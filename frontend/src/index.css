@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-paper text-ink antialiased;
+  }
+
+  body {
+    @apply m-0 min-h-screen font-sans;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    @apply font-sans;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+}
+
+@layer components {
+  .field {
+    @apply w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink shadow-sm placeholder:text-slate-400 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-slate-50;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent-hover;
+  }
+
+  .btn-secondary {
+    @apply btn border border-line bg-white text-ink hover:bg-slate-50;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-800 text-white hover:bg-red-900;
+  }
+
+  .btn-ghost {
+    @apply btn text-slate-200 hover:bg-white/10;
+  }
+
+  .surface-card {
+    @apply rounded-xl border border-line bg-white shadow-card;
+  }
+
+  .table-wrap {
+    @apply overflow-hidden rounded-xl border border-line bg-white shadow-card;
+  }
+
+  .data-table {
+    @apply min-w-[720px] w-full border-collapse text-left text-sm;
+  }
+
+  .data-table th {
+    @apply whitespace-nowrap bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted;
+  }
+
+  .data-table td {
+    @apply border-t border-line px-4 py-3 align-middle;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

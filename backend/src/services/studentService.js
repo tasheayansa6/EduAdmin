@@ -1,0 +1,108 @@
+import { pool } from '../db/pool.js';
+import { AppError } from '../lib/errors.js';
+import { logActivity } from '../lib/activity.js';
+import { likeClause, likePattern, toPage } from '../lib/sql.js';
+
+function mapStudent(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    status: row.status,
+    createdAt: row.created_at,
+    enrollmentCount: Number(row.enrollment_count ?? 0),
+  };
+}
+
+function filters(query) {
+  const where = ['u.role = ?'];
+  const params = ['student'];
+  if (query.q) {
+    where.push(`(${likeClause('u.name')} OR ${likeClause('u.email')})`);
+    const pattern = likePattern(query.q);
+    params.push(pattern, pattern);
+  }
+  if (query.status) {
+    where.push('u.status = ?');
+    params.push(query.status);
+  }
+  return { clause: where.join(' AND '), params };
+}
+
+export async function listStudents(query) {
+  const { clause, params } = filters(query);
+  const [countRows] = await pool.query(
+    `SELECT COUNT(*) AS total FROM users u WHERE ${clause}`,
+    params,
+  );
+  const offset = (query.page - 1) * query.limit;
+  const [rows] = await pool.query(
+    `SELECT u.id, u.name, u.email, u.status, u.created_at,
+            (SELECT COUNT(*) FROM enrollments e
+              WHERE e.user_id = u.id AND e.status <> 'withdrawn') AS enrollment_count
+     FROM users u
+     WHERE ${clause}
+     ORDER BY u.created_at DESC, u.name ASC
+     LIMIT ? OFFSET ?`,
+    [...params, query.limit, offset],
+  );
+  return toPage(rows.map(mapStudent), Number(countRows[0].total), query.page, query.limit);
+}
+
+export async function getStudent(id) {
+  const [rows] = await pool.query(
+    `SELECT id, name, email, status, created_at
+     FROM users WHERE id = ? AND role = 'student'`,
+    [id],
+  );
+  if (!rows[0]) throw new AppError(404, 'Student not found.');
+
+  const [enrollments] = await pool.query(
+    `SELECT e.id, e.status, e.enrolled_at, c.title AS course_title,
+            COALESCE(p.percent, 0) AS percent
+     FROM enrollments e
+     JOIN courses c ON c.id = e.course_id
+     LEFT JOIN progress p ON p.user_id = e.user_id AND p.course_id = e.course_id
+     WHERE e.user_id = ?
+     ORDER BY e.enrolled_at DESC`,
+    [id],
+  );
+
+  const activeCount = enrollments.filter((row) => row.status !== 'withdrawn').length;
+  return {
+    ...mapStudent({ ...rows[0], enrollment_count: activeCount }),
+    enrollments: enrollments.map((row) => ({
+      id: row.id,
+      status: row.status,
+      enrolledAt: row.enrolled_at,
+      courseTitle: row.course_title,
+      percent: Number(row.percent),
+    })),
+  };
+}
+
+export async function updateStudent(actorId, id, body) {
+  const existing = await getStudent(id);
+  try {
+    await pool.query(
+      `UPDATE users SET name = ?, email = ?, status = ? WHERE id = ? AND role = 'student'`,
+      [body.name, body.email, body.status, id],
+    );
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      throw new AppError(409, 'That email address is already in use.', [
+        { field: 'email', message: 'That email address is already in use.' },
+      ]);
+    }
+    throw error;
+  }
+
+  await logActivity(pool, {
+    actorId,
+    action: 'student.updated',
+    entityType: 'user',
+    entityId: id,
+    details: `Updated ${existing.name}`,
+  });
+  return getStudent(id);
+}
