@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { statusLabel } from '../lib/format.js';
 
 export function BootScreen() {
@@ -42,6 +42,30 @@ function described(id, error) {
 
 export function TextInput({ id, error, ...props }) {
   return <input id={id} className="field" {...described(id, error)} {...props} />;
+}
+
+export function PasswordInput({ id, error, ...props }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        className="field pr-16"
+        type={visible ? 'text' : 'password'}
+        {...described(id, error)}
+        {...props}
+      />
+      <button
+        type="button"
+        className="absolute inset-y-0 right-2 text-xs font-semibold text-ink-muted hover:text-ink"
+        aria-pressed={visible}
+        aria-controls={id}
+        onClick={() => setVisible((current) => !current)}
+      >
+        {visible ? 'Hide' : 'Show'}
+      </button>
+    </div>
+  );
 }
 
 export function SelectInput({ id, error, children, ...props }) {

@@ -36,5 +36,17 @@ export function validatePassword(password) {
   if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
     return 'Use at least 8 characters, with a letter and a number.';
   }
+  if (password.length > 72) return 'Use at most 72 characters.';
   return '';
+}
+
+export function validateRegister(input) {
+  const errors = {};
+  if (input.name.trim().length < 2) errors.name = 'Enter at least 2 characters.';
+  if (!emailPattern.test(input.email.trim())) errors.email = 'Enter a valid email address.';
+  const passwordError = validatePassword(input.password);
+  if (passwordError) errors.password = passwordError;
+  if (!input.confirmPassword) errors.confirmPassword = 'Confirm your password.';
+  else if (input.password !== input.confirmPassword) errors.confirmPassword = 'Passwords do not match.';
+  return errors;
 }

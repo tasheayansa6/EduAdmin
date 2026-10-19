@@ -287,7 +287,7 @@ Error shape (**Verified**): `{ "message": "...", "errors"?: { field: "..." } | [
 POST /api/v1/auth/login
 Content-Type: application/json
 
-{ "email": "registrar@eduadmin.test", "password": "***" }
+{ "email": "super@eduadmin.test", "password": "***" }
 ```
 
 ```json
@@ -296,7 +296,7 @@ Content-Type: application/json
   "user": {
     "id": 2,
     "name": "...",
-    "email": "registrar@eduadmin.test",
+    "email": "super@eduadmin.test",
     "role": "admin",
     "status": "active"
   }

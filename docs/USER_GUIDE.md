@@ -1,14 +1,28 @@
 # EduAdmin user guide
 
-For authorized **administrators** and **super administrators** using the web dashboard.
+For students, administrators, and the super administrator.
 
 ## Sign in
 
 1. Open the web app (local default http://localhost:5173).
-2. Enter your administrator email and password.
-3. Use **Sign in**. Students and inactive accounts are rejected.
+2. Enter your email and password.
+3. Use **Sign in**.
 
-On success you land on the **Dashboard**. Your session uses a secure token stored in the browser; **Sign out** from the profile menu ends the session on the server as well.
+A student lands on **Your learning**. An administrator lands on the admin **Dashboard**. Inactive accounts are rejected. **Log out** ends the session on the server.
+
+## Student registration
+
+1. Open **Create an account** from the sign-in page, or go to `/register`.
+2. Enter your name, email, and password, then confirm the password.
+3. Submit the form. The account is always created as a student.
+
+There is no phone field. Registration does not enroll anyone. After signing in, the student can enroll in a published course from **Courses**, which stores the enrollment in the database. The student can update their display name from **Profile**. Email and role stay on the account record.
+
+## Student area
+
+- **Home** shows that student's enrollments, completion count, and average progress from stored records.
+- **Courses** lists published courses. **Enroll** saves that course to the signed-in student in the database.
+- Students cannot open the admin dashboard, reports, or another student's record.
 
 ## Dashboard
 

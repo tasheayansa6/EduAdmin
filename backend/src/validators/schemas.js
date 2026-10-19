@@ -43,6 +43,23 @@ export const loginSchema = {
   }),
 };
 
+export const registerSchema = {
+  body: z.object({
+    name: personName,
+    email,
+    password,
+    confirmPassword: z.string().min(1, 'Confirm your password.'),
+  }).superRefine((value, ctx) => {
+    if (value.password !== value.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['confirmPassword'],
+        message: 'Passwords do not match.',
+      });
+    }
+  }),
+};
+
 export const profileSchema = {
   body: z.object({ name: personName }),
 };
@@ -109,6 +126,12 @@ export const enrollmentListSchema = {
 export const enrollmentCreateSchema = {
   body: z.object({
     userId: z.number().int().positive('Choose a student.'),
+    courseId: z.number().int().positive('Choose a course.'),
+  }),
+};
+
+export const studentEnrollSchema = {
+  body: z.object({
     courseId: z.number().int().positive('Choose a course.'),
   }),
 };

@@ -3,7 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { login, logout, updateProfile } from '../services/authService.js';
+import { login, logout, registerStudent, updateProfile } from '../services/authService.js';
 import { getDashboard } from '../services/dashboardService.js';
 import { getStudent, listStudents, updateStudent } from '../services/studentService.js';
 import { createCourse, deleteCourse, listCourses, updateCourse } from '../services/courseService.js';
@@ -18,6 +18,7 @@ import { listProgress } from '../services/progressService.js';
 import { getReport, reportToCsv } from '../services/reportService.js';
 import { createAdmin, listAdmins, updateAdminStatus } from '../services/adminService.js';
 import { getLookups } from '../services/lookupService.js';
+import { getStudentHome } from '../services/studentPortalService.js';
 import {
   adminCreateSchema,
   adminPatchSchema,
@@ -29,9 +30,11 @@ import {
   enrollmentPatchSchema,
   loginSchema,
   profileSchema,
+  registerSchema,
   progressListSchema,
   recordParams,
   reportSchema,
+  studentEnrollSchema,
   studentListSchema,
   studentUpdateSchema,
 } from '../validators/schemas.js';
@@ -45,7 +48,20 @@ const loginLimiter = rateLimit({
   skip: () => process.env.NODE_ENV === 'test',
 });
 
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many registration attempts. Try again in a few minutes.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
 const authRouter = Router();
+authRouter.post('/register', registerLimiter, validate(registerSchema), asyncHandler(async (req, res) => {
+  const { name, email, password } = req.valid.body;
+  res.status(201).json(await registerStudent({ name, email, password }));
+}));
 authRouter.post('/login', loginLimiter, validate(loginSchema), asyncHandler(async (req, res) => {
   res.json(await login(req.valid.body.email, req.valid.body.password));
 }));
@@ -69,14 +85,16 @@ authRouter.post('/logout', authenticate, asyncHandler(async (req, res) => {
   res.status(204).end();
 }));
 
+const adminOnly = [authenticate, authorize('admin', 'super_admin')];
+
 const dashboardRouter = Router();
-dashboardRouter.use(authenticate);
+dashboardRouter.use(...adminOnly);
 dashboardRouter.get('/', asyncHandler(async (req, res) => {
   res.json({ data: await getDashboard() });
 }));
 
 const studentRouter = Router();
-studentRouter.use(authenticate);
+studentRouter.use(...adminOnly);
 studentRouter.get('/', validate(studentListSchema), asyncHandler(async (req, res) => {
   res.json(await listStudents(req.valid.query));
 }));
@@ -88,7 +106,7 @@ studentRouter.patch('/:id', validate(studentUpdateSchema), asyncHandler(async (r
 }));
 
 const courseRouter = Router();
-courseRouter.use(authenticate);
+courseRouter.use(...adminOnly);
 courseRouter.get('/', validate(courseListSchema), asyncHandler(async (req, res) => {
   res.json(await listCourses(req.valid.query));
 }));
@@ -104,7 +122,7 @@ courseRouter.delete('/:id', validate(recordParams), asyncHandler(async (req, res
 }));
 
 const enrollmentRouter = Router();
-enrollmentRouter.use(authenticate);
+enrollmentRouter.use(...adminOnly);
 enrollmentRouter.get('/', validate(enrollmentListSchema), asyncHandler(async (req, res) => {
   res.json(await listEnrollments(req.valid.query));
 }));
@@ -123,13 +141,13 @@ enrollmentRouter.delete('/:id', validate(recordParams), asyncHandler(async (req,
 }));
 
 const progressRouter = Router();
-progressRouter.use(authenticate);
+progressRouter.use(...adminOnly);
 progressRouter.get('/', validate(progressListSchema), asyncHandler(async (req, res) => {
   res.json(await listProgress(req.valid.query));
 }));
 
 const reportRouter = Router();
-reportRouter.use(authenticate);
+reportRouter.use(...adminOnly);
 reportRouter.get('/', validate(reportSchema), asyncHandler(async (req, res) => {
   res.json({ data: await getReport(req.valid.query) });
 }));
@@ -156,7 +174,20 @@ adminRouter.patch('/:id', validate(adminPatchSchema), asyncHandler(async (req, r
 }));
 
 const lookupRouter = Router();
-lookupRouter.use(authenticate);
+lookupRouter.use(...adminOnly);
+
+const portalRouter = Router();
+portalRouter.use(authenticate, authorize('student'));
+portalRouter.get('/home', asyncHandler(async (req, res) => {
+  res.json({ data: await getStudentHome(req.user.id) });
+}));
+portalRouter.post('/enrollments', validate(studentEnrollSchema), asyncHandler(async (req, res) => {
+  const enrollment = await createEnrollment(req.user.id, {
+    userId: req.user.id,
+    courseId: req.valid.body.courseId,
+  });
+  res.status(201).json({ data: enrollment });
+}));
 lookupRouter.get('/', asyncHandler(async (req, res) => {
   res.json({ data: await getLookups() });
 }));
@@ -178,5 +209,6 @@ export function registerRoutes(app) {
   v1.use('/reports', reportRouter);
   v1.use('/administrators', adminRouter);
   v1.use('/lookups', lookupRouter);
+  v1.use('/student', portalRouter);
   app.use('/api/v1', v1);
 }

@@ -137,7 +137,6 @@ async function seed() {
 
     const staff = [
       ['Helena Okoye', 'super@eduadmin.test', adminHash, 'super_admin', 'active', monthsAgo(8, 3)],
-      ['Marcus Adebanjo', 'registrar@eduadmin.test', adminHash, 'admin', 'active', monthsAgo(7, 12)],
     ];
     for (const [name, email, passwordHash, role, status, createdAt] of staff) {
       const [result] = await connection.query(
@@ -184,14 +183,12 @@ async function seed() {
     }
 
     const helena = userIds.get('super@eduadmin.test');
-    const marcus = userIds.get('registrar@eduadmin.test');
     const activity = [
       [helena, 'course.published', 'course', courseIds.get('Python for Beginners'), 'Published Python for Beginners', monthsAgo(5, 9, 11)],
-      [marcus, 'enrollment.created', 'enrollment', null, 'Amina Yusuf enrolled in Introduction to Data Analysis', monthsAgo(1, 6, 14)],
-      [marcus, 'student.updated', 'user', userIds.get('samuel.nwosu@students.test'), 'Updated Samuel Nwosu', monthsAgo(0, 4, 16)],
+      [helena, 'enrollment.created', 'enrollment', null, 'Amina Yusuf enrolled in Introduction to Data Analysis', monthsAgo(1, 6, 14)],
+      [helena, 'student.updated', 'user', userIds.get('samuel.nwosu@students.test'), 'Updated Samuel Nwosu', monthsAgo(0, 4, 16)],
       [helena, 'course.created', 'course', courseIds.get('Research Methods'), 'Created Research Methods', monthsAgo(0, 2, 9)],
-      [marcus, 'enrollment.updated', 'enrollment', null, 'Sofia Alvarez marked completed in Academic Writing Studio', monthsAgo(0, 8, 13)],
-      [helena, 'admin.created', 'user', marcus, 'Added administrator Marcus Adebanjo', monthsAgo(7, 12, 10)],
+      [helena, 'enrollment.updated', 'enrollment', null, 'Sofia Alvarez marked completed in Academic Writing Studio', monthsAgo(0, 8, 13)],
     ];
     for (const [actorId, action, entityType, entityId, details, createdAt] of activity) {
       await connection.query(
@@ -211,7 +208,6 @@ async function seed() {
 
   console.log('Seed complete.');
   console.log('Super admin    super@eduadmin.test');
-  console.log('Administrator  registrar@eduadmin.test');
   console.log('Password       Admin123!');
 }
 

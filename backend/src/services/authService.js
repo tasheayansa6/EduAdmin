@@ -31,11 +31,8 @@ export async function login(email, password) {
   if (!user || !matches) {
     throw new AppError(401, 'Email or password is incorrect.');
   }
-  if (user.role === 'student') {
-    throw new AppError(403, 'This dashboard is limited to administrators.');
-  }
   if (user.status !== 'active') {
-    throw new AppError(403, 'This account is inactive. Contact a super administrator.');
+    throw new AppError(403, 'This account is inactive. Contact an administrator.');
   }
 
   const token = jwt.sign(
@@ -47,11 +44,37 @@ export async function login(email, password) {
   return { token, user: toPublic(user) };
 }
 
+export async function registerStudent({ name, email, password }) {
+  const passwordHash = await bcrypt.hash(password, 10);
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO users (name, email, password_hash, role, status)
+       VALUES (?, ?, ?, 'student', 'active')`,
+      [name, email, passwordHash],
+    );
+    await logActivity(pool, {
+      actorId: result.insertId,
+      action: 'student.registered',
+      entityType: 'user',
+      entityId: result.insertId,
+      details: 'Student account created',
+    });
+    return login(email, password);
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      throw new AppError(409, 'That email address is already in use.', [
+        { field: 'email', message: 'That email address is already in use.' },
+      ]);
+    }
+    throw error;
+  }
+}
+
 export async function getSessionUser(id) {
   const [rows] = await pool.query(
     `SELECT id, name, email, role, status, session_version
      FROM users
-     WHERE id = ? AND role IN ('admin', 'super_admin') AND status = 'active'`,
+     WHERE id = ? AND status = 'active'`,
     [id],
   );
   const user = rows[0];

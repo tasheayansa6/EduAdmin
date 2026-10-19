@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
+import bcrypt from 'bcryptjs';
 import { createApp } from '../src/app.js';
 import { pool } from '../src/db/pool.js';
 
-const ADMIN = { email: 'registrar@eduadmin.test', password: 'Admin123!' };
-const SUPER = { email: 'super@eduadmin.test', password: 'Admin123!' };
+const ADMIN = { email: 'super@eduadmin.test', password: 'Admin123!' };
+const SUPER = ADMIN;
 
 let server;
 let baseUrl;
@@ -274,22 +275,33 @@ describe('Authorization hardening', () => {
       body: { name: originalName, role: 'super_admin', id: 1 },
     });
     assert.equal(status, 200);
-    assert.equal(payload.user.role, 'admin');
+    assert.equal(payload.user.role, 'super_admin');
     assert.equal(payload.user.id, session.user.id);
   });
 
   test('admin cannot create administrators', async () => {
-    const session = await login();
-    const { status } = await request('/api/v1/administrators', {
-      method: 'POST',
-      token: session.token,
-      body: {
-        name: 'Intruder Admin',
-        email: `intruder.${Date.now()}@eduadmin.test`,
-        password: 'Admin123!',
-      },
-    });
-    assert.equal(status, 403);
+    const email = `staff.${Date.now()}@eduadmin.test`;
+    const passwordHash = await bcrypt.hash('Admin123!', 4);
+    const [created] = await pool.query(
+      `INSERT INTO users (name, email, password_hash, role, status)
+       VALUES ('Staff Admin', ?, ?, 'admin', 'active')`,
+      [email, passwordHash],
+    );
+    try {
+      const session = await login({ email, password: 'Admin123!' });
+      const { status } = await request('/api/v1/administrators', {
+        method: 'POST',
+        token: session.token,
+        body: {
+          name: 'Intruder Admin',
+          email: `intruder.${Date.now()}@eduadmin.test`,
+          password: 'Admin123!',
+        },
+      });
+      assert.equal(status, 403);
+    } finally {
+      await pool.query('DELETE FROM users WHERE id = ?', [created.insertId]);
+    }
   });
 
   test('missing Authorization header is rejected on mutations', async () => {

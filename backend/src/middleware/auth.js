@@ -26,10 +26,6 @@ export async function authenticate(req, res, next) {
       throw new AppError(401, 'Sign in to continue.');
     }
 
-    if (!['admin', 'super_admin'].includes(user.role)) {
-      throw new AppError(403, 'You do not have permission to perform this action.');
-    }
-
     req.user = user;
     next();
   } catch (error) {

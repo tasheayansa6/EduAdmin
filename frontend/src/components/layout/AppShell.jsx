@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { roleLabel } from '../../lib/format.js';
@@ -14,7 +14,6 @@ import {
   MenuIcon,
   ShieldIcon,
   TrendIcon,
-  UserIcon,
   UsersIcon,
 } from '../icons.jsx';
 
@@ -64,77 +63,26 @@ function SidebarNav({ user, onNavigate }) {
   );
 }
 
-function ProfileMenu({ user, onLogout, onProfile }) {
-  const [open, setOpen] = useState(false);
-  const menuId = useId();
-  const rootRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    function onPointer(event) {
-      if (rootRef.current && !rootRef.current.contains(event.target)) setOpen(false);
-    }
-    function onKey(event) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('mousedown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
+function AccountCard({ user, onNavigate, onLogout }) {
   return (
-    <div className="relative" ref={rootRef}>
-      <button
-        type="button"
-        className="btn-secondary !gap-2 !px-2"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={menuId}
-        onClick={() => setOpen((value) => !value)}
+    <div className="border-t border-line p-3">
+      <NavLink
+        to="/profile"
+        onClick={onNavigate}
+        className={({ isActive }) =>
+          `flex items-center gap-3 rounded-lg px-3 py-2.5 ${isActive ? 'bg-accent/10' : 'hover:bg-slate-50'}`
+        }
       >
         <Avatar name={user.name} size="sm" />
-        <span className="hidden max-w-[9rem] truncate sm:inline">{user.name}</span>
+        <span className="min-w-0 text-left">
+          <span className="block truncate text-sm font-semibold text-ink">{user.name}</span>
+          <span className="block truncate text-xs text-ink-muted">{roleLabel(user.role)}</span>
+        </span>
+      </NavLink>
+      <button type="button" className="nav-link mt-1 w-full text-slate-600 hover:bg-slate-50" onClick={onLogout}>
+        <LogoutIcon />
+        Log out
       </button>
-      {open ? (
-        <div
-          id={menuId}
-          role="menu"
-          className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
-        >
-          <div className="border-b border-line px-3 py-3">
-            <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
-            <p className="truncate text-xs text-ink-muted">{user.email}</p>
-            <p className="mt-1 text-xs font-semibold text-accent">{roleLabel(user.role)}</p>
-          </div>
-          <button
-            type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-ink hover:bg-slate-50"
-            onClick={() => {
-              setOpen(false);
-              onProfile();
-            }}
-          >
-            <UserIcon />
-            Profile
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-red-800 hover:bg-red-50"
-            onClick={() => {
-              setOpen(false);
-              onLogout();
-            }}
-          >
-            <LogoutIcon />
-            Log out
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -207,7 +155,7 @@ export function AppShell() {
               <Mark />
               <div>
                 <p className="text-base font-semibold leading-none text-ink">EduAdmin</p>
-                <p className="mt-1 text-xs text-ink-muted">{roleLabel(user.role)}</p>
+                <p className="mt-1 text-xs text-ink-muted">Administration</p>
               </div>
             </div>
             <button
@@ -222,27 +170,11 @@ export function AppShell() {
 
           <SidebarNav user={user} onNavigate={() => setOpen(false)} />
 
-          <div className="space-y-1 border-t border-line px-3 py-4">
-            <button
-              type="button"
-              className="nav-link w-full text-slate-600 hover:bg-slate-50"
-              onClick={() => {
-                setOpen(false);
-                navigate('/profile');
-              }}
-            >
-              <UserIcon />
-              Profile
-            </button>
-            <button
-              type="button"
-              className="nav-link w-full text-slate-600 hover:bg-slate-50"
-              onClick={onLogout}
-            >
-              <LogoutIcon />
-              Log out
-            </button>
-          </div>
+          <AccountCard
+            user={user}
+            onNavigate={() => setOpen(false)}
+            onLogout={onLogout}
+          />
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -271,11 +203,6 @@ export function AppShell() {
                   placeholder="Search students"
                 />
               </form>
-              <ProfileMenu
-                user={user}
-                onProfile={() => navigate('/profile')}
-                onLogout={onLogout}
-              />
             </div>
             <form onSubmit={onSearch} className="px-4 pb-3 md:hidden" role="search">
               <label className="sr-only" htmlFor="shell-search-mobile">Search students</label>

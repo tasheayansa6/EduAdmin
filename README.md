@@ -4,7 +4,7 @@ Standalone administration dashboard for an online learning platform. Authorized 
 
 ## Features
 
-- JWT authentication for `admin` and `super_admin` roles (students cannot sign in)
+- JWT authentication for administrators and registered students, with separate areas for each role
 - Dashboard with live totals, enrollment trends, and recent activity
 - Student list, search, status filters, and profile updates
 - Course catalog with create / publish / unpublish (soft archive)
@@ -105,7 +105,6 @@ Created only by `npm run db:seed` for **local MySQL / automated tests**. They ar
 | Role | Email (seed) |
 | --- | --- |
 | Super admin | `super@eduadmin.test` |
-| Administrator | `registrar@eduadmin.test` |
 
 Passwords are defined in `backend/db/seed.js`. Student seed accounts cannot open the admin dashboard.
 
@@ -136,7 +135,7 @@ EduAdmin/
 ## Known limitations
 
 - Progress is an enrollment-level `percent` value; there is no lesson/module tracking.
-- Administrators update existing students; there is no admin “create student” API in this app.
+- Students register themselves. Administrators can still update an existing student, and only an administrator can create an enrollment.
 - Course delete and enrollment delete are soft (unpublish / withdraw), not hard deletes.
 - No ESLint/TypeScript frontend lint or frontend unit-test suite is configured.
 - Login is rate-limited (20 attempts / 15 minutes) outside `NODE_ENV=test`.

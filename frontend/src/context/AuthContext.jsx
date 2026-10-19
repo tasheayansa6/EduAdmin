@@ -42,6 +42,13 @@ export function AuthProvider({ children }) {
       const data = await api('/api/v1/auth/login', { method: 'POST', body: { email, password } });
       setToken(data.token);
       setUser(data.user);
+      return data.user;
+    },
+    async register(body) {
+      const data = await api('/api/v1/auth/register', { method: 'POST', body });
+      setToken(data.token);
+      setUser(data.user);
+      return data.user;
     },
     async logout() {
       try {

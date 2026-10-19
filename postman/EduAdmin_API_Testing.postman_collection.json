@@ -14,6 +14,10 @@
       "value": ""
     },
     {
+      "key": "studentToken",
+      "value": ""
+    },
+    {
       "key": "studentId",
       "value": ""
     },
@@ -168,6 +172,55 @@
               }
             }
           ]
+        },
+        {
+          "name": "Register student",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = 'reg.' + Date.now() + '@students.test';",
+                  "pm.collectionVariables.set('newStudentEmail', email);",
+                  "pm.environment.set('newStudentEmail', email);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('role is student even if a role was sent', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.user.role).to.eql('student');",
+                  "  pm.expect(j.user.password_hash).to.be.undefined;",
+                  "  pm.expect(j.token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Creates a student. The role field is ignored by the server.",
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Registered Student\",\n  \"email\": \"{{newStudentEmail}}\",\n  \"password\": \"{{studentPassword}}\",\n  \"confirmPassword\": \"{{studentPassword}}\",\n  \"role\": \"super_admin\"\n}"
+            }
+          }
         },
         {
           "name": "Current session",
@@ -1172,7 +1225,7 @@
           ]
         },
         {
-          "name": "Student login rejected",
+          "name": "Student login",
           "request": {
             "method": "POST",
             "header": [
@@ -1197,13 +1250,144 @@
                 "login"
               ]
             },
-            "description": "Students cannot access the admin API.",
+            "description": "Student login returns a JWT. The token is stored as studentToken and does not replace the administrator token.",
             "auth": {
               "type": "noauth"
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{studentPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('student token has no password hash', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.user.role).to.eql('student');",
+                  "  pm.expect(j.user.password_hash).to.be.undefined;",
+                  "  pm.collectionVariables.set('studentToken', j.token);",
+                  "  pm.environment.set('studentToken', j.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Student home",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/student/home",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "student", "home"]
+            },
+            "description": "Returns only the signed-in student's enrollments and the published catalog.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('own profile only', function () {",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(data.profile.email).to.eql(pm.environment.get('studentEmail'));",
+                  "  pm.expect(data.profile.password_hash).to.be.undefined;",
+                  "  pm.expect(data.enrollments).to.be.an('array');",
+                  "  pm.expect(data.catalog).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Student cannot open admin dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard"]
+            },
+            "description": "A student token is rejected by the administrator dashboard.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Student cannot read another student record",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/{{studentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "students", "{{studentId}}"]
+            },
+            "description": "Student-management routes stay limited to administrators, including when the id belongs to another student.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{studentToken}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [

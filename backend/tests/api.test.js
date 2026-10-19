@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
+import bcrypt from 'bcryptjs';
 import { createApp } from '../src/app.js';
 import { pool } from '../src/db/pool.js';
 
-const ADMIN = { email: 'registrar@eduadmin.test', password: 'Admin123!' };
-const SUPER = { email: 'super@eduadmin.test', password: 'Admin123!' };
+const ADMIN = { email: 'super@eduadmin.test', password: 'Admin123!' };
+const SUPER = ADMIN;
 const STUDENT = { email: 'amina.yusuf@students.test', password: 'Student123!' };
 
 let server;
@@ -23,6 +24,22 @@ async function request(path, { method = 'GET', token, body } = {}) {
   const text = await response.text();
   const payload = text ? JSON.parse(text) : null;
   return { status: response.status, payload };
+}
+
+async function withStaffAdmin(run) {
+  const email = `staff.${Date.now()}@eduadmin.test`;
+  const password = 'Admin123!';
+  const passwordHash = await bcrypt.hash(password, 4);
+  const [result] = await pool.query(
+    `INSERT INTO users (name, email, password_hash, role, status)
+     VALUES ('Staff Admin', ?, ?, 'admin', 'active')`,
+    [email, passwordHash],
+  );
+  try {
+    return await run({ email, password, id: result.insertId });
+  } finally {
+    await pool.query('DELETE FROM users WHERE id = ?', [result.insertId]);
+  }
 }
 
 async function login(credentials) {
@@ -66,17 +83,20 @@ describe('AUTH', () => {
     assert.equal(payload.message, 'Email or password is incorrect.');
   });
 
-  test('rejects student login for the admin dashboard', async () => {
+  test('student login cannot open the admin dashboard', async () => {
     const { status, payload } = await login(STUDENT);
-    assert.equal(status, 403);
-    assert.match(payload.message, /administrator/i);
+    assert.equal(status, 200);
+    assert.equal(payload.user.role, 'student');
+    assert.equal(payload.user.password_hash, undefined);
+    const dashboard = await request('/api/v1/dashboard', { token: payload.token });
+    assert.equal(dashboard.status, 403);
   });
 
   test('allows admin login and returns a token without password fields', async () => {
     const { status, payload } = await login(ADMIN);
     assert.equal(status, 200);
     assert.ok(payload.token);
-    assert.equal(payload.user.role, 'admin');
+    assert.equal(payload.user.role, 'super_admin');
     assert.equal(payload.user.email, ADMIN.email);
     assert.equal(payload.user.password_hash, undefined);
     assert.equal(payload.password_hash, undefined);
@@ -156,11 +176,13 @@ describe('Authorization', () => {
   });
 
   test('admin cannot list administrators', async () => {
-    const { payload: session } = await login(ADMIN);
-    const { status } = await request('/api/v1/administrators', {
-      token: session.token,
+    await withStaffAdmin(async (staff) => {
+      const { payload: session } = await login(staff);
+      const { status } = await request('/api/v1/administrators', {
+        token: session.token,
+      });
+      assert.equal(status, 403);
     });
-    assert.equal(status, 403);
   });
 
   test('super admin can list administrators', async () => {
@@ -174,14 +196,12 @@ describe('Authorization', () => {
   });
 
   test('inactive administrator tokens are rejected', async () => {
-    const { payload: session } = await login(ADMIN);
-    await pool.query(`UPDATE users SET status = 'inactive' WHERE email = ?`, [ADMIN.email]);
-    try {
+    await withStaffAdmin(async (staff) => {
+      const { payload: session } = await login(staff);
+      await pool.query(`UPDATE users SET status = 'inactive' WHERE id = ?`, [staff.id]);
       const { status } = await request('/api/v1/auth/me', { token: session.token });
       assert.equal(status, 401);
-    } finally {
-      await pool.query(`UPDATE users SET status = 'active' WHERE email = ?`, [ADMIN.email]);
-    }
+    });
   });
 });
 describe('Enrollments', () => {

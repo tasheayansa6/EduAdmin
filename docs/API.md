@@ -12,15 +12,28 @@ Authentication: `Authorization: Bearer <jwt>` on protected routes. Login returns
 | --- | --- | --- |
 | GET | `/api/health` | `{ ok: true }` |
 | GET | `/api/v1/health` | Same |
-| POST | `/api/v1/auth/login` | Body: `{ email, password }` |
+| POST | `/api/v1/auth/login` | Body: `{ email, password }`. Same error for an unknown email and a wrong password. |
+| POST | `/api/v1/auth/register` | Student registration. Body: `{ name, email, password, confirmPassword }`. Role is always `student`. |
+
+## Signed-in account (student or administrator)
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/api/v1/auth/me` | Current user. No password hash. |
+| PATCH | `/api/v1/auth/me` | Body: `{ name }` only. Role cannot be changed. |
+| POST | `/api/v1/auth/logout` | Increments session version and invalidates the token (`204`) |
+
+## Student
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/api/v1/student/home` | Signed-in student's profile, enrollments, progress, and published catalog. |
+| POST | `/api/v1/student/enrollments` | Body: `{ courseId }`. Enrolls the signed-in student in a published course and stores the row in `enrollments`. |
 
 ## Protected (admin / super_admin)
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/api/v1/auth/me` | Current user |
-| PATCH | `/api/v1/auth/me` | Body: `{ name }` |
-| POST | `/api/v1/auth/logout` | Invalidates token (`204`) |
 | GET | `/api/v1/dashboard` | Aggregate overview |
 | GET | `/api/v1/students` | Query: `q`, `page`, `limit`, `status` |
 | GET | `/api/v1/students/:id` | Detail + enrollments |

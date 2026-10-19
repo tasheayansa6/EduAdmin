@@ -18,6 +18,7 @@
 5. Ensure MySQL is seeded and the API is running (`npm run db:up`, `npm run db:seed`, `npm run dev:api`).
 6. Run the **Authentication → Login (admin)** request first so `token` is saved.
 7. Run folders in order: Health → Authentication → Dashboard → Students → Courses → Enrollments → Learning Progress → Reports → Negative tests.
+8. **Student login** stores `studentToken` separately. Use it for `/api/v1/student/home`. It must receive `403` from administrator routes.
 
 ## Newman (CLI)
 
