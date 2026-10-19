@@ -3,8 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { useResource } from '../hooks/useResource.js';
-import { statusLabel } from '../lib/format.js';
-import { DataPanel, StatusBadge } from '../components/ui.jsx';
+import { DataPanel, ProgressBar, StatusBadge } from '../components/ui.jsx';
 
 export function StudentCoursesPage() {
   const toast = useToast();
@@ -49,7 +48,12 @@ export function StudentCoursesPage() {
               <li key={course.id} className="surface-card flex flex-col p-5">
                 <div className="flex items-start justify-between gap-3">
                   <h2 className="text-base font-semibold text-ink">{course.title}</h2>
-                  {course.enrollmentStatus ? <StatusBadge status={course.enrollmentStatus} /> : <span className="text-xs font-semibold text-ink-muted">Not enrolled</span>}
+                  {course.enrollmentStatus ? (
+                    <span className="flex shrink-0 flex-wrap justify-end gap-2">
+                      <StatusBadge status={course.enrollmentStatus} />
+                      {course.progressStatus ? <StatusBadge status={course.progressStatus} /> : null}
+                    </span>
+                  ) : <span className="text-xs font-semibold text-ink-muted">Not enrolled</span>}
                 </div>
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">{course.categoryName}</p>
                 <p className="mt-3 text-sm text-ink-muted">{course.description}</p>
@@ -58,8 +62,10 @@ export function StudentCoursesPage() {
                     <button type="button" className="btn-primary" disabled={pendingId === course.id} onClick={() => enroll(course.id)}>
                       {pendingId === course.id ? 'Saving…' : course.enrollmentStatus === 'withdrawn' ? 'Enroll again' : 'Enroll'}
                     </button>
+                  ) : course.percent == null ? (
+                    <p className="text-sm text-ink-muted">No progress row is stored for this enrollment.</p>
                   ) : (
-                    <p className="text-sm text-ink-muted">Saved on your account as {statusLabel(course.enrollmentStatus)}.</p>
+                    <ProgressBar value={course.percent} />
                   )}
                 </div>
               </li>

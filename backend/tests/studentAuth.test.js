@@ -170,6 +170,15 @@ describe('Student session', () => {
     assert.equal(Number(rows[0].percent), 0);
     assert.equal(rows[0].user_id, enrolled.payload.data.userId);
 
+    const saved = await request('/api/v1/student/home', { token: session.payload.token });
+    const catalogCourse = saved.payload.data.catalog.find((item) => item.id === course.id);
+    const enrollment = saved.payload.data.enrollments.find((item) => item.courseTitle === course.title);
+    assert.equal(catalogCourse.enrollmentStatus, 'active');
+    assert.equal(catalogCourse.progressStatus, 'not_started');
+    assert.equal(catalogCourse.percent, 0);
+    assert.equal(enrollment.progressStatus, 'not_started');
+    assert.equal(enrollment.percent, 0);
+
     const again = await request('/api/v1/student/enrollments', {
       method: 'POST',
       token: session.payload.token,

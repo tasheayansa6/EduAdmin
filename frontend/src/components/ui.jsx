@@ -192,9 +192,9 @@ export function ProgressBar({ value }) {
   );
 }
 
-export function BarChart({ points, emptyMessage = 'No data in this period yet.' }) {
+export function BarChart({ points, emptyMessage = 'No data in this period yet.', hideWhenZero = true }) {
   const total = points.reduce((sum, point) => sum + point.count, 0);
-  if (!points.length || total === 0) {
+  if (!points.length || (hideWhenZero && total === 0)) {
     return (
       <div className="flex h-44 items-center justify-center rounded-lg bg-slate-50 px-4 text-center">
         <p className="text-sm text-ink-muted">{emptyMessage}</p>

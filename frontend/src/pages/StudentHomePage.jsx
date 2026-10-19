@@ -39,7 +39,7 @@ export function StudentHomePage() {
   const data = resource.data?.data;
   const firstName = data?.profile?.name?.trim().split(/\s+/)[0] || 'there';
   const current = (data?.enrollments || []).filter((row) => row.status !== 'withdrawn');
-  const active = current.filter((row) => row.status === 'active');
+  const inProgress = current.filter((row) => row.progressStatus === 'in_progress');
   const openCourses = (data?.catalog || []).filter((course) => !course.enrollmentStatus || course.enrollmentStatus === 'withdrawn').slice(0, 4);
 
   async function enroll(courseId) {
@@ -90,8 +90,8 @@ export function StudentHomePage() {
               </article>
               <article className="surface-card border-l-4 border-l-accent p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">In progress</p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-ink">{active.length}</p>
-                <p className="mt-1 text-sm text-ink-muted">Still active</p>
+                <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-ink">{inProgress.length}</p>
+                <p className="mt-1 text-sm text-ink-muted">Marked in progress</p>
               </article>
             </div>
 
@@ -121,7 +121,12 @@ export function StudentHomePage() {
                             <p className="font-semibold text-ink">{row.courseTitle}</p>
                             <p className="text-ink-muted">{row.categoryName}</p>
                           </td>
-                          <td className="px-5 py-3"><StatusBadge status={row.status} /></td>
+                          <td className="px-5 py-3">
+                            <span className="flex flex-wrap gap-2">
+                              <StatusBadge status={row.status} />
+                              {row.progressStatus ? <StatusBadge status={row.progressStatus} /> : null}
+                            </span>
+                          </td>
                           <td className="px-5 py-3">{row.percent == null ? <span className="text-ink-muted">No progress data</span> : <ProgressBar value={row.percent} />}</td>
                           <td className="px-5 py-3 text-ink-muted">{formatDate(row.enrolledAt)}</td>
                         </tr>
@@ -160,6 +165,7 @@ export function StudentHomePage() {
               <p className="mb-4 mt-1 text-xs text-ink-muted">Stored percent for each current enrollment.</p>
               <BarChart
                 emptyMessage="No stored progress yet."
+                hideWhenZero={false}
                 points={current.slice(0, 6).map((row) => ({
                   month: String(row.id),
                   label: row.courseTitle,

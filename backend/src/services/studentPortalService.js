@@ -20,6 +20,9 @@ function mapCourse(row) {
     description: row.description,
     categoryName: row.category_name,
     enrollmentStatus: row.enrollment_status ?? null,
+    enrolledAt: row.enrolled_at ?? null,
+    percent: row.percent == null ? null : Number(row.percent),
+    progressStatus: row.progress_status ?? null,
   };
 }
 
@@ -43,13 +46,16 @@ export async function getStudentHome(userId) {
   );
 
   const [catalogRows] = await pool.query(
-    `SELECT c.id, c.title, c.description, cat.name AS category_name, e.status AS enrollment_status
+    `SELECT c.id, c.title, c.description, cat.name AS category_name,
+            e.status AS enrollment_status, e.enrolled_at,
+            p.percent, p.status AS progress_status
      FROM courses c
      JOIN categories cat ON cat.id = c.category_id
      LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = ?
+     LEFT JOIN progress p ON p.course_id = c.id AND p.user_id = ?
      WHERE c.status = 'published'
      ORDER BY c.title ASC`,
-    [userId],
+    [userId, userId],
   );
 
   const enrollments = enrollmentRows.map(mapEnrollment);
