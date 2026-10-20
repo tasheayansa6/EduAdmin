@@ -1,4 +1,11 @@
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS student_profiles;
+DROP TABLE IF EXISTS lesson_progress;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS favorites;
+DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS activity_logs;
 DROP TABLE IF EXISTS progress;
 DROP TABLE IF EXISTS enrollments;
@@ -31,12 +38,27 @@ CREATE TABLE categories (
 CREATE TABLE courses (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(180) NOT NULL,
+  subtitle VARCHAR(255) NULL,
   description TEXT NOT NULL,
+  image_url VARCHAR(500) NULL,
+  preview_video_url VARCHAR(500) NULL,
+  instructor_name VARCHAR(120) NULL,
+  level VARCHAR(40) NULL,
+  language VARCHAR(40) NOT NULL DEFAULT 'English',
+  total_minutes INT UNSIGNED NULL,
+  outcomes JSON NULL,
+  requirements JSON NULL,
+  includes JSON NULL,
+  outline JSON NULL,
   category_id INT UNSIGNED NOT NULL,
   status ENUM('draft', 'published') NOT NULL DEFAULT 'draft',
+  price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  currency CHAR(3) NOT NULL DEFAULT 'ETB',
+  source_slug VARCHAR(160) NULL,
   created_by INT UNSIGNED NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_courses_source_slug (source_slug),
   CONSTRAINT fk_courses_category FOREIGN KEY (category_id) REFERENCES categories (id),
   CONSTRAINT fk_courses_creator FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL,
   KEY idx_courses_status (status),

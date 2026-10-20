@@ -92,12 +92,53 @@ export const courseListSchema = {
   }),
 };
 
+const coursePrice = z.coerce.number().min(0, 'Price cannot be negative.').max(1_000_000, 'Enter a lower price.');
+const courseCurrency = z.string().trim().toUpperCase().length(3, 'Use a 3-letter currency code.').default('ETB');
+const optionalUrl = z.preprocess(
+  (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+  z.string().url('Enter a full web address starting with http:// or https://.').max(500).nullable(),
+);
+const optionalText = (max) => z.preprocess(
+  (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+  z.string().max(max).nullable(),
+);
+const stringList = z.array(z.string().trim().min(1).max(240)).max(40).optional().default([]);
+const outlineSchema = z.array(z.object({
+  title: z.string().trim().min(1).max(160),
+  lessons: z.array(z.object({
+    title: z.string().trim().min(1).max(180),
+    durationMinutes: z.number().int().min(0).max(24 * 60).nullable().optional(),
+    type: z.string().trim().max(40).optional().default('lesson'),
+    isPreview: z.boolean().optional().default(false),
+  })).max(80).default([]),
+})).max(40).optional().default([]);
+
+const courseDetails = {
+  subtitle: optionalText(255).optional(),
+  imageUrl: optionalUrl.optional(),
+  previewVideoUrl: optionalUrl.optional(),
+  instructorName: optionalText(120).optional(),
+  level: z.preprocess(
+    (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+    z.enum(['beginner', 'intermediate', 'advanced']).nullable(),
+  ).optional(),
+  language: z.string().trim().min(2).max(40).optional().default('English'),
+  totalMinutes: z.coerce.number().int().min(0).max(100_000).nullable().optional(),
+  outcomes: stringList,
+  requirements: stringList,
+  includes: stringList,
+  outline: outlineSchema,
+};
+
 export const courseCreateSchema = {
   body: z.object({
     title: z.string().trim().min(3, 'Enter a title of at least 3 characters.').max(180),
     description: z.string().trim().min(10, 'Enter a description of at least 10 characters.').max(4000),
     categoryId: z.number().int().positive('Choose a category.'),
     status: z.enum(['draft', 'published']),
+    price: coursePrice.default(0),
+    currency: courseCurrency,
+    ...courseDetails,
   }),
 };
 
@@ -109,6 +150,22 @@ export const coursePatchSchema = {
       description: z.string().trim().min(10).max(4000).optional(),
       categoryId: z.number().int().positive().optional(),
       status: z.enum(['draft', 'published']).optional(),
+      price: coursePrice.optional(),
+      currency: courseCurrency.optional(),
+      subtitle: optionalText(255).optional(),
+      imageUrl: optionalUrl.optional(),
+      previewVideoUrl: optionalUrl.optional(),
+      instructorName: optionalText(120).optional(),
+      level: z.preprocess(
+        (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+        z.enum(['beginner', 'intermediate', 'advanced']).nullable(),
+      ).optional(),
+      language: z.string().trim().min(2).max(40).optional(),
+      totalMinutes: z.coerce.number().int().min(0).max(100_000).nullable().optional(),
+      outcomes: z.array(z.string().trim().min(1).max(240)).max(40).optional(),
+      requirements: z.array(z.string().trim().min(1).max(240)).max(40).optional(),
+      includes: z.array(z.string().trim().min(1).max(240)).max(40).optional(),
+      outline: outlineSchema.optional(),
     })
     .refine((body) => Object.keys(body).length > 0, { message: 'Nothing to update.' }),
 };
@@ -178,4 +235,109 @@ export const adminPatchSchema = {
 
 export const recordParams = {
   params: idParam,
+};
+
+const courseSlug = z.string().trim().min(1).max(160).regex(/^[a-z0-9-]+$/, 'Choose a valid course.');
+
+export const slugParams = {
+  params: z.object({ slug: courseSlug }),
+};
+
+export const slugBody = {
+  body: z.object({ slug: courseSlug }),
+};
+
+/** Exactly one of slug (AILG store) or courseId (EduAdmin course). */
+export const savedItemBody = {
+  body: z.object({
+    slug: courseSlug.optional(),
+    courseId: z.number().int().positive().optional(),
+  }).refine((body) => Boolean(body.slug) !== Boolean(body.courseId), {
+    message: 'Choose a course by slug or by id.',
+  }),
+};
+
+export const localCourseParams = {
+  params: z.object({ courseId: z.coerce.number().int().positive() }),
+};
+
+export const checkoutSchema = {
+  body: z.object({
+    slugs: z.array(courseSlug).max(20).optional().default([]),
+    courseIds: z.array(z.number().int().positive()).max(20).optional().default([]),
+  }).refine((body) => body.slugs.length + body.courseIds.length >= 1, {
+    message: 'Choose at least one course.',
+  }).refine((body) => body.slugs.length + body.courseIds.length <= 20, {
+    message: 'Choose at most 20 courses.',
+  }),
+};
+
+export const PROFILE_LANGUAGES = ['en', 'am', 'om', 'ti', 'so', 'ar', 'fr'];
+
+const blankToNull = (schema) => z.preprocess((value) => {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text === '' ? null : text;
+}, schema.nullable());
+
+const username = (label) => blankToNull(
+  z.string().max(100).regex(/^[A-Za-z0-9._-]+$/, `Enter only your ${label} username, without the web address.`),
+);
+
+export const studentProfileSchema = {
+  body: z.object({
+    firstName: z.string().trim().min(1, 'Enter your first name.').max(60, 'Use at most 60 characters.'),
+    lastName: z.string().trim().max(60, 'Use at most 60 characters.').default(''),
+    headline: blankToNull(z.string().max(60, 'Use at most 60 characters.')),
+    biography: blankToNull(
+      z.string()
+        .max(2000, 'Use at most 2000 characters.')
+        .refine((text) => !/(https?:\/\/|www\.)/i.test(text), 'Links are not permitted in your biography.'),
+    ),
+    language: z.enum(PROFILE_LANGUAGES, { errorMap: () => ({ message: 'Choose a language from the list.' }) }),
+    website: blankToNull(
+      z.string().max(255).url('Enter a full web address starting with http:// or https://.')
+        .refine((url) => /^https?:\/\//i.test(url), 'Enter a full web address starting with http:// or https://.'),
+    ),
+    facebook: username('Facebook'),
+    instagram: username('Instagram'),
+    linkedin: blankToNull(
+      z.string().max(150).regex(/^(in|company|school)\/[A-Za-z0-9._%-]+\/?$/, 'Use the part after linkedin.com/, for example in/johnsmith.'),
+    ),
+    tiktok: blankToNull(z.string().max(100).transform((value) => value.replace(/^@/, '')).pipe(
+      z.string().regex(/^[A-Za-z0-9._-]+$/, 'Enter only your TikTok username, without the web address.'),
+    )),
+    x: username('X'),
+    youtube: username('YouTube'),
+  }).refine((body) => `${body.firstName} ${body.lastName}`.trim().length >= 2, {
+    path: ['firstName'],
+    message: 'Enter at least 2 characters for your name.',
+  }),
+};
+
+export const passwordChangeSchema = {
+  body: z.object({
+    currentPassword: z.string().min(1, 'Enter your current password.').max(72),
+    newPassword: password,
+  }).refine((body) => body.currentPassword !== body.newPassword, {
+    path: ['newPassword'],
+    message: 'Choose a password different from your current one.',
+  }),
+};
+
+export const notificationListSchema = {
+  query: z.object({ limit: z.coerce.number().int().min(1).max(50).default(20) }),
+};
+
+export const notificationReadSchema = {
+  body: z.object({ ids: z.array(z.number().int().positive()).max(100).optional() }),
+};
+
+export const lessonCompletionSchema = {
+  params: z.object({ slug: courseSlug, lessonId: z.coerce.number().int().positive() }),
+  body: z.object({ completed: z.boolean() }),
+};
+
+export const orderParams = {
+  params: z.object({ txRef: z.string().regex(/^eduadmin-[0-9a-f-]{36}$/, 'Payment not found.') }),
 };

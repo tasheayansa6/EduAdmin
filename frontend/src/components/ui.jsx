@@ -72,11 +72,11 @@ export function SelectInput({ id, error, children, ...props }) {
   return <select id={id} className="field" {...described(id, error)} {...props}>{children}</select>;
 }
 
-export function TextArea({ id, error, ...props }) {
-  return <textarea id={id} className="field" {...described(id, error)} {...props} />;
+export function TextArea({ id, error, className = '', ...props }) {
+  return <textarea id={id} className={`field ${className}`.trim()} {...described(id, error)} {...props} />;
 }
 
-export function Modal({ title, onClose, children }) {
+export function Modal({ title, onClose, children, wide = false }) {
   useEffect(() => {
     function onKey(event) {
       if (event.key === 'Escape') onClose();
@@ -93,7 +93,7 @@ export function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
       <button type="button" className="absolute inset-0 bg-ink/40" aria-label="Close dialog" onClick={onClose} />
-      <div role="dialog" aria-modal="true" aria-labelledby="dialog-title" className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
+      <div role="dialog" aria-modal="true" aria-labelledby="dialog-title" className={`relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white p-6 shadow-xl ${wide ? 'max-w-3xl' : 'max-w-lg'}`}>
         <h2 id="dialog-title" className="text-lg font-semibold">{title}</h2>
         <div className="mt-4">{children}</div>
       </div>
@@ -120,7 +120,7 @@ export function StatusBadge({ status }) {
   );
 }
 
-export function Avatar({ name, size = 'md' }) {
+export function Avatar({ name, size = 'md', tone = 'accent' }) {
   const initials = String(name || '?')
     .split(/\s+/)
     .filter(Boolean)
@@ -131,10 +131,15 @@ export function Avatar({ name, size = 'md' }) {
     sm: 'h-8 w-8 text-xs',
     md: 'h-9 w-9 text-sm',
     lg: 'h-11 w-11 text-base',
+    xl: 'h-20 w-20 text-2xl',
+  };
+  const tones = {
+    accent: 'bg-accent/10 text-accent',
+    brand: 'bg-brand-soft text-brand',
   };
   return (
     <span
-      className={`inline-grid shrink-0 place-items-center rounded-full bg-accent/10 font-semibold text-accent ${sizes[size] || sizes.md}`}
+      className={`inline-grid shrink-0 place-items-center rounded-full font-semibold ${tones[tone] || tones.accent} ${sizes[size] || sizes.md}`}
       aria-hidden="true"
     >
       {initials}

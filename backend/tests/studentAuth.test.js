@@ -2,12 +2,17 @@ import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
 import { createApp } from '../src/app.js';
 import { pool } from '../src/db/pool.js';
+import { trackNotifications } from './notificationCleanup.js';
+import { cleanupCourse, cleanupUser, createCourse, createStudent } from './fixtures.js';
 
-const STUDENT = { email: 'amina.yusuf@students.test', password: 'Student123!' };
 const ADMIN = { email: 'super@eduadmin.test', password: 'Admin123!' };
 
 let server;
 let baseUrl;
+let STUDENT;
+let OTHER;
+let fixtureCourse;
+let draftCourse;
 const createdEmails = [];
 
 async function request(path, { method = 'GET', token, body } = {}) {
@@ -41,15 +46,32 @@ function registration(overrides = {}) {
   };
 }
 
+let cleanNotifications;
+
 before(async () => {
+  cleanNotifications = await trackNotifications(pool);
   const app = createApp();
   server = await new Promise((resolve) => {
     const instance = app.listen(0, '127.0.0.1', () => resolve(instance));
   });
   baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  STUDENT = await createStudent(request, { name: 'Auth Fixture Student' });
+  OTHER = await createStudent(request, { name: 'Auth Other Student' });
+  const admin = await login(ADMIN);
+  fixtureCourse = await createCourse(request, admin.payload.token, { title: `Auth Fixture Course ${Date.now()}` });
+  draftCourse = await createCourse(request, admin.payload.token, {
+    title: `Auth Draft Course ${Date.now()}`,
+    status: 'draft',
+  });
 });
 
 after(async () => {
+  await cleanNotifications?.();
+  await cleanupCourse(fixtureCourse?.id);
+  await cleanupCourse(draftCourse?.id);
+  await cleanupUser(STUDENT?.id);
+  await cleanupUser(OTHER?.id);
   if (createdEmails.length) {
     await pool.query('DELETE FROM users WHERE email IN (?)', [createdEmails]);
   }
@@ -172,7 +194,7 @@ describe('Student session', () => {
 
     const saved = await request('/api/v1/student/home', { token: session.payload.token });
     const catalogCourse = saved.payload.data.catalog.find((item) => item.id === course.id);
-    const enrollment = saved.payload.data.enrollments.find((item) => item.courseTitle === course.title);
+    const enrollment = saved.payload.data.enrollments.find((item) => item.courseId === course.id);
     assert.equal(catalogCourse.enrollmentStatus, 'active');
     assert.equal(catalogCourse.progressStatus, 'not_started');
     assert.equal(catalogCourse.percent, 0);
@@ -186,11 +208,10 @@ describe('Student session', () => {
     });
     assert.equal(again.status, 409);
 
-    const [drafts] = await pool.query(`SELECT id FROM courses WHERE status = 'draft' LIMIT 1`);
     const draft = await request('/api/v1/student/enrollments', {
       method: 'POST',
       token: session.payload.token,
-      body: { courseId: drafts[0].id },
+      body: { courseId: draftCourse.id },
     });
     assert.equal(draft.status, 400);
 
@@ -208,11 +229,7 @@ describe('Student session', () => {
 
   test('blocks student access to another student and to admin routes', async () => {
     const { payload } = await login(STUDENT);
-    const [others] = await pool.query(
-      `SELECT id FROM users WHERE role = 'student' AND email <> ? LIMIT 1`,
-      [STUDENT.email],
-    );
-    const other = await request(`/api/v1/students/${others[0].id}`, { token: payload.token });
+    const other = await request(`/api/v1/students/${OTHER.id}`, { token: payload.token });
     assert.equal(other.status, 403);
 
     const dashboard = await request('/api/v1/dashboard', { token: payload.token });

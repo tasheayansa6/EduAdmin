@@ -17,6 +17,11 @@ const parsed = z
     JWT_SECRET: z.string().min(16),
     JWT_EXPIRES_IN: z.string().default('8h'),
     CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
+    AILG_API_URL: z.string().url().default('http://localhost:4100'),
+    AILG_PARTNER_KEY: z.string().optional(),
+    CHAPA_SECRET_KEY: z.string().optional(),
+    CHAPA_API_URL: z.string().url().default('https://api.chapa.co/v1'),
+    API_PUBLIC_URL: z.preprocess((value) => (value === '' ? undefined : value), z.string().url().optional()),
   })
   .parse(process.env);
 
@@ -32,4 +37,11 @@ export const env = {
   jwtSecret: parsed.JWT_SECRET,
   jwtExpiresIn: parsed.JWT_EXPIRES_IN,
   clientOrigin: parsed.CLIENT_ORIGIN,
+  ailgApiUrl: parsed.AILG_API_URL.replace(/\/+$/, ''),
+  ailgPartnerKey: parsed.AILG_PARTNER_KEY?.trim() || null,
+  chapa: {
+    secretKey: parsed.CHAPA_SECRET_KEY?.trim() || null,
+    apiUrl: parsed.CHAPA_API_URL.replace(/\/+$/, ''),
+  },
+  apiPublicUrl: parsed.API_PUBLIC_URL?.replace(/\/+$/, '') || null,
 };

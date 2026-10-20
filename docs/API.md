@@ -27,8 +27,13 @@ Authentication: `Authorization: Bearer <jwt>` on protected routes. Login returns
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/api/v1/student/home` | Signed-in student's profile, enrollments, progress, and published catalog. |
+| GET | `/api/v1/student/home` | Signed-in student's profile, summary, enrollments (each with `courseId`, status, `percent`, `progressStatus`), and the published catalog with that student's `enrollmentStatus`, `percent`, and `progressStatus` per course. |
 | POST | `/api/v1/student/enrollments` | Body: `{ courseId }`. Enrolls the signed-in student in a published course and stores the row in `enrollments`. |
+| GET | `/api/v1/student/profile` | Public profile: `firstName`, `lastName`, `headline`, `biography`, `language`, `website`, `facebook`, `instagram`, `linkedin`, `tiktok`, `x`, `youtube`, plus `name`, `email`, `memberSince`. Falls back to the account name when nothing is saved. |
+| PUT | `/api/v1/student/profile` | Same fields. Headline max 60; links are rejected in the biography; `website` must be http(s); social fields are usernames only; `linkedin` is `in/…`, `company/…` or `school/…`. Also sets the account name to "first last". |
+| POST | `/api/v1/student/password` | Body: `{ currentPassword, newPassword }`. Wrong current password returns `400`. Bumps the session version (other sessions get `401`) and returns a new `{ token }`. |
+| GET | `/api/v1/student/notifications?limit=20` | `{ items: [{ id, type, title, body, link, read, createdAt }], unread }`, newest first. Types: `welcome`, `enrollment`, `payment`, `completion`, `security`. |
+| POST | `/api/v1/student/notifications/read` | Body: `{ ids?: number[] }`. Marks those (or all) of the caller's notifications read. |
 
 ## Protected (admin / super_admin)
 

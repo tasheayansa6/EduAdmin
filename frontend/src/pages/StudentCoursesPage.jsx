@@ -1,82 +1,153 @@
-import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { api } from '../api/client.js';
-import { useToast } from '../context/ToastContext.jsx';
-import { useResource } from '../hooks/useResource.js';
-import { DataPanel, ProgressBar, StatusBadge } from '../components/ui.jsx';
+import { SearchIcon } from '../components/icons.jsx';
+import { useAllCourses, useDocumentTitle } from '../student/StudentData.jsx';
+import { CARD_GRID, CatalogCard, PageSkeleton, PageTitle, StoreOutageNotice, StudentEmpty, StudentError } from '../student/components.jsx';
 
-export function StudentCoursesPage() {
-  const toast = useToast();
-  const [params] = useSearchParams();
-  const query = (params.get('q') || '').trim().toLowerCase();
-  const resource = useResource(() => api('/api/v1/student/home'), []);
-  const [pendingId, setPendingId] = useState(null);
-  const catalog = (resource.data?.data?.catalog ?? []).filter((course) => {
-    if (!query) return true;
-    return `${course.title} ${course.categoryName} ${course.description}`.toLowerCase().includes(query);
-  });
+const SORTS = {
+  newest: { label: 'Newest', compare: (a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0) },
+  'title-asc': { label: 'Title A–Z', compare: (a, b) => a.title.localeCompare(b.title) },
+  'price-asc': { label: 'Price: low to high', compare: (a, b) => a.price - b.price || a.title.localeCompare(b.title) },
+  'price-desc': { label: 'Price: high to low', compare: (a, b) => b.price - a.price || a.title.localeCompare(b.title) },
+};
 
-  async function enroll(courseId) {
-    setPendingId(courseId);
-    try {
-      await api('/api/v1/student/enrollments', { method: 'POST', body: { courseId } });
-      toast.success('You are enrolled. The course is saved to your record.');
-      resource.reload();
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setPendingId(null);
-    }
+const SHOW = {
+  all: { label: 'All courses', test: () => true },
+  free: { label: 'Free', test: (course) => course.isFree },
+  paid: { label: 'Paid', test: (course) => !course.isFree },
+  enrolled: { label: 'Enrolled', test: (course) => Boolean(course.enrollment) },
+  favorites: { label: 'Favorites', test: (course) => course.favorite },
+};
+
+function SearchBox({ value, onSearch }) {
+  function onSubmit(event) {
+    event.preventDefault();
+    onSearch(String(new FormData(event.currentTarget).get('q') || '').trim());
+  }
+  return (
+    <form onSubmit={onSubmit} role="search" className="w-full sm:max-w-sm">
+      <label htmlFor="course-search" className="sr-only">Search courses</label>
+      <div className="relative">
+        <span className="pointer-events-none absolute inset-y-0 left-3.5 grid place-items-center text-charcoal-muted [&_svg]:h-[18px] [&_svg]:w-[18px]">
+          <SearchIcon />
+        </span>
+        <input
+          key={value}
+          id="course-search"
+          name="q"
+          type="search"
+          defaultValue={value}
+          placeholder="Search by title, topic, or instructor"
+          className="w-full rounded-full border border-hairline bg-white py-2.5 pl-10 pr-4 text-sm text-charcoal shadow-soft placeholder:text-charcoal-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+        />
+      </div>
+    </form>
+  );
+}
+
+function ExploreBody({ catalog }) {
+  const [params, setParams] = useSearchParams();
+  const q = (params.get('q') || '').trim();
+  const category = params.get('category') || '';
+  const sort = SORTS[params.get('sort')] ? params.get('sort') : 'newest';
+  const show = SHOW[params.get('show')] ? params.get('show') : 'all';
+
+  const categories = [...catalog.reduce((map, course) => map.set(course.category, (map.get(course.category) || 0) + 1), new Map())]
+    .filter(([name]) => name)
+    .sort((a, b) => a[0].localeCompare(b[0]));
+  const needle = q.toLowerCase();
+  const results = catalog
+    .filter((course) => !category || course.category === category)
+    .filter((course) => !needle || [course.title, course.subtitle, course.category, course.instructorName].join(' ').toLowerCase().includes(needle))
+    .filter(SHOW[show].test)
+    .sort(SORTS[sort].compare);
+
+  function update(key, value, fallback) {
+    const next = new URLSearchParams(params);
+    if (!value || value === fallback) next.delete(key);
+    else next.set(key, value);
+    setParams(next, { replace: true });
   }
 
+  const filtered = Boolean(q || category || show !== 'all');
+
   return (
-    <DataPanel
-      status={resource.status}
-      error={resource.error}
-      onRetry={resource.reload}
-      skeleton={<div className="h-64 animate-pulse rounded-xl bg-slate-200" aria-busy="true"><span className="sr-only">Loading courses</span></div>}
-    >
-      <p className="mb-5 max-w-2xl text-sm text-ink-muted">
-        Published courses from the database. Enroll to store the course on your account.
-        {query ? ` Showing matches for “${params.get('q')}”.` : ''}
-      </p>
-      {catalog.length ? (
-        <ul className="grid gap-3 md:grid-cols-2">
-          {catalog.map((course) => {
-            const open = !course.enrollmentStatus || course.enrollmentStatus === 'withdrawn';
-            return (
-              <li key={course.id} className="surface-card flex flex-col p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-base font-semibold text-ink">{course.title}</h2>
-                  {course.enrollmentStatus ? (
-                    <span className="flex shrink-0 flex-wrap justify-end gap-2">
-                      <StatusBadge status={course.enrollmentStatus} />
-                      {course.progressStatus ? <StatusBadge status={course.progressStatus} /> : null}
-                    </span>
-                  ) : <span className="text-xs font-semibold text-ink-muted">Not enrolled</span>}
-                </div>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">{course.categoryName}</p>
-                <p className="mt-3 text-sm text-ink-muted">{course.description}</p>
-                <div className="mt-4">
-                  {open ? (
-                    <button type="button" className="btn-primary" disabled={pendingId === course.id} onClick={() => enroll(course.id)}>
-                      {pendingId === course.id ? 'Saving…' : course.enrollmentStatus === 'withdrawn' ? 'Enroll again' : 'Enroll'}
-                    </button>
-                  ) : course.percent == null ? (
-                    <p className="text-sm text-ink-muted">No progress row is stored for this enrollment.</p>
-                  ) : (
-                    <ProgressBar value={course.percent} />
-                  )}
-                </div>
-              </li>
-            );
-          })}
+    <>
+      <PageTitle
+        title="Explore courses"
+        description={`${catalog.length} published course${catalog.length === 1 ? '' : 's'}. New courses appear here as soon as an administrator publishes them.`}
+      >
+        <SearchBox value={q} onSearch={(text) => update('q', text)} />
+      </PageTitle>
+
+      <div className="mb-6 space-y-4">
+        {categories.length ? (
+          <div role="group" aria-label="Filter by category" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+            <button type="button" className={category ? 'chip-off' : 'chip-on'} aria-pressed={!category} onClick={() => update('category', '')}>
+              All
+              <span className={category ? 'text-charcoal-muted' : 'text-white/70'}>{catalog.length}</span>
+            </button>
+            {categories.map(([name, count]) => (
+              <button key={name} type="button" className={category === name ? 'chip-on' : 'chip-off'} aria-pressed={category === name} onClick={() => update('category', name)}>
+                {name}
+                <span className={category === name ? 'text-white/70' : 'text-charcoal-muted'}>{count}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="flex flex-col gap-3 border-y border-hairline py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-charcoal-muted" aria-live="polite">
+            <span className="font-bold text-charcoal">{results.length}</span> result{results.length === 1 ? '' : 's'}
+            {q ? <> for <span className="font-semibold text-charcoal">“{q}”</span></> : null}
+            {q ? (
+              <button type="button" className="ml-2 font-semibold text-brand underline-offset-2 hover:underline" onClick={() => update('q', '')}>
+                Clear search
+              </button>
+            ) : null}
+          </p>
+          <div className="flex gap-3">
+            <label className="flex items-center gap-2 text-sm font-semibold text-charcoal">
+              <span className="shrink-0">Show</span>
+              <select className="s-field py-2" value={show} onChange={(event) => update('show', event.target.value, 'all')}>
+                {Object.entries(SHOW).map(([key, option]) => <option key={key} value={key}>{option.label}</option>)}
+              </select>
+            </label>
+            <label className="flex items-center gap-2 text-sm font-semibold text-charcoal">
+              <span className="shrink-0">Sort</span>
+              <select className="s-field py-2" value={sort} onChange={(event) => update('sort', event.target.value, 'newest')}>
+                {Object.entries(SORTS).map(([key, option]) => <option key={key} value={key}>{option.label}</option>)}
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {results.length ? (
+        <ul className={CARD_GRID}>
+          {results.map((course) => <li key={course.key}><CatalogCard course={course} /></li>)}
         </ul>
       ) : (
-        <p className="rounded-xl border border-dashed border-line bg-white px-5 py-8 text-sm text-ink-muted">
-          {query ? 'No published course matches that search.' : 'No published courses are in the catalog.'}
-        </p>
+        <StudentEmpty
+          title={catalog.length ? 'No courses match' : 'No published courses yet'}
+          message={catalog.length ? 'Try another search term, category, or filter.' : 'Courses appear here once an administrator publishes them.'}
+          action={filtered ? <button type="button" className="btn-outline" onClick={() => setParams({}, { replace: true })}>Reset filters</button> : null}
+        />
       )}
-    </DataPanel>
+    </>
+  );
+}
+
+export function StudentCoursesPage() {
+  useDocumentTitle('Explore courses');
+  const { courses, loading, storeError, reloadStore } = useAllCourses();
+  if (loading) return <PageSkeleton label="Loading courses" />;
+  if (storeError && !courses.length) {
+    return <StudentError title="The course catalog could not be loaded" error={storeError} onRetry={reloadStore} />;
+  }
+  return (
+    <>
+      {storeError ? <StoreOutageNotice error={storeError} onRetry={reloadStore} /> : null}
+      <ExploreBody catalog={courses} />
+    </>
   );
 }

@@ -19,6 +19,10 @@ import { getReport, reportToCsv } from '../services/reportService.js';
 import { createAdmin, listAdmins, updateAdminStatus } from '../services/adminService.js';
 import { getLookups } from '../services/lookupService.js';
 import { getStudentHome } from '../services/studentPortalService.js';
+import * as store from '../services/storeService.js';
+import { assertLocalCourse } from '../services/storeService.js';
+import { getLearning, setLessonCompleted } from '../services/learningService.js';
+import * as account from '../services/studentAccountService.js';
 import {
   adminCreateSchema,
   adminPatchSchema,
@@ -34,6 +38,17 @@ import {
   progressListSchema,
   recordParams,
   reportSchema,
+  checkoutSchema,
+  orderParams,
+  lessonCompletionSchema,
+  notificationListSchema,
+  notificationReadSchema,
+  passwordChangeSchema,
+  studentProfileSchema,
+  slugBody,
+  savedItemBody,
+  localCourseParams,
+  slugParams,
   studentEnrollSchema,
   studentListSchema,
   studentUpdateSchema,
@@ -54,6 +69,15 @@ const registerLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many registration attempts. Try again in a few minutes.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+const checkoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many payment attempts. Try again in a few minutes.' },
   skip: () => process.env.NODE_ENV === 'test',
 });
 
@@ -182,12 +206,88 @@ portalRouter.get('/home', asyncHandler(async (req, res) => {
   res.json({ data: await getStudentHome(req.user.id) });
 }));
 portalRouter.post('/enrollments', validate(studentEnrollSchema), asyncHandler(async (req, res) => {
+  await assertLocalCourse(req.valid.body.courseId);
   const enrollment = await createEnrollment(req.user.id, {
     userId: req.user.id,
     courseId: req.valid.body.courseId,
   });
   res.status(201).json({ data: enrollment });
 }));
+portalRouter.get('/catalog', asyncHandler(async (req, res) => {
+  res.json({ data: await store.getCatalog(req.user.id) });
+}));
+portalRouter.get('/catalog/:slug', validate(slugParams), asyncHandler(async (req, res) => {
+  res.json({ data: await store.getCatalogDetail(req.user.id, req.valid.params.slug) });
+}));
+portalRouter.post('/catalog/:slug/enroll', validate(slugParams), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await store.enrollFree(req.user, req.valid.params.slug) });
+}));
+portalRouter.get('/cart', asyncHandler(async (req, res) => {
+  res.json({ data: await store.getCart(req.user.id) });
+}));
+portalRouter.post('/cart', validate(savedItemBody), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await store.addToCart(req.user.id, req.valid.body) });
+}));
+portalRouter.delete('/cart/local/:courseId', validate(localCourseParams), asyncHandler(async (req, res) => {
+  res.json({ data: await store.removeFromCart(req.user.id, { courseId: req.valid.params.courseId }) });
+}));
+portalRouter.delete('/cart/:slug', validate(slugParams), asyncHandler(async (req, res) => {
+  res.json({ data: await store.removeFromCart(req.user.id, { slug: req.valid.params.slug }) });
+}));
+portalRouter.get('/favorites', asyncHandler(async (req, res) => {
+  res.json({ data: await store.getFavorites(req.user.id) });
+}));
+portalRouter.post('/favorites', validate(savedItemBody), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await store.addFavorite(req.user.id, req.valid.body) });
+}));
+portalRouter.delete('/favorites/local/:courseId', validate(localCourseParams), asyncHandler(async (req, res) => {
+  res.json({ data: await store.removeFavorite(req.user.id, { courseId: req.valid.params.courseId }) });
+}));
+portalRouter.delete('/favorites/:slug', validate(slugParams), asyncHandler(async (req, res) => {
+  res.json({ data: await store.removeFavorite(req.user.id, { slug: req.valid.params.slug }) });
+}));
+portalRouter.post('/checkout', checkoutLimiter, validate(checkoutSchema), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await store.startCheckout(req.user, req.valid.body) });
+}));
+portalRouter.get('/profile', asyncHandler(async (req, res) => {
+  res.json({ data: await account.getStudentProfile(req.user.id) });
+}));
+portalRouter.put('/profile', validate(studentProfileSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await account.updateStudentProfile(req.user.id, req.valid.body) });
+}));
+portalRouter.post('/password', loginLimiter, validate(passwordChangeSchema), asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.valid.body;
+  res.json({ data: await account.changePassword(req.user.id, currentPassword, newPassword) });
+}));
+portalRouter.get('/notifications', validate(notificationListSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await account.listNotifications(req.user.id, req.valid.query.limit) });
+}));
+portalRouter.post('/notifications/read', validate(notificationReadSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await account.markNotificationsRead(req.user.id, req.valid.body.ids) });
+}));
+portalRouter.get('/learn/:slug', validate(slugParams), asyncHandler(async (req, res) => {
+  res.json({ data: await getLearning(req.user.id, req.valid.params.slug) });
+}));
+portalRouter.put('/learn/:slug/lessons/:lessonId', validate(lessonCompletionSchema), asyncHandler(async (req, res) => {
+  const { slug, lessonId } = req.valid.params;
+  res.json({ data: await setLessonCompleted(req.user.id, slug, lessonId, req.valid.body.completed) });
+}));
+portalRouter.post('/orders/:txRef/confirm', validate(orderParams), asyncHandler(async (req, res) => {
+  res.json({ data: await store.confirmOrder(req.valid.params.txRef, req.user.id) });
+}));
+
+/** Chapa calls this after payment. The order is only marked paid after re-verifying with Chapa. */
+const paymentRouter = Router();
+paymentRouter.all('/chapa/callback', asyncHandler(async (req, res) => {
+  const txRef = String(req.query.trx_ref || req.query.tx_ref || req.body?.trx_ref || req.body?.tx_ref || '');
+  if (!/^eduadmin-[0-9a-f-]{36}$/.test(txRef)) {
+    res.status(400).json({ message: 'Unknown payment reference.' });
+    return;
+  }
+  const order = await store.confirmOrder(txRef);
+  res.json({ status: order.status });
+}));
+
 lookupRouter.get('/', asyncHandler(async (req, res) => {
   res.json({ data: await getLookups() });
 }));
@@ -210,5 +310,6 @@ export function registerRoutes(app) {
   v1.use('/administrators', adminRouter);
   v1.use('/lookups', lookupRouter);
   v1.use('/student', portalRouter);
+  v1.use('/payments', paymentRouter);
   app.use('/api/v1', v1);
 }

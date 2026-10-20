@@ -3,12 +3,16 @@ import { after, before, describe, test } from 'node:test';
 import bcrypt from 'bcryptjs';
 import { createApp } from '../src/app.js';
 import { pool } from '../src/db/pool.js';
+import { trackNotifications } from './notificationCleanup.js';
+import { cleanupCourse, cleanupUser, createCourse, createStudent } from './fixtures.js';
 
 const ADMIN = { email: 'super@eduadmin.test', password: 'Admin123!' };
 const SUPER = ADMIN;
 
 let server;
 let baseUrl;
+let fixtureStudent;
+let fixtureCourse;
 
 async function request(path, { method = 'GET', token, body, rawBody, headers = {} } = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
@@ -42,15 +46,29 @@ async function login(credentials = ADMIN) {
   return payload;
 }
 
+let cleanNotifications;
+const createdCourseIds = [];
+
 before(async () => {
+  cleanNotifications = await trackNotifications(pool);
   const app = createApp();
   server = await new Promise((resolve) => {
     const instance = app.listen(0, '127.0.0.1', () => resolve(instance));
   });
   baseUrl = `http://127.0.0.1:${server.address().port}`;
+  fixtureStudent = await createStudent(request, { name: 'Phase9 Fixture Student' });
+  const session = await login();
+  fixtureCourse = await createCourse(request, session.token, { title: `Phase9 Fixture Course ${Date.now()}` });
+  createdCourseIds.push(fixtureCourse.id);
 });
 
 after(async () => {
+  await cleanNotifications?.();
+  if (createdCourseIds.length) {
+    await pool.query("DELETE FROM activity_logs WHERE entity_type = 'course' AND entity_id IN (?)", [createdCourseIds]);
+    await pool.query('DELETE FROM courses WHERE id IN (?)', [createdCourseIds]);
+  }
+  await cleanupUser(fixtureStudent?.id);
   await new Promise((resolve) => server.close(resolve));
   await pool.end();
 });
@@ -214,6 +232,7 @@ describe('Courses integrity', () => {
     });
     assert.equal(created.status, 201);
     const courseId = created.payload.data.id;
+    createdCourseIds.push(courseId);
 
     const published = await request(`/api/v1/courses/${courseId}`, {
       method: 'PATCH',

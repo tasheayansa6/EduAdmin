@@ -13,8 +13,8 @@
 2. Select both JSON files from this folder.
 3. Choose the **EduAdmin Local** environment.
 4. Set secret values (do not commit them):
-   - `adminPassword` — local demo administrator password from the project README
-   - `studentPassword` — local demo student password from the project README
+   - `adminPassword` — local administrator password from the project README
+   - `studentEmail` / `studentPassword` — register a student in the UI or via API (no seeded demo students)
 5. Ensure MySQL is seeded and the API is running (`npm run db:up`, `npm run db:seed`, `npm run dev:api`).
 6. Run the **Authentication → Login (admin)** request first so `token` is saved.
 7. Run folders in order: Health → Authentication → Dashboard → Students → Courses → Enrollments → Learning Progress → Reports → Negative tests.
@@ -27,8 +27,8 @@ From the repository root, with the API listening on port 4000:
 ```bash
 npx newman run postman/EduAdmin_API_Testing.postman_collection.json \
   -e postman/EduAdmin_Local.postman_environment.json \
-  --env-var "adminPassword=<local-demo-password>" \
-  --env-var "studentPassword=<local-demo-password>" \
+  --env-var "adminPassword=<local-admin-password>" \
+  --env-var "studentPassword=<registered-student-password>" \
   --delay-request 100
 ```
 

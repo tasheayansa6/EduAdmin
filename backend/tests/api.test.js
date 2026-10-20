@@ -3,13 +3,17 @@ import { after, before, describe, test } from 'node:test';
 import bcrypt from 'bcryptjs';
 import { createApp } from '../src/app.js';
 import { pool } from '../src/db/pool.js';
+import { trackNotifications } from './notificationCleanup.js';
+import { cleanupCourse, cleanupEnrollment, cleanupUser, createCourse, createStudent } from './fixtures.js';
 
 const ADMIN = { email: 'super@eduadmin.test', password: 'Admin123!' };
 const SUPER = ADMIN;
-const STUDENT = { email: 'amina.yusuf@students.test', password: 'Student123!' };
 
 let server;
 let baseUrl;
+let STUDENT;
+let fixtureCourse;
+let fixtureEnrollmentId;
 
 async function request(path, { method = 'GET', token, body } = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
@@ -50,16 +54,40 @@ async function login(credentials) {
   return { status, payload };
 }
 
+let cleanNotifications;
+const createdCourseIds = [];
+
 before(async () => {
+  cleanNotifications = await trackNotifications(pool);
   const app = createApp();
   server = await new Promise((resolve) => {
     const instance = app.listen(0, '127.0.0.1', () => resolve(instance));
   });
   const { port } = server.address();
   baseUrl = `http://127.0.0.1:${port}`;
+
+  STUDENT = await createStudent(request, { name: 'API Fixture Student' });
+  const { payload: session } = await login(ADMIN);
+  fixtureCourse = await createCourse(request, session.token, { title: `API Fixture Course ${Date.now()}` });
+  createdCourseIds.push(fixtureCourse.id);
+  const enrolled = await request('/api/v1/enrollments', {
+    method: 'POST',
+    token: session.token,
+    body: { userId: STUDENT.id, courseId: fixtureCourse.id },
+  });
+  assert.equal(enrolled.status, 201);
+  fixtureEnrollmentId = enrolled.payload.data.id;
 });
 
 after(async () => {
+  await cleanNotifications?.();
+  await cleanupEnrollment(fixtureEnrollmentId);
+  if (fixtureEnrollmentId) {
+    await pool.query('DELETE FROM progress WHERE user_id = ? AND course_id = ?', [STUDENT?.id, fixtureCourse?.id]);
+    await pool.query('DELETE FROM enrollments WHERE id = ?', [fixtureEnrollmentId]);
+  }
+  for (const id of createdCourseIds) await cleanupCourse(id);
+  await cleanupUser(STUDENT?.id);
   await new Promise((resolve) => server.close(resolve));
   await pool.end();
 });
@@ -315,7 +343,7 @@ describe('Enrollments', () => {
       token: session.token,
     });
     const enrollment = list.payload.data[0];
-    assert.ok(enrollment, 'seed data should include an active enrollment');
+    assert.ok(enrollment, 'expected an active enrollment from fixtures');
 
     const updated = await request(`/api/v1/enrollments/${enrollment.id}`, {
       method: 'PATCH',
@@ -334,7 +362,7 @@ describe('Enrollments', () => {
       token: session.token,
     });
     const enrollment = list.payload.data[0];
-    assert.ok(enrollment, 'seed data should include an active enrollment');
+    assert.ok(enrollment, 'expected an active enrollment from fixtures');
 
     const removed = await request(`/api/v1/enrollments/${enrollment.id}`, {
       method: 'DELETE',
@@ -487,6 +515,7 @@ describe('Courses', () => {
     });
     assert.equal(created.status, 201);
     const courseId = created.payload.data.id;
+    createdCourseIds.push(courseId);
 
     const deleted = await request(`/api/v1/courses/${courseId}`, {
       method: 'DELETE',

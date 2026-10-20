@@ -71,6 +71,54 @@
   .nav-link {
     @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors;
   }
+
+  .student-theme :focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-brand;
+  }
+
+  .btn-brand {
+    @apply btn bg-brand px-4 py-2.5 text-white hover:bg-brand-hover focus-visible:outline-brand active:bg-brand-hover;
+  }
+
+  .btn-outline {
+    @apply btn border border-charcoal/80 bg-white px-4 py-2.5 text-charcoal hover:bg-sand focus-visible:outline-brand active:bg-hairline;
+  }
+
+  .btn-wheat {
+    @apply btn bg-wheat px-4 py-2.5 text-charcoal hover:bg-wheat-hover focus-visible:outline-brand;
+  }
+
+  .icon-btn {
+    @apply relative inline-grid h-10 w-10 place-items-center rounded-full text-charcoal transition-colors hover:bg-sand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand;
+  }
+
+  .btn-quiet {
+    @apply btn px-3 py-2 text-brand hover:bg-brand-soft focus-visible:outline-brand;
+  }
+
+  .s-field {
+    @apply w-full rounded-lg border border-hairline bg-white px-3.5 py-2.5 text-sm text-charcoal placeholder:text-charcoal-muted/80 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:bg-sand disabled:text-charcoal-muted;
+  }
+
+  .s-card {
+    @apply rounded-xl border border-hairline bg-white shadow-soft;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-brand;
+  }
+
+  .chip-off {
+    @apply chip border-hairline bg-white text-charcoal hover:border-charcoal/40;
+  }
+
+  .chip-on {
+    @apply chip border-brand bg-brand text-white;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-muted;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

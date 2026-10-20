@@ -1,6 +1,7 @@
 import { pool } from '../db/pool.js';
 import { AppError } from '../lib/errors.js';
 import { logActivity } from '../lib/activity.js';
+import { courseLink, notify } from '../lib/notify.js';
 import { likeClause, likePattern, toPage } from '../lib/sql.js';
 
 function mapEnrollment(row) {
@@ -40,7 +41,7 @@ function filters(query) {
 
 const enrollmentSelect = `
   SELECT e.id, e.status, e.enrolled_at, e.user_id, e.course_id,
-         u.name AS student_name, u.email, c.title AS course_title,
+         u.name AS student_name, u.email, c.title AS course_title, c.source_slug,
          p.percent AS percent,
          p.status AS progress_status,
          p.updated_at AS progress_updated_at
@@ -99,7 +100,7 @@ export async function createEnrollment(actorId, { userId, courseId }) {
     }
 
     const [courses] = await connection.query(
-      `SELECT id, title, status FROM courses WHERE id = ?`,
+      `SELECT id, title, status, source_slug FROM courses WHERE id = ?`,
       [courseId],
     );
     if (!courses[0]) {
@@ -151,6 +152,13 @@ export async function createEnrollment(actorId, { userId, courseId }) {
       entityId: enrollmentId,
       details: `${student.name} enrolled in ${courses[0].title}`,
     });
+    const self = actorId === student.id;
+    await notify(connection, student.id, {
+      type: 'enrollment',
+      title: self ? `You enrolled in ${courses[0].title}` : `You were enrolled in ${courses[0].title}`,
+      body: self ? 'The course is now in My learning.' : 'An administrator added this course to My learning.',
+      link: courseLink(courses[0]),
+    });
 
     const row = await findEnrollment(enrollmentId, connection);
     await connection.commit();
@@ -192,6 +200,20 @@ export async function updateEnrollment(actorId, id, status) {
       entityId: id,
       details: `${current.student_name} marked ${status.replace('_', ' ')} in ${current.course_title}`,
     });
+    const messages = {
+      active: ['is active again', 'An administrator reopened this course in My learning.'],
+      completed: ['is marked completed', 'An administrator marked this course as completed. Well done!'],
+      withdrawn: ['was withdrawn', 'An administrator removed this course from My learning. Your saved progress is kept.'],
+    };
+    if (current.status !== status && actorId !== current.user_id && messages[status]) {
+      const [title, body] = messages[status];
+      await notify(connection, current.user_id, {
+        type: 'enrollment',
+        title: `Your enrollment in ${current.course_title} ${title}`,
+        body,
+        link: status === 'withdrawn' ? '/learn/my-learning' : courseLink({ source_slug: current.source_slug, id: current.course_id }),
+      });
+    }
     const row = await findEnrollment(id, connection);
     await connection.commit();
     return mapEnrollment(row);

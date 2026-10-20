@@ -3,9 +3,11 @@ import { pool } from '../db/pool.js';
 function mapEnrollment(row) {
   return {
     id: row.id,
+    courseId: row.course_id,
     status: row.status,
     enrolledAt: row.enrolled_at,
     courseTitle: row.course_title,
+    courseSlug: row.source_slug ?? null,
     courseDescription: row.course_description,
     categoryName: row.category_name,
     percent: row.percent == null ? null : Number(row.percent),
@@ -14,11 +16,47 @@ function mapEnrollment(row) {
 }
 
 function mapCourse(row) {
+  const price = Number(row.price ?? 0);
+  const parseList = (value) => {
+    if (value == null || value === '') return [];
+    if (Array.isArray(value)) return value;
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+  const parseOutline = (value) => {
+    const sections = parseList(value);
+    return sections.map((section) => ({
+      title: section?.title || 'Section',
+      lessons: Array.isArray(section?.lessons) ? section.lessons : [],
+    }));
+  };
   return {
     id: row.id,
     title: row.title,
+    subtitle: row.subtitle ?? null,
     description: row.description,
+    imageUrl: row.image_url ?? null,
+    previewVideoUrl: row.preview_video_url ?? null,
+    instructorName: row.instructor_name ?? null,
+    level: row.level ?? null,
+    language: row.language || 'English',
+    totalMinutes: row.total_minutes == null ? null : Number(row.total_minutes),
+    outcomes: parseList(row.outcomes),
+    requirements: parseList(row.requirements),
+    includes: parseList(row.includes),
+    sections: parseOutline(row.outline),
     categoryName: row.category_name,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    price,
+    currency: row.currency || 'ETB',
+    isFree: price <= 0,
+    inCart: Boolean(row.in_cart),
+    favorite: Boolean(row.favorite),
     enrollmentStatus: row.enrollment_status ?? null,
     enrolledAt: row.enrolled_at ?? null,
     percent: row.percent == null ? null : Number(row.percent),
@@ -34,7 +72,7 @@ export async function getStudentHome(userId) {
   const profile = profileRows[0];
 
   const [enrollmentRows] = await pool.query(
-    `SELECT e.id, e.status, e.enrolled_at, c.title AS course_title, c.description AS course_description,
+    `SELECT e.id, e.course_id, e.status, e.enrolled_at, c.title AS course_title, c.source_slug, c.description AS course_description,
             cat.name AS category_name, p.percent, p.status AS progress_status
      FROM enrollments e
      JOIN courses c ON c.id = e.course_id
@@ -46,16 +84,20 @@ export async function getStudentHome(userId) {
   );
 
   const [catalogRows] = await pool.query(
-    `SELECT c.id, c.title, c.description, cat.name AS category_name,
+    `SELECT c.id, c.title, c.subtitle, c.description, c.image_url, c.preview_video_url, c.instructor_name,
+            c.level, c.language, c.total_minutes, c.outcomes, c.requirements, c.includes, c.outline,
+            c.created_at, c.updated_at, c.price, c.currency, cat.name AS category_name,
             e.status AS enrollment_status, e.enrolled_at,
-            p.percent, p.status AS progress_status
+            p.percent, p.status AS progress_status,
+            EXISTS (SELECT 1 FROM cart_items ci WHERE ci.user_id = ? AND ci.course_id = c.id) AS in_cart,
+            EXISTS (SELECT 1 FROM favorites f WHERE f.user_id = ? AND f.course_id = c.id) AS favorite
      FROM courses c
      JOIN categories cat ON cat.id = c.category_id
      LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = ?
      LEFT JOIN progress p ON p.course_id = c.id AND p.user_id = ?
-     WHERE c.status = 'published'
+     WHERE c.status = 'published' AND c.source_slug IS NULL
      ORDER BY c.title ASC`,
-    [userId, userId],
+    [userId, userId, userId, userId],
   );
 
   const enrollments = enrollmentRows.map(mapEnrollment);

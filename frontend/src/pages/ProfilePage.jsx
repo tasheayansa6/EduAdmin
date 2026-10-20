@@ -1,36 +1,9 @@
-import { useState } from 'react';
-import { api } from '../api/client.js';
-import { useAuth } from '../context/AuthContext.jsx';
-import { useToast } from '../context/ToastContext.jsx';
-import { fieldErrors, roleLabel } from '../lib/format.js';
-import { validatePerson } from '../lib/validate.js';
+import { useProfileForm } from '../hooks/useProfileForm.js';
+import { roleLabel } from '../lib/format.js';
 import { Field, TextInput } from '../components/ui.jsx';
 
 export function ProfilePage() {
-  const { user, updateUser } = useAuth();
-  const toast = useToast();
-  const [name, setName] = useState(user.name);
-  const [errors, setErrors] = useState({});
-  const [pending, setPending] = useState(false);
-
-  async function onSubmit(event) {
-    event.preventDefault();
-    const nextErrors = validatePerson({ name });
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) return;
-    setPending(true);
-    try {
-      const result = await api('/api/v1/auth/me', { method: 'PATCH', body: { name: name.trim() } });
-      updateUser(result.user);
-      toast.success('Profile updated.');
-    } catch (error) {
-      const fields = fieldErrors(error);
-      setErrors(fields);
-      if (!Object.keys(fields).length) toast.error(error.message);
-    } finally {
-      setPending(false);
-    }
-  }
+  const { user, name, setName, errors, pending, onSubmit } = useProfileForm();
 
   return (
     <form onSubmit={onSubmit} className="max-w-lg space-y-4 rounded-lg border border-line bg-white p-6 shadow-card" noValidate>

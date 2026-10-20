@@ -40,7 +40,7 @@ npm run setup
 cp backend/.env.example backend/.env
 # Edit JWT_SECRET to a long random string before any shared or non-local use.
 
-# 3. Start local MySQL (optional: seed sample rows for local/dev only)
+# 3. Start local MySQL (seed creates admin + empty categories only)
 npm run db:up
 npm run db:seed
 
@@ -53,7 +53,7 @@ npm run dev
 
 ### Environment variables
 
-Safe template: [`backend/.env.example`](backend/.env.example) (also mirrored at [`.env.example`](.env.example)).
+Safe template: [`backend/.env.example`](backend/.env.example).
 
 | Variable | Purpose |
 | --- | --- |
@@ -67,7 +67,7 @@ Never commit `backend/.env`. Docker Compose uses local-only MySQL credentials de
 
 ### Database
 
-`npm run db:seed` applies `backend/db/schema.sql` and loads demo users, courses, enrollments, and progress. Re-running seed **rebuilds** the local database contents (development only).
+`npm run db:seed` applies `backend/db/schema.sql` / store tables and creates the super admin plus empty categories. It does **not** invent students, courses, enrollments, or progress. Re-running seed **rebuilds** the local database (development only). Automated tests create their own temporary fixtures.
 
 ## Scripts
 
@@ -93,22 +93,22 @@ Postman:
 
 1. Import `postman/EduAdmin_API_Testing.postman_collection.json`
 2. Import `postman/EduAdmin_Local.postman_environment.json`
-3. Select **EduAdmin Local**, set `adminPassword` / `studentPassword` from the local seed accounts (see below)
+3. Select **EduAdmin Local**, set `adminPassword` from the local admin account (see below). Register a student in the UI (or via API) for student-route checks.
 4. Run **Authentication → Login (admin)** first
 
 Newman CLI details: [`postman/README.md`](postman/README.md).
 
-## Local development seed accounts
+## Local development admin account
 
-Created only by `npm run db:seed` for **local MySQL / automated tests**. They are **not** real platform identities, and credentials are **not** shown in the login UI.
+Created only by `npm run db:seed` for **local MySQL**. Not a real platform identity; credentials are **not** shown in the login UI.
 
-| Role | Email (seed) |
+| Role | Email |
 | --- | --- |
 | Super admin | `super@eduadmin.test` |
 
-Passwords are defined in `backend/db/seed.js`. Student seed accounts cannot open the admin dashboard.
+Password is defined in `backend/db/seed.js`. Students register themselves; there are no seeded demo students or courses.
 
-Connecting EduAdmin to an external educational platform (API or database) is **not configured** until the project owner provides access and approves the method. See [`docs/REAL_DATA_INTEGRATION_STATUS.md`](docs/REAL_DATA_INTEGRATION_STATUS.md).
+Partner catalog and Chapa payments use `AILG_*` / `CHAPA_*` settings in `backend/.env` when those services are available.
 
 ## Documentation
 
@@ -116,26 +116,22 @@ Connecting EduAdmin to an external educational platform (API or database) is **n
 | --- | --- |
 | [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | How administrators use the UI |
 | [`docs/API.md`](docs/API.md) | HTTP API overview |
-| [`docs/FINAL_PROJECT_REVIEW.md`](docs/FINAL_PROJECT_REVIEW.md) | Delivery review |
-| [`docs/FINAL_QA_SUMMARY.md`](docs/FINAL_QA_SUMMARY.md) | QA summary |
-| [`docs/PHASE_9_QA_REPORT.md`](docs/PHASE_9_QA_REPORT.md) | Phase 9 detailed QA |
-| [`docs/PHASE_3_DATABASE_API_DESIGN.md`](docs/PHASE_3_DATABASE_API_DESIGN.md) | Approved DB / API design |
 
 ## Project layout
 
 ```
 EduAdmin/
   backend/          Express API, Zod schemas, MySQL services, tests
-  frontend/         React admin UI
+  frontend/         React admin + student UI
   postman/          Collection + local environment template
-  docs/             Guides, phase notes, delivery reports
+  docs/             User guide and API overview
   docker-compose.yml
 ```
 
 ## Known limitations
 
-- Progress is an enrollment-level `percent` value; there is no lesson/module tracking.
-- Students register themselves. Administrators can still update an existing student, and only an administrator can create an enrollment.
+- Local EduAdmin progress can be lesson-level for store courses; admin Progress still lists enrollment-level percentages.
+- Students register themselves and can enroll in published free courses; paid courses go through cart / Chapa when configured.
 - Course delete and enrollment delete are soft (unpublish / withdraw), not hard deletes.
 - No ESLint/TypeScript frontend lint or frontend unit-test suite is configured.
 - Login is rate-limited (20 attempts / 15 minutes) outside `NODE_ENV=test`.

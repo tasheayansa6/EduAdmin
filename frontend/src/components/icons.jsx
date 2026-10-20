@@ -62,6 +62,54 @@ export function LogoutIcon() {
   return <Icon><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></Icon>;
 }
 
+export function SearchIcon() {
+  return <Icon><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Icon>;
+}
+
+export function ChevronDownIcon() {
+  return <Icon><path d="M6 9l6 6 6-6" /></Icon>;
+}
+
+export function ArrowRightIcon() {
+  return <Icon><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></Icon>;
+}
+
+export function CheckIcon() {
+  return <Icon><path d="M5 12.5l4.5 4.5L19 7" /></Icon>;
+}
+
+export function HeartIcon({ filled = false }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 shrink-0" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+    </svg>
+  );
+}
+
+export function CartIcon() {
+  return <Icon><circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" /><path d="M2.5 3h2.6l2.3 11.2a2 2 0 0 0 2 1.6h8.1a2 2 0 0 0 2-1.5L21.5 7H6" /></Icon>;
+}
+
+export function PlayIcon() {
+  return <Icon><circle cx="12" cy="12" r="9.5" /><path d="M10 8.5v7l5.5-3.5z" fill="currentColor" /></Icon>;
+}
+
+export function ClockIcon() {
+  return <Icon><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Icon>;
+}
+
+export function LockIcon() {
+  return <Icon><rect x="4.5" y="11" width="15" height="10" rx="2" /><path d="M8 11V7.5a4 4 0 0 1 8 0V11" /></Icon>;
+}
+
+export function BellIcon() {
+  return <Icon><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></Icon>;
+}
+
+export function LinkIcon() {
+  return <Icon><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></Icon>;
+}
+
 export function AlertIcon() {
   return <Icon><path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L14.7 3.9a2 2 0 0 0-3.4 0z" /></Icon>;
 }

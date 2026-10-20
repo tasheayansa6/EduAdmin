@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { pool } from '../db/pool.js';
 import { AppError } from '../lib/errors.js';
 import { logActivity } from '../lib/activity.js';
+import { notify } from '../lib/notify.js';
 
 /** Valid bcrypt hash used only so missing users still run a compare (timing). */
 const DUMMY_PASSWORD_HASH = '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
@@ -58,6 +59,12 @@ export async function registerStudent({ name, email, password }) {
       entityType: 'user',
       entityId: result.insertId,
       details: 'Student account created',
+    });
+    await notify(pool, result.insertId, {
+      type: 'welcome',
+      title: 'Welcome to EduAdmin Learning',
+      body: 'Explore the courses and tap the heart on the ones you like to save them.',
+      link: '/learn/courses',
     });
     return login(email, password);
   } catch (error) {

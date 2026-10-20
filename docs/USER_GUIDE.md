@@ -8,7 +8,7 @@ For students, administrators, and the super administrator.
 2. Enter your email and password.
 3. Use **Sign in**.
 
-A student lands on **Your learning**. An administrator lands on the admin **Dashboard**. Inactive accounts are rejected. **Log out** ends the session on the server.
+A student lands on the learning **Home** page. An administrator lands on the admin **Dashboard**. Inactive accounts are rejected. **Log out** ends the session on the server.
 
 ## Student registration
 
@@ -16,13 +16,23 @@ A student lands on **Your learning**. An administrator lands on the admin **Dash
 2. Enter your name, email, and password, then confirm the password.
 3. Submit the form. The account is always created as a student.
 
-There is no phone field. Registration does not enroll anyone. After signing in, the student can enroll in a published course from **Courses**, which stores the enrollment in the database. The student can update their display name from **Profile**. Email and role stay on the account record.
+There is no phone field. Registration does not enroll anyone. After signing in, the student can enroll in a published course from its course page, which stores the enrollment in the database. The student can update their display name from **Profile**. Email and role stay on the account record.
 
 ## Student area
 
-- **Home** shows that student's enrollments, completion count, and average progress from stored records.
-- **Courses** lists published courses. **Enroll** saves that course to the signed-in student in the database.
+The header search looks through published course titles, categories, and descriptions. The account menu (avatar) opens My learning, Favorites, Cart, Notifications, Edit profile, Account security, and Log out. The old Progress page now redirects to My learning. On small screens the menu button opens the same links.
+
+- **Home** greets the student, summarizes enrolled and completed courses with average progress, lists active enrollments under **Continue learning**, and shows categories and published courses not yet joined.
+- **Explore courses** lists every published course. Filter by category or by enrolled / not enrolled, and sort by title. **View course** opens the course page.
+- **Course page** shows the title, description, category, and the student's enrollment. **Enroll in this course** (or **Enroll again** after a withdrawal) saves the enrollment in the database and starts progress at 0%.
+- **My learning** lists the student's enrollments by status (all, active, completed, withdrawn) with stored progress, and can be searched.
+- **Profile** has a **Public profile** form (first and last name, a 60-character headline, biography without links, language, website and social usernames), **Account security** (change password; this signs the student out everywhere else), and **View public profile**, a preview only the student can see. Email is read-only.
+- **Explore courses** and **Home** list both the courses administrators publish in EduAdmin and the AILG Academy store. EduAdmin courses have a price set by the administrator: free courses enroll from the course page; paid courses use **Add to cart**, **Favorites**, and Chapa checkout — the same cart students already use for AILG courses. If the AILG Academy API is offline, a notice says so and the EduAdmin courses stay listed.
+- **Notifications** (the bell in the header) also announce every course an administrator publishes, linking to it.
+- **Notifications** lists real events: welcome on sign-up, enrollments made by the student or an administrator, status changes by an administrator, Chapa payments received or not completed, finishing every lesson in a course, and password changes. The badge shows the unread count, refreshed every minute and when the tab regains focus.
 - Students cannot open the admin dashboard, reports, or another student's record.
+
+Courses have no image, instructor, duration, rating, price, or lesson content in the database, so the student pages do not show them. Course covers are a neutral design tinted by category.
 
 ## Dashboard
 
@@ -34,7 +44,7 @@ The overview shows live counts (students, courses, enrollments, average progress
 - Open a student to view enrollments and progress percentages.
 - Edit name, email, or status. Status changes affect whether the student can be newly enrolled (only **active** students can be enrolled).
 
-There is no “add student” action in this admin app; student accounts come from the platform / seed data.
+There is no “add student” action in this admin app; students register themselves through the student portal.
 
 ## Courses
 
