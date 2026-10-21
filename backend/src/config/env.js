@@ -14,6 +14,11 @@ const parsed = z
     DB_USER: z.string().min(1),
     DB_PASSWORD: z.string().min(1),
     DB_NAME: z.string().min(1),
+    // TiDB Cloud / managed MySQL public endpoints require TLS.
+    DB_SSL: z
+      .string()
+      .optional()
+      .transform((value) => ['1', 'true', 'yes', 'on'].includes(String(value || '').toLowerCase())),
     JWT_SECRET: z.string().min(16),
     JWT_EXPIRES_IN: z.string().default('8h'),
     CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
@@ -33,6 +38,14 @@ export const env = {
     user: parsed.DB_USER,
     password: parsed.DB_PASSWORD,
     database: parsed.DB_NAME,
+    ...(parsed.DB_SSL
+      ? {
+          ssl: {
+            minVersion: 'TLSv1.2',
+            rejectUnauthorized: true,
+          },
+        }
+      : {}),
   },
   jwtSecret: parsed.JWT_SECRET,
   jwtExpiresIn: parsed.JWT_EXPIRES_IN,

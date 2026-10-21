@@ -51,6 +51,13 @@ npm run dev
 - Web UI: http://localhost:5173 (Vite may choose 5174/5175 if the port is busy)
 - API: http://localhost:4000 (`/api/v1`, proxied from the Vite app as `/api`)
 
+### Deploy frontend on Vercel
+
+1. Host the API somewhere public first (not on Vercel).
+2. Edit [`frontend/vercel.json`](frontend/vercel.json): replace `YOUR-API-HOST` with your API hostname (no path), e.g. `https://api.example.com`.
+3. In Vercel: import the repo → Root Directory `frontend` → Build `npm run build` → Output `dist`.
+4. On the API set `CLIENT_ORIGIN` to your Vercel URL (e.g. `https://edu-admin.vercel.app`).
+
 ### Environment variables
 
 Safe template: [`backend/.env.example`](backend/.env.example).
