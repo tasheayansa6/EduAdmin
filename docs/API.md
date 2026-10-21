@@ -41,6 +41,7 @@ Authentication: `Authorization: Bearer <jwt>` on protected routes. Login returns
 | --- | --- | --- |
 | GET | `/api/v1/dashboard` | Aggregate overview |
 | GET | `/api/v1/students` | Query: `q`, `page`, `limit`, `status` |
+| POST | `/api/v1/students` | `{ name, email, password }` — admin creates a student |
 | GET | `/api/v1/students/:id` | Detail + enrollments |
 | PATCH | `/api/v1/students/:id` | `{ name, email, status }` |
 | GET | `/api/v1/courses` | Query: `q`, `page`, `limit`, `status`, `categoryId` |

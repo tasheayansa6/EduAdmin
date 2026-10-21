@@ -4,7 +4,7 @@ import { useToast } from '../context/ToastContext.jsx';
 import { useListParams } from '../hooks/useListParams.js';
 import { useResource } from '../hooks/useResource.js';
 import { fieldErrors, formatDate } from '../lib/format.js';
-import { validatePerson } from '../lib/validate.js';
+import { validatePassword, validatePerson } from '../lib/validate.js';
 import {
   DataPanel,
   Field,
@@ -19,6 +19,8 @@ import {
   TextInput,
 } from '../components/ui.jsx';
 
+const emptyStudent = { name: '', email: '', password: '' };
+
 export function StudentsPage() {
   const toast = useToast();
   const list = useListParams();
@@ -27,13 +29,16 @@ export function StudentsPage() {
     [list.q, list.status, list.page],
   );
   const [selectedId, setSelectedId] = useState(null);
+  const [creating, setCreating] = useState(false);
 
   const rows = resource.data?.data ?? [];
   const filtered = Boolean(list.q || list.status);
 
   return (
     <>
-      <PageIntro>View student accounts, then update a name, email, or status.</PageIntro>
+      <PageIntro action={<button type="button" className="btn-primary" onClick={() => setCreating(true)}>Add student</button>}>
+        Create student accounts, then update a name, email, or status.
+      </PageIntro>
       <Filters onSubmit={(event) => { event.preventDefault(); list.update({ q: list.draft.trim(), status: list.status }); }}>
         <Field id="student-search" label="Search" className="min-w-[16rem] flex-1">
           <TextInput id="student-search" value={list.draft} onChange={(event) => list.setDraft(event.target.value)} placeholder="Name or email" />
@@ -54,7 +59,7 @@ export function StudentsPage() {
         onRetry={resource.reload}
         isEmpty={rows.length === 0}
         emptyTitle={filtered ? 'No matching students' : 'No students yet'}
-        emptyMessage={filtered ? 'Try a different name, email, or status.' : 'Student accounts will appear here.'}
+        emptyMessage={filtered ? 'Try a different name, email, or status.' : 'Use Add student to create the first account.'}
         skeleton={<TableSkeleton />}
       >
         <div className="table-wrap overflow-x-auto">
@@ -98,7 +103,74 @@ export function StudentsPage() {
           }}
         />
       ) : null}
+      {creating ? (
+        <CreateStudentDialog
+          onClose={() => setCreating(false)}
+          onSaved={() => {
+            toast.success('Student added.');
+            setCreating(false);
+            resource.reload();
+          }}
+        />
+      ) : null}
     </>
+  );
+}
+
+function CreateStudentDialog({ onClose, onSaved }) {
+  const [form, setForm] = useState(emptyStudent);
+  const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState('');
+  const [pending, setPending] = useState(false);
+
+  function update(event) {
+    setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+  }
+
+  async function onSubmit(event) {
+    event.preventDefault();
+    const nextErrors = validatePerson(form);
+    const passwordError = validatePassword(form.password);
+    if (passwordError) nextErrors.password = passwordError;
+    setErrors(nextErrors);
+    setFormError('');
+    if (Object.keys(nextErrors).length) return;
+    setPending(true);
+    try {
+      await api('/api/v1/students', {
+        method: 'POST',
+        body: { name: form.name.trim(), email: form.email.trim(), password: form.password },
+      });
+      onSaved();
+    } catch (error) {
+      const fields = fieldErrors(error);
+      setErrors(fields);
+      if (!Object.keys(fields).length) setFormError(error.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <Modal title="Add student" onClose={onClose}>
+      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+        {formError ? <p role="alert" className="text-sm font-semibold text-red-800">{formError}</p> : null}
+        <Field id="new-student-name" label="Name" error={errors.name}>
+          <TextInput id="new-student-name" name="name" value={form.name} error={errors.name} onChange={update} />
+        </Field>
+        <Field id="new-student-email" label="Email" error={errors.email}>
+          <TextInput id="new-student-email" name="email" type="email" autoComplete="off" value={form.email} error={errors.email} onChange={update} />
+        </Field>
+        <Field id="new-student-password" label="Temporary password" error={errors.password}>
+          <TextInput id="new-student-password" name="password" type="password" autoComplete="new-password" value={form.password} error={errors.password} onChange={update} />
+        </Field>
+        <p className="text-sm text-ink-muted">At least 8 characters, with a letter and a number. Share this with the student so they can sign in.</p>
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="submit" className="btn-primary" disabled={pending}>{pending ? 'Saving…' : 'Add student'}</button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

@@ -1,6 +1,8 @@
+import bcrypt from 'bcryptjs';
 import { pool } from '../db/pool.js';
 import { AppError } from '../lib/errors.js';
 import { logActivity } from '../lib/activity.js';
+import { notify } from '../lib/notify.js';
 import { likeClause, likePattern, toPage } from '../lib/sql.js';
 
 function mapStudent(row) {
@@ -79,6 +81,39 @@ export async function getStudent(id) {
       percent: Number(row.percent),
     })),
   };
+}
+
+/** Creates a student account an administrator can hand to a learner. */
+export async function createStudent(actorId, body) {
+  const passwordHash = await bcrypt.hash(body.password, 10);
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO users (name, email, password_hash, role, status)
+       VALUES (?, ?, ?, 'student', 'active')`,
+      [body.name, body.email, passwordHash],
+    );
+    await logActivity(pool, {
+      actorId,
+      action: 'student.created',
+      entityType: 'user',
+      entityId: result.insertId,
+      details: `Added student ${body.name}`,
+    });
+    await notify(pool, result.insertId, {
+      type: 'welcome',
+      title: 'Welcome to EduAdmin Learning',
+      body: 'An administrator created your account. Explore courses and start learning.',
+      link: '/learn/courses',
+    });
+    return getStudent(result.insertId);
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      throw new AppError(409, 'That email address is already in use.', [
+        { field: 'email', message: 'That email address is already in use.' },
+      ]);
+    }
+    throw error;
+  }
 }
 
 export async function updateStudent(actorId, id, body) {

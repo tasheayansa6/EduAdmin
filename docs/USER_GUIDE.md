@@ -40,11 +40,12 @@ The overview shows live counts (students, courses, enrollments, average progress
 
 ## Students
 
+- **Add student** creates an account with a temporary password the learner can use to sign in.
 - Search by name or email; filter by status (active, inactive, suspended).
 - Open a student to view enrollments and progress percentages.
 - Edit name, email, or status. Status changes affect whether the student can be newly enrolled (only **active** students can be enrolled).
 
-There is no “add student” action in this admin app; students register themselves through the student portal.
+Students can also register themselves through the student portal.
 
 ## Courses
 

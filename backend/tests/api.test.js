@@ -203,6 +203,23 @@ describe('Authorization', () => {
     assert.ok(payload.meta);
   });
 
+  test('admin can create a student account', async () => {
+    const { payload: session } = await login(ADMIN);
+    const email = `admin-created-${Date.now()}@students.test`;
+    const created = await request('/api/v1/students', {
+      method: 'POST',
+      token: session.token,
+      body: { name: 'Admin Created Student', email, password: 'Student123!' },
+    });
+    assert.equal(created.status, 201);
+    assert.equal(created.payload.data.email, email);
+    assert.equal(created.payload.data.status, 'active');
+    const signedIn = await login({ email, password: 'Student123!' });
+    assert.equal(signedIn.status, 200);
+    assert.equal(signedIn.payload.user.role, 'student');
+    await cleanupUser(created.payload.data.id);
+  });
+
   test('admin cannot list administrators', async () => {
     await withStaffAdmin(async (staff) => {
       const { payload: session } = await login(staff);

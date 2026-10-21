@@ -5,7 +5,7 @@ import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { login, logout, registerStudent, updateProfile } from '../services/authService.js';
 import { getDashboard } from '../services/dashboardService.js';
-import { getStudent, listStudents, updateStudent } from '../services/studentService.js';
+import { createStudent, getStudent, listStudents, updateStudent } from '../services/studentService.js';
 import { createCourse, deleteCourse, listCourses, updateCourse } from '../services/courseService.js';
 import {
   createEnrollment,
@@ -49,6 +49,7 @@ import {
   savedItemBody,
   localCourseParams,
   slugParams,
+  studentCreateSchema,
   studentEnrollSchema,
   studentListSchema,
   studentUpdateSchema,
@@ -121,6 +122,9 @@ const studentRouter = Router();
 studentRouter.use(...adminOnly);
 studentRouter.get('/', validate(studentListSchema), asyncHandler(async (req, res) => {
   res.json(await listStudents(req.valid.query));
+}));
+studentRouter.post('/', validate(studentCreateSchema), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await createStudent(req.user.id, req.valid.body) });
 }));
 studentRouter.get('/:id', validate(recordParams), asyncHandler(async (req, res) => {
   res.json({ data: await getStudent(req.valid.params.id) });

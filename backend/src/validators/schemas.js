@@ -73,6 +73,14 @@ export const studentListSchema = {
   }),
 };
 
+export const studentCreateSchema = {
+  body: z.object({
+    name: personName,
+    email,
+    password,
+  }),
+};
+
 export const studentUpdateSchema = {
   params: idParam,
   body: z.object({
