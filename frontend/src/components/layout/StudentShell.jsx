@@ -297,7 +297,7 @@ export function StudentShell() {
 
           <MobileDrawer open={drawer} onClose={closeDrawer} user={user} onLogout={onLogout} />
 
-          <main id="main" tabIndex={-1} className="mx-auto w-full max-w-shell flex-1 px-4 py-6 pb-24 focus:outline-none sm:px-6 md:pb-10 lg:px-8 lg:py-10">
+          <main id="main" tabIndex={-1} className="mx-auto w-full max-w-shell flex-1 px-4 py-6 pb-28 focus:outline-none sm:px-6 lg:px-8 lg:py-8">
             <Outlet />
           </main>
 

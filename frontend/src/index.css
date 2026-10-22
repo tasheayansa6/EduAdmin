@@ -141,7 +141,7 @@
   }
 
   .student-theme .bottom-nav {
-    @apply fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-brand pb-[env(safe-area-inset-bottom)] text-white md:hidden;
+    @apply fixed inset-x-0 bottom-0 z-40 border-t border-brand/40 bg-brand pb-[env(safe-area-inset-bottom)] text-white shadow-[0_-8px_24px_rgba(21,67,42,0.18)];
   }
 
   .student-theme .bottom-nav-link {
