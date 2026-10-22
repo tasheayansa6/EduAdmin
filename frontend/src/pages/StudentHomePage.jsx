@@ -95,11 +95,12 @@ function CuratedCard({ course }) {
     || (course.sections || []).reduce((sum, section) => sum + (section.lessons?.length || 0), 0)
     || null;
   const track = course.category || 'Course';
-  const about = String(course.description || course.subtitle || '').trim();
+  const about = String(course.description || course.subtitle || '').trim()
+    || `Learn ${course.title} with guided lessons and practical projects.`;
 
   return (
-    <article className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
-      <div className="relative aspect-[16/10] bg-sand">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
+      <div className="relative aspect-[16/10] shrink-0 bg-sand">
         {course.imageUrl ? (
           <CourseImage course={course} className="!aspect-auto h-full w-full" />
         ) : (
@@ -111,39 +112,31 @@ function CuratedCard({ course }) {
           </span>
         ) : (
           <span className="absolute right-2.5 top-2.5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-brand shadow-soft">
-            Prerequisite met
+            Open
           </span>
         )}
       </div>
-      <div className="space-y-2.5 p-3.5">
+      <div className="flex flex-1 flex-col space-y-2.5 p-3.5">
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
           {track}
           {modules ? ` · ${modules} modules` : ''}
         </p>
-        <div>
+        <div className="min-w-0 flex-1">
           <h3 className="font-display text-base font-bold leading-snug text-charcoal">
             <Link to={to} className="hover:text-brand">{course.title}</Link>
           </h3>
-          {about ? (
-            <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-charcoal-muted">{about}</p>
-          ) : (
-            <p className="mt-1.5 text-sm text-charcoal-muted">
-              {course.instructorName || 'Instructor TBA'}
-            </p>
-          )}
+          <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-charcoal-muted">{about}</p>
+          <p className="mt-2 text-xs font-semibold text-charcoal-muted">
+            {course.instructorName || 'Instructor TBA'}
+          </p>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className={`text-base font-extrabold ${course.isFree ? 'text-brand' : 'text-charcoal'}`}>
             {formatPrice(course.price, course.currency)}
           </span>
-          {course.instructorName && about ? (
-            <span className="text-sm font-semibold text-charcoal-muted">{course.instructorName}</span>
-          ) : course.ratingAvg != null ? (
+          {course.ratingAvg != null ? (
             <span className="text-sm font-semibold text-charcoal-muted">
               ★ {Number(course.ratingAvg).toFixed(1)}
-              {course.ratingCount ? (
-                <span className="font-normal"> ({Number(course.ratingCount).toLocaleString()})</span>
-              ) : null}
             </span>
           ) : null}
         </div>
@@ -206,12 +199,12 @@ function HomeBody({ data }) {
   const curated = (category === 'All'
     ? curatedBase
     : curatedBase.filter((course) => course.category === category)
-  ).slice(0, 6);
+  ).slice(0, 9);
   const deadlines = active.filter((row) => (row.percent ?? 0) < 80).slice(0, 2);
   const left = featured ? lessonsLeft(featured.percent) : null;
 
   return (
-    <div className="student-compact space-y-5">
+    <div className="space-y-6">
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-display text-[1.75rem] font-bold leading-tight tracking-tight text-charcoal sm:text-4xl">
@@ -302,11 +295,11 @@ function HomeBody({ data }) {
         </div>
 
         {loading ? (
-          <CardGridSkeleton count={3} />
+          <CardGridSkeleton count={6} />
         ) : curated.length ? (
-          <ul className="space-y-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {curated.map((course) => (
-              <li key={course.key || course.id || course.slug}>
+              <li key={course.key || course.id || course.slug} className="min-w-0">
                 <CuratedCard course={course} />
               </li>
             ))}
