@@ -295,6 +295,9 @@ export function StudentShell() {
   const location = useLocation();
   const [drawer, setDrawer] = useState(false);
   const closeDrawer = useCallback(() => setDrawer(false), []);
+  const path = location.pathname.replace(/\/+$/, '') || '/';
+  const learningHub = path === '/learn/my-learning';
+
   useEffect(() => {
     setDrawer(false);
     window.scrollTo(0, 0);
@@ -317,7 +320,11 @@ export function StudentShell() {
           <main
             id="main"
             tabIndex={-1}
-            className="mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8"
+            className={
+              learningHub
+                ? 'w-full flex-1 pb-28 focus:outline-none md:pb-8'
+                : 'mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8'
+            }
           >
             <Outlet />
           </main>
