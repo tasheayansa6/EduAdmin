@@ -1,8 +1,11 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://eduadmin-just.onrender.com/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://eduadmin-just.onrender.com/api/:path*"
     },
     {
       "source": "/((?!api/).*)",
