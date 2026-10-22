@@ -73,7 +73,7 @@ function FeatureResume({ enrollment }) {
               </span>
             </div>
 
-            <h2 className="font-display text-2xl font-bold leading-snug tracking-tight text-charcoal md:text-[1.75rem] lg:text-3xl">
+            <h2 className="font-display text-3xl font-extrabold leading-snug tracking-tight text-charcoal md:text-[2rem] lg:text-4xl">
               {enrollment.courseTitle}
             </h2>
 
@@ -196,7 +196,7 @@ function CuratedCard({ course }) {
             <span className="ml-1 font-normal text-charcoal-muted">({ratingCount})</span>
           </span>
         </div>
-        <h3 className="font-display text-lg font-bold leading-snug text-charcoal">
+        <h3 className="font-display text-xl font-extrabold leading-snug text-charcoal md:text-2xl">
           <Link to={to} className="hover:text-brand">{course.title}</Link>
         </h3>
         <p className="line-clamp-2 text-sm leading-relaxed text-charcoal-muted">{about}</p>
@@ -313,7 +313,7 @@ function HomeBody({ data }) {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-[1.875rem] font-bold tracking-tight text-charcoal md:text-4xl lg:text-[2.5rem] lg:leading-tight">
+              <h1 className="font-display text-4xl font-extrabold tracking-tight text-charcoal md:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
                 Welcome back, {firstName}!
               </h1>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand">
@@ -321,7 +321,7 @@ function HomeBody({ data }) {
                 Term Active
               </span>
             </div>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-base text-charcoal-muted md:text-lg">
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-lg font-medium text-charcoal-muted md:text-xl">
               <span>Undergraduate</span>
               <span className="text-hairline">•</span>
               <span>Year 3</span>
@@ -400,10 +400,10 @@ function HomeBody({ data }) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">Academic Catalog</p>
-            <h2 id="curated-heading" className="mt-1 font-display text-2xl font-bold tracking-tight text-charcoal md:text-3xl">
+            <h2 id="curated-heading" className="mt-1 font-display text-3xl font-extrabold tracking-tight text-charcoal md:text-4xl">
               Curated For Your Degree
             </h2>
-            <p className="mt-1 text-base text-charcoal-muted">
+            <p className="mt-1 text-lg text-charcoal-muted">
               Recommended based on completed prerequisites and academic track.
             </p>
           </div>
@@ -518,7 +518,7 @@ function HomeBody({ data }) {
             {deadlines.length ? (
               <section className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-bold text-charcoal">Upcoming Deadlines</h3>
+                  <h3 className="text-lg font-extrabold text-charcoal">Upcoming Deadlines</h3>
                   {dueSoon ? (
                     <span className="rounded-full bg-wheat/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-wheat-ink">
                       {dueSoon} Due Soon
@@ -562,7 +562,7 @@ function HomeBody({ data }) {
 
             <section className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-bold text-charcoal">Degree Pathway</h3>
+                <h3 className="text-lg font-extrabold text-charcoal">Degree Pathway</h3>
                 <span className="text-xs font-semibold text-brand">Year 3 Semester 1</span>
               </div>
               <div className="mt-3 flex items-center gap-3 rounded-xl bg-sand/70 p-3">
@@ -608,7 +608,7 @@ function HomeBody({ data }) {
                   Academic Support
                 </span>
               </div>
-              <h3 className="mt-2 font-display text-lg font-bold">CS Faculty Office Hours</h3>
+              <h3 className="mt-2 font-display text-xl font-extrabold">CS Faculty Office Hours</h3>
               <p className="mt-1 text-sm text-white/90">
                 {featured?.instructorName || 'Your instructor'} is hosting an open question desk today from 3:30 PM to 5:00 PM.
               </p>

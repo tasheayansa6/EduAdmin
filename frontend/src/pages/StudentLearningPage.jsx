@@ -112,36 +112,36 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex flex-1 flex-col gap-3.5 p-5 sm:p-6">
             <div className="flex items-start justify-between gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand">
+              <p className="text-sm font-bold uppercase tracking-[0.12em] text-brand">
                 {deptLabel(enrollment)}
               </p>
-              <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${badge.tone}`}>
+              <span className={`shrink-0 rounded-full px-3 py-1 text-sm font-bold uppercase tracking-wide ${badge.tone}`}>
                 {badge.label}
               </span>
             </div>
 
             <div>
-              <h2 className="font-display text-xl font-bold leading-snug tracking-tight text-charcoal md:text-2xl">
+              <h2 className="font-display text-2xl font-extrabold leading-snug tracking-tight text-charcoal md:text-3xl">
                 <Link to={href} className="hover:text-brand">{enrollment.courseTitle}</Link>
               </h2>
-              <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-base text-charcoal-muted">
-                <span className="inline-flex items-center gap-1.5 [&_svg]:h-4 [&_svg]:w-4">
+              <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-lg text-charcoal-muted">
+                <span className="inline-flex items-center gap-1.5 [&_svg]:h-5 [&_svg]:w-5">
                   <UserIcon />
                   {enrollment.instructorName || 'Instructor TBA'}
                 </span>
                 <span aria-hidden="true">•</span>
-                <span className="font-semibold text-charcoal">
+                <span className="font-bold text-charcoal">
                   {credits} Academic Credits
                 </span>
               </p>
             </div>
 
             <div>
-              <div className="mb-2 flex items-baseline justify-between gap-3 text-sm font-semibold">
+              <div className="mb-2 flex items-baseline justify-between gap-3 text-base font-bold">
                 <span className="text-charcoal">Syllabus Completion</span>
-                <span className="font-bold text-brand">
+                <span className="font-extrabold text-brand">
                   {percent}%{' '}
-                  <span className="font-normal text-charcoal-muted">
+                  <span className="font-semibold text-charcoal-muted">
                     ({lessons.done}/{lessons.total} lessons)
                   </span>
                 </span>
@@ -153,18 +153,18 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
           </div>
 
           <div className="flex flex-col gap-3 border-t border-hairline bg-sand/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div className="min-w-0 text-sm leading-relaxed text-charcoal-muted">
+            <div className="min-w-0 text-base leading-relaxed text-charcoal-muted">
               <p>
                 {lastActiveLabel(percent)}
                 {!completed ? (
                   <>
                     {' • '}
-                    <span className="text-charcoal">{moduleLine(percent)}</span>
+                    <span className="font-semibold text-charcoal">{moduleLine(percent)}</span>
                   </>
                 ) : null}
               </p>
               {!completed ? (
-                <p className="mt-0.5 font-semibold text-charcoal">
+                <p className="mt-1 font-bold text-charcoal">
                   Next: {nextLessonLabel(percent)}
                 </p>
               ) : null}
@@ -172,7 +172,7 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
-                className={`grid h-11 w-11 place-items-center rounded-full transition ${
+                className={`grid h-12 w-12 place-items-center rounded-full transition ${
                   bookmarked ? 'bg-brand-soft text-brand' : 'bg-white text-charcoal-muted ring-1 ring-hairline hover:text-brand'
                 }`}
                 aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark course'}
@@ -183,7 +183,7 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
               </button>
               <Link
                 to={href}
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-base font-bold text-white shadow-soft hover:bg-brand-hover"
+                className="inline-flex h-12 items-center gap-2 rounded-xl bg-brand px-5 text-lg font-bold text-white shadow-soft hover:bg-brand-hover"
               >
                 Continue Learning
                 <span className="[&_svg]:h-4 [&_svg]:w-4"><ArrowRightIcon /></span>
@@ -215,8 +215,8 @@ function OfflinePack({ enrollment, index }) {
         </svg>
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-base font-bold text-charcoal">{pack.title}</p>
-        <p className="mt-0.5 line-clamp-2 text-sm text-charcoal-muted">{pack.detail}</p>
+        <p className="truncate text-base font-extrabold text-charcoal md:text-lg">{pack.title}</p>
+        <p className="mt-0.5 line-clamp-2 text-base text-charcoal-muted">{pack.detail}</p>
         <p className="mt-1 text-xs font-semibold text-charcoal-muted">{pack.size} • {pack.synced}</p>
       </div>
       <Link
@@ -238,8 +238,8 @@ function MilestoneRow({ title, course, code, dayLabel, timeLabel, urgent }) {
           {dayLabel} {timeLabel}
         </span>
       </div>
-      <h4 className="mt-1.5 text-base font-bold leading-snug text-charcoal">{title}</h4>
-      <p className="mt-1 text-sm text-charcoal-muted">
+      <h4 className="mt-1.5 text-lg font-extrabold leading-snug text-charcoal">{title}</h4>
+      <p className="mt-1 text-base text-charcoal-muted">
         {code} • {course}
       </p>
     </div>
@@ -344,23 +344,23 @@ function LearningBody({ data }) {
     <div className="space-y-7 md:space-y-8">
       <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-2.5">
-          <nav aria-label="Breadcrumb" className="text-sm font-semibold text-charcoal-muted">
+          <nav aria-label="Breadcrumb" className="text-base font-bold text-charcoal-muted">
             Academic Session {year}–{year + 1}
             <span className="mx-1.5 text-hairline">/</span>
             <span className="text-brand">My Learning Hub</span>
           </nav>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-[1.875rem] font-bold tracking-tight text-charcoal md:text-4xl lg:text-[2.5rem] lg:leading-tight">
+            <h1 className="font-display text-4xl font-extrabold tracking-tight text-charcoal md:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
               My Learning Hub
             </h1>
             {streak ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-sm font-bold uppercase tracking-wide text-brand [&_svg]:h-4 [&_svg]:w-4">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3.5 py-1.5 text-base font-bold uppercase tracking-wide text-brand [&_svg]:h-4 [&_svg]:w-4">
                 <FlameIcon />
                 {streak}-Day Streak
               </span>
             ) : null}
           </div>
-          <p className="text-base text-charcoal-muted md:text-lg">
+          <p className="text-lg font-medium text-charcoal-muted md:text-xl">
             Spring {year + 1} • Year 3 Undergraduate • Department of Computer Science
           </p>
         </div>
@@ -369,14 +369,14 @@ function LearningBody({ data }) {
           <div className="flex w-full max-w-md items-center gap-4 rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline lg:w-[24rem]">
             <PaceRing value={ringValue} size="md" label="Done" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-charcoal-muted">Weekly Target</p>
-              <p className="mt-1 font-display text-xl font-bold leading-snug text-charcoal">
+              <p className="text-sm font-bold uppercase tracking-[0.14em] text-charcoal-muted">Weekly Target</p>
+              <p className="mt-1 font-display text-2xl font-extrabold leading-snug text-charcoal">
                 {hoursDone} of {hoursTarget} hrs
               </p>
-              <p className="mt-0.5 text-sm text-charcoal-muted">Keep the momentum!</p>
+              <p className="mt-0.5 text-base text-charcoal-muted">Keep the momentum!</p>
               <Link
                 to="/learn/progress"
-                className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-lg bg-brand px-3.5 text-sm font-bold text-white hover:bg-brand-hover"
+                className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-lg bg-brand px-4 text-base font-bold text-white hover:bg-brand-hover"
               >
                 Schedule
               </Link>
@@ -394,7 +394,7 @@ function LearningBody({ data }) {
                 key={item.key}
                 type="button"
                 aria-pressed={selected}
-                className={`shrink-0 rounded-full px-4 py-2.5 text-base font-semibold transition ${
+                className={`shrink-0 rounded-full px-4 py-2.5 text-lg font-bold transition ${
                   selected ? 'bg-brand text-white shadow-soft' : 'bg-white text-charcoal ring-1 ring-hairline hover:bg-mint-soft'
                 }`}
                 onClick={() => update('tab', item.key, 'active')}
@@ -483,7 +483,7 @@ function LearningBody({ data }) {
                         <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand">
                           {item.category || 'Bookmarked'}
                         </p>
-                        <h2 className="mt-1.5 font-display text-xl font-bold md:text-2xl">
+                        <h2 className="mt-1.5 font-display text-2xl font-extrabold md:text-3xl">
                           <Link to={to} className="hover:text-brand">{item.title}</Link>
                         </h2>
                         <Link to={to} className="mt-3 inline-flex text-base font-bold text-brand hover:underline">
@@ -542,7 +542,7 @@ function LearningBody({ data }) {
           {active.length ? (
             <section className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-hairline">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="font-display text-lg font-bold text-charcoal">Offline Course Materials</h3>
+                <h3 className="font-display text-xl font-extrabold text-charcoal">Offline Course Materials</h3>
                 <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-brand">
                   {offlineCount} Available
                 </span>
@@ -560,7 +560,7 @@ function LearningBody({ data }) {
           {milestones.length ? (
             <section className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-hairline">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="font-display text-lg font-bold text-charcoal">Upcoming Milestones</h3>
+                <h3 className="font-display text-xl font-extrabold text-charcoal">Upcoming Milestones</h3>
                 <Link to="/learn/progress" className="text-xs font-bold uppercase tracking-wide text-brand hover:underline">
                   View All
                 </Link>
@@ -581,11 +581,11 @@ function LearningBody({ data }) {
                 <ShieldIcon />
               </span>
               <div>
-                <h3 className="text-base font-bold text-brand">Academic Integrity Standards</h3>
-                <p className="mt-1.5 text-base leading-relaxed text-charcoal-muted">
+                <h3 className="text-lg font-extrabold text-brand">Academic Integrity Standards</h3>
+                <p className="mt-1.5 text-base leading-relaxed text-charcoal-muted md:text-lg">
                   All assignment submissions, code repositories, and assessments are subject to automated verification against the EduAdmin Honor Code standard.
                 </p>
-                <Link to="/learn/progress" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline [&_svg]:h-3.5 [&_svg]:w-3.5">
+                <Link to="/learn/progress" className="mt-3 inline-flex items-center gap-1 text-base font-bold text-brand hover:underline [&_svg]:h-3.5 [&_svg]:w-3.5">
                   Review Institutional Policy Guide
                   <ArrowRightIcon />
                 </Link>
