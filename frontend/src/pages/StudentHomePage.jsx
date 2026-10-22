@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { AlertIcon, CheckIcon, ClockIcon, LeafIcon, PlayIcon } from '../components/icons.jsx';
+import { AlertIcon, ArrowRightIcon, CheckIcon, ClockIcon, LeafIcon, PlayIcon } from '../components/icons.jsx';
 import { currentEnrollments, useAllCourses, useDocumentTitle, useStudentData } from '../student/StudentData.jsx';
 import {
   CardGridSkeleton,
@@ -10,14 +10,17 @@ import {
   StudentData,
   StudentEmpty,
   enrollmentLink,
-  formatMinutes,
   formatPrice,
 } from '../student/components.jsx';
 
 function lessonsLeft(percent) {
   if (percent == null) return null;
-  const left = Math.max(1, Math.ceil((100 - percent) / 12));
-  return left;
+  return Math.max(1, Math.ceil((100 - percent) / 12));
+}
+
+function moduleLabel(percent) {
+  const module = Math.max(1, Math.min(8, Math.ceil((percent || 10) / 15)));
+  return `Module ${module}`;
 }
 
 function ResumeCard({ enrollment }) {
@@ -26,34 +29,35 @@ function ResumeCard({ enrollment }) {
   const mins = enrollment.totalMinutes
     ? Math.max(15, Math.round((Number(enrollment.totalMinutes) || 60) * (1 - percent / 100) / 4))
     : 35;
-  const resumeLabel = percent > 0 ? `Resume ${enrollment.courseTitle}` : `Start ${enrollment.courseTitle}`;
+  const action = percent > 0
+    ? `Resume ${enrollment.courseTitle}`
+    : `Start ${enrollment.courseTitle}`;
 
   return (
-    <article className="overflow-hidden rounded-[1.75rem] bg-white shadow-lift ring-1 ring-hairline">
-      <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[2/1]">
+    <article className="overflow-hidden rounded-[1.5rem] bg-white shadow-lift ring-1 ring-hairline">
+      <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[2.05/1]">
         <CourseCover
           category={enrollment.categoryName}
           title={enrollment.courseTitle}
           className="!aspect-auto absolute inset-0 h-full w-full"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand via-brand/55 to-transparent" />
-        <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-charcoal shadow-soft [&_svg]:h-3.5 [&_svg]:w-3.5">
+        <div className="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/35 to-transparent" />
+        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-charcoal shadow-soft [&_svg]:h-3.5 [&_svg]:w-3.5">
           <ClockIcon />
           {mins} mins left
         </span>
         <div className="absolute inset-x-0 bottom-0 space-y-1 p-4 text-white sm:p-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-wheat">
-            {enrollment.categoryName || 'In progress'}
-            {percent ? ` · ${percent}%` : ''}
+            {moduleLabel(percent)} · {(enrollment.categoryName || 'Optimization').toUpperCase()}
           </p>
           <p className="font-display text-xl font-bold leading-snug sm:text-2xl">
             {percent > 0 ? 'Resume lesson' : 'Start learning'}
           </p>
-          <p className="text-sm text-white/85 line-clamp-1">{enrollment.courseTitle}</p>
+          <p className="line-clamp-1 text-sm text-white/85">{enrollment.courseTitle}</p>
         </div>
       </div>
       <div className="space-y-4 p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="font-display text-lg font-bold leading-snug text-charcoal">
               {enrollment.courseTitle}
@@ -65,14 +69,14 @@ function ResumeCard({ enrollment }) {
           <p className="shrink-0 text-sm font-bold text-brand">{percent}% Completed</p>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-brand-soft">
-          <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${percent}%` }} />
+          <div className="h-full rounded-full bg-brand" style={{ width: `${percent}%` }} />
         </div>
         <Link
           to={href}
           className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-4 py-3.5 text-sm font-bold text-white shadow-soft hover:bg-brand-hover"
         >
           <PlayIcon />
-          <span className="truncate">{resumeLabel}</span>
+          <span className="truncate">{action}</span>
         </Link>
       </div>
     </article>
@@ -87,45 +91,41 @@ function CuratedCard({ course }) {
   const modules = course.lessonCount
     || (course.sections || []).reduce((sum, section) => sum + (section.lessons?.length || 0), 0)
     || null;
+  const track = course.category || 'Course';
 
   return (
-    <article className="overflow-hidden rounded-[1.5rem] bg-white shadow-soft ring-1 ring-hairline">
+    <article className="overflow-hidden rounded-[1.35rem] bg-white shadow-soft ring-1 ring-hairline">
       <div className="relative aspect-[16/10] bg-sand">
         {course.imageUrl ? (
           <CourseImage course={course} className="!aspect-auto h-full w-full" />
         ) : (
           <CourseCover category={course.category} title={course.title} className="!aspect-auto h-full w-full" />
         )}
-        <div className="absolute inset-x-0 top-0 flex flex-wrap items-start justify-between gap-2 p-3">
-          <span className="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand shadow-soft">
-            {course.category || 'Course'}
+        {enrolled ? (
+          <span className="absolute right-3 top-3 rounded-full bg-brand px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-soft">
+            Enrolled
           </span>
-          <div className="flex flex-wrap justify-end gap-1.5">
-            {modules ? (
-              <span className="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-charcoal shadow-soft">
-                {modules} modules
-              </span>
-            ) : null}
-            {enrolled ? (
-              <span className="rounded-full bg-brand px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-soft">
-                Enrolled
-              </span>
-            ) : (
-              <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[10px] font-bold text-brand shadow-soft">
-                Prerequisite met
-              </span>
-            )}
-          </div>
-        </div>
+        ) : (
+          <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-brand shadow-soft">
+            Prerequisite met
+          </span>
+        )}
       </div>
       <div className="space-y-3 p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand">
+            {track}
+          </span>
+          {modules ? (
+            <span className="text-[11px] font-semibold text-charcoal-muted">{modules} modules</span>
+          ) : null}
+        </div>
         <div>
           <h3 className="font-display text-[1.05rem] font-bold leading-snug text-charcoal">
             <Link to={to} className="hover:text-brand">{course.title}</Link>
           </h3>
           <p className="mt-1 text-sm text-charcoal-muted">
             {course.instructorName || 'Instructor TBA'}
-            {course.totalMinutes ? ` · ${formatMinutes(course.totalMinutes)}` : ''}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -141,16 +141,19 @@ function CuratedCard({ course }) {
             </span>
           ) : null}
         </div>
-        <Link
-          to={to}
-          className={`inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold ${
-            enrolled
-              ? 'bg-brand-soft text-brand hover:bg-brand hover:text-white'
-              : 'bg-brand text-white hover:bg-brand-hover'
-          }`}
-        >
-          {enrolled ? 'View syllabus' : '+ Enroll now'}
-        </Link>
+        {enrolled ? (
+          <Link to={to} className="inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline [&_svg]:h-3.5 [&_svg]:w-3.5">
+            View syllabus
+            <ArrowRightIcon />
+          </Link>
+        ) : (
+          <Link
+            to={to}
+            className="inline-flex w-full items-center justify-center rounded-2xl bg-brand-soft px-4 py-3 text-sm font-bold text-brand hover:bg-brand hover:text-white"
+          >
+            + Enroll now
+          </Link>
+        )}
       </div>
     </article>
   );
@@ -160,7 +163,7 @@ function DeadlineRow({ enrollment, urgent, dayLabel, timeLabel }) {
   return (
     <Link
       to={enrollmentLink(enrollment)}
-      className="flex items-start gap-3 rounded-2xl bg-white p-3.5 shadow-soft ring-1 ring-hairline transition hover:ring-brand/30"
+      className="flex items-start gap-3 rounded-2xl bg-white p-3.5 shadow-soft ring-1 ring-hairline transition hover:ring-brand/25"
     >
       <span className={`mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl ${urgent ? 'bg-wheat/20 text-wheat' : 'bg-brand-soft text-brand'}`}>
         {urgent ? <AlertIcon /> : <CheckIcon />}
@@ -208,7 +211,7 @@ function HomeBody({ data }) {
           <h1 className="font-display text-[1.85rem] font-bold leading-tight tracking-tight text-charcoal sm:text-4xl">
             Welcome back, {firstName}!
           </h1>
-          <span className="rounded-full bg-brand px-3 py-1 text-[11px] font-bold text-white">
+          <span className="rounded-full bg-brand-soft px-3 py-1 text-[11px] font-bold text-brand ring-1 ring-brand/10">
             Undergraduate · Student
           </span>
         </div>
@@ -231,8 +234,18 @@ function HomeBody({ data }) {
       </header>
 
       {featured ? (
-        <section aria-labelledby="resume-heading">
-          <h2 id="resume-heading" className="sr-only">Continue learning</h2>
+        <section aria-labelledby="in-progress-heading" className="space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">In progress</p>
+              <h2 id="in-progress-heading" className="font-display text-xl font-bold text-charcoal">
+                {active.length} active course{active.length === 1 ? '' : 's'}
+              </h2>
+            </div>
+            <Link to="/learn/my-learning" className="text-sm font-bold text-brand hover:underline">
+              View all
+            </Link>
+          </div>
           <ResumeCard enrollment={featured} />
         </section>
       ) : (
@@ -243,7 +256,15 @@ function HomeBody({ data }) {
         />
       )}
 
-      <section aria-labelledby="curated-heading" className="space-y-4">
+      <section aria-labelledby="categories-heading" className="space-y-3">
+        <div className="flex items-end justify-between gap-3">
+          <h2 id="categories-heading" className="text-[11px] font-bold uppercase tracking-[0.16em] text-charcoal-muted">
+            Categories
+          </h2>
+          <Link to="/learn/courses" className="text-sm font-bold text-brand hover:underline">
+            View hierarchy
+          </Link>
+        </div>
         <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {(categories.length > 1 ? categories : ['All']).map((item) => (
             <button
@@ -260,7 +281,9 @@ function HomeBody({ data }) {
             </button>
           ))}
         </div>
+      </section>
 
+      <section aria-labelledby="curated-heading" className="space-y-4">
         <div className="flex items-end justify-between gap-3">
           <div>
             <h2 id="curated-heading" className="font-display text-xl font-bold text-charcoal sm:text-2xl">
