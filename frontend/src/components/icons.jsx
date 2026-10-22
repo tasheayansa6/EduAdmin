@@ -82,6 +82,10 @@ export function ChevronDownIcon() {
   return <Icon><path d="M6 9l6 6 6-6" /></Icon>;
 }
 
+export function ChevronRightIcon() {
+  return <Icon><path d="M9 6l6 6-6 6" /></Icon>;
+}
+
 export function ArrowRightIcon() {
   return <Icon><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></Icon>;
 }
