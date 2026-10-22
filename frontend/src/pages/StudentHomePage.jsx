@@ -205,7 +205,7 @@ function HomeBody({ data }) {
   const left = featured ? lessonsLeft(featured.percent) : null;
 
   return (
-    <div className="space-y-5">
+    <div className="student-compact space-y-5">
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-display text-[1.75rem] font-bold leading-tight tracking-tight text-charcoal sm:text-4xl">

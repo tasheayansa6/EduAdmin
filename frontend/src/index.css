@@ -159,6 +159,16 @@
   .student-theme .bottom-nav-icon {
     @apply grid h-9 w-9 place-items-center rounded-full [&_svg]:h-[1.15rem] [&_svg]:w-[1.15rem];
   }
+
+  /* Compact Stitch layout for Explore + Learning only */
+  .student-compact {
+    @apply w-full;
+  }
+
+  .student-compact .hub-card,
+  .student-compact article {
+    @apply rounded-2xl;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

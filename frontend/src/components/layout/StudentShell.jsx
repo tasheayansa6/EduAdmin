@@ -295,7 +295,8 @@ export function StudentShell() {
   const location = useLocation();
   const [drawer, setDrawer] = useState(false);
   const closeDrawer = useCallback(() => setDrawer(false), []);
-  const compactLayout = location.pathname === '/learn' || location.pathname === '/learn/my-learning';
+  const path = location.pathname.replace(/\/+$/, '') || '/';
+  const compactLayout = path === '/learn' || path === '/learn/my-learning';
 
   useEffect(() => {
     setDrawer(false);
@@ -321,7 +322,7 @@ export function StudentShell() {
             tabIndex={-1}
             className={
               compactLayout
-                ? 'mx-auto w-full max-w-lg flex-1 px-3 py-4 pb-28 focus:outline-none sm:max-w-2xl sm:px-4 sm:py-5 md:pb-8'
+                ? 'student-compact-shell mx-auto w-full max-w-lg flex-1 px-3 py-4 pb-28 focus:outline-none sm:max-w-2xl sm:px-4 sm:py-5 md:pb-8'
                 : 'mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8'
             }
           >

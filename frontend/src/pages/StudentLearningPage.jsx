@@ -251,7 +251,7 @@ function LearningBody({ data }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="student-compact space-y-4">
       <header className="space-y-3">
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
           Academic session {year}-{year + 1}
