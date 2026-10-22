@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { FlameIcon, PlayIcon, SearchIcon } from '../components/icons.jsx';
+import { MiniWeekChart, PaceRing } from '../student/charts.jsx';
 import { currentEnrollments, useDocumentTitle, useStore, useStudentData } from '../student/StudentData.jsx';
 import {
   CourseCover,
@@ -18,6 +19,7 @@ const TABS = [
 function HubCard({ enrollment }) {
   const percent = enrollment.percent ?? 0;
   const href = enrollmentLink(enrollment);
+  const strong = percent >= 50;
   return (
     <article className="hub-card">
       <div className="relative">
@@ -61,11 +63,15 @@ function HubCard({ enrollment }) {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <p className="text-xs font-semibold text-charcoal-muted">
-            {percent >= 100 ? 'Course complete' : `Next: continue learning`}
+            {percent >= 100 ? 'Course complete' : 'Next: continue learning'}
           </p>
           <Link
             to={href}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-sm font-bold text-white hover:bg-brand-hover"
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold ${
+              strong
+                ? 'bg-brand text-white hover:bg-brand-hover'
+                : 'bg-brand-soft text-brand hover:bg-brand hover:text-white'
+            }`}
           >
             <PlayIcon />
             Continue learning
@@ -73,33 +79,6 @@ function HubCard({ enrollment }) {
         </div>
       </div>
     </article>
-  );
-}
-
-function Ring({ value }) {
-  const pct = Math.max(0, Math.min(100, Number(value) || 0));
-  const r = 28;
-  const c = 2 * Math.PI * r;
-  const offset = c - (pct / 100) * c;
-  return (
-    <svg viewBox="0 0 72 72" className="h-16 w-16 shrink-0" aria-hidden="true">
-      <circle cx="36" cy="36" r={r} fill="none" stroke="#e8efe9" strokeWidth="7" />
-      <circle
-        cx="36"
-        cy="36"
-        r={r}
-        fill="none"
-        stroke="#15432a"
-        strokeWidth="7"
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={offset}
-        transform="rotate(-90 36 36)"
-      />
-      <text x="36" y="40" textAnchor="middle" className="fill-brand text-[13px] font-bold">
-        {pct}%
-      </text>
-    </svg>
   );
 }
 
@@ -115,6 +94,8 @@ function LearningBody({ data }) {
   const filter = params.get('find') || '';
   const needle = filter.trim().toLowerCase();
   const year = new Date().getFullYear();
+  const hoursDone = Math.round(((Number(avg) || 0) / 100) * 6 * 10) / 10;
+  const hoursTarget = 6;
 
   let visible;
   if (tab.key === 'favorites') {
@@ -143,7 +124,7 @@ function LearningBody({ data }) {
 
   return (
     <div className="space-y-5">
-      <header className="space-y-3">
+      <header className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
             Academic session {year}
@@ -151,21 +132,32 @@ function LearningBody({ data }) {
           {active.length ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand [&_svg]:h-3.5 [&_svg]:w-3.5">
               <FlameIcon />
-              {active.length} day streak
+              {Math.max(active.length, 1)} day streak
             </span>
           ) : null}
         </div>
 
+        <h1 className="font-display text-3xl font-bold tracking-tight text-charcoal sm:text-4xl">
+          My Learning Hub
+        </h1>
+
         {(active.length || completed.length) ? (
-          <div className="hub-card flex items-center justify-between gap-4 p-4">
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-charcoal">Weekly target</p>
-              <p className="mt-1 text-sm text-charcoal-muted">
-                {completed.length} completed · {active.length} in progress
-                {avg != null ? ` · ${avg}% avg` : ''}
-              </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="hub-card flex items-center justify-between gap-4 p-4">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-charcoal">Weekly target</p>
+                <p className="mt-1 text-sm text-charcoal-muted">
+                  {hoursDone} of {hoursTarget} hrs
+                </p>
+                <p className="mt-1 text-xs font-semibold text-brand">
+                  {avg == null ? '—' : `${avg}%`} completed
+                </p>
+              </div>
+              <PaceRing value={avg ?? Math.round((hoursDone / hoursTarget) * 100)} size="lg" label="Done" />
             </div>
-            <Ring value={avg ?? 0} />
+            <div className="hub-card p-4">
+              <MiniWeekChart avg={avg} courseCount={rows.length} height={88} />
+            </div>
           </div>
         ) : null}
       </header>

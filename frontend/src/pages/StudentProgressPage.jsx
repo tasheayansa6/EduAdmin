@@ -15,13 +15,14 @@ import {
   YAxis,
 } from 'recharts';
 import { CheckIcon, FlameIcon, TrendIcon } from '../components/icons.jsx';
+import { CHART, ChartTip, buildWeeklyHours } from '../student/charts.jsx';
 import { currentEnrollments, useDocumentTitle, useStudentData } from '../student/StudentData.jsx';
 import { Meter, StudentData, StudentEmpty, enrollmentLink } from '../student/components.jsx';
 
-const BRAND = '#15432a';
-const BRAND_SOFT = '#b9d4c2';
-const BRAND_MUTED = '#e8f1ea';
-const WHEAT = '#eab308';
+const BRAND = CHART.brand;
+const BRAND_SOFT = CHART.soft;
+const BRAND_MUTED = CHART.muted;
+const WHEAT = CHART.wheat;
 const GRID = '#d5e0d7';
 
 function StatTile({ label, value, detail, tone }) {
@@ -36,44 +37,8 @@ function StatTile({ label, value, detail, tone }) {
   );
 }
 
-function ChartTooltip({ active, payload, label, unit = 'h' }) {
-  if (!active || !payload?.length) return null;
-  const value = payload[0]?.value;
-  return (
-    <div className="rounded-xl border border-hairline bg-white px-3 py-2 shadow-lift">
-      <p className="text-xs font-bold uppercase tracking-wide text-charcoal-muted">{label}</p>
-      <p className="mt-0.5 text-sm font-bold text-brand">
-        {value}
-        {unit}
-      </p>
-    </div>
-  );
-}
-
-/** Static professional weekly series shaped lightly by real progress. */
-function buildWeeklySeries(avg, courseCount) {
-  const intensity = Math.max(0.4, (Number(avg) || 42) / 100);
-  const load = Math.max(1, Math.min(courseCount || 1, 5));
-  const base = [
-    { day: 'Mon', hours: 3.5 },
-    { day: 'Tue', hours: 4.2 },
-    { day: 'Wed', hours: 5.0 },
-    { day: 'Thu', hours: 2.1 },
-    { day: 'Fri', hours: 4.8 },
-    { day: 'Sat', hours: 6.2 },
-    { day: 'Sun', hours: 3.0 },
-  ];
-  const scale = 0.55 + intensity * 0.7 + load * 0.04;
-  const todayIndex = (new Date().getDay() + 6) % 7;
-  return base.map((row, index) => ({
-    day: row.day,
-    hours: Math.round(row.hours * scale * 10) / 10,
-    fill: index === todayIndex ? BRAND : BRAND_SOFT,
-  }));
-}
-
 function WeeklyStudyChart({ avg, courseCount }) {
-  const data = useMemo(() => buildWeeklySeries(avg, courseCount), [avg, courseCount]);
+  const data = useMemo(() => buildWeeklyHours(avg, courseCount), [avg, courseCount]);
   const total = Math.round(data.reduce((sum, row) => sum + row.hours, 0) * 10) / 10;
   const target = 25;
   const dailyTarget = Math.round((target / 7) * 10) / 10;
@@ -116,7 +81,7 @@ function WeeklyStudyChart({ avg, courseCount }) {
               unit="h"
               width={36}
             />
-            <Tooltip content={<ChartTooltip unit="h" />} cursor={{ fill: BRAND_MUTED, radius: 8 }} />
+            <Tooltip content={<ChartTip unit="h" />} cursor={{ fill: BRAND_MUTED, radius: 8 }} />
             <ReferenceLine
               y={dailyTarget}
               stroke={WHEAT}
@@ -256,7 +221,7 @@ function PaceDonut({ avg, active, completed }) {
                   <Cell key={entry.name} fill={entry.fill} />
                 ))}
               </Pie>
-              <Tooltip content={<ChartTooltip unit="%" />} />
+              <Tooltip content={<ChartTip unit="%" />} />
             </PieChart>
           </ResponsiveContainer>
           <div className="pointer-events-none absolute inset-0 grid place-items-center">

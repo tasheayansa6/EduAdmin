@@ -17,25 +17,26 @@ import {
 function ResumeCard({ enrollment }) {
   const percent = enrollment.percent ?? 0;
   const href = enrollmentLink(enrollment);
+  const action = percent > 0 ? 'Resume lesson' : 'Start learning';
   return (
     <article className="overflow-hidden rounded-[1.75rem] border border-hairline bg-white shadow-soft">
-      <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[2.1/1]">
+      <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[2.15/1]">
         <CourseCover
           category={enrollment.categoryName}
           title={enrollment.courseTitle}
           className="!aspect-auto absolute inset-0 h-full w-full"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-charcoal/85 via-charcoal/35 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/40 to-transparent" />
         <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-charcoal shadow-soft">
           Continue
         </span>
         <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/75">
-            {enrollment.categoryName || 'In progress'}
-            {enrollment.percent != null ? ` · ${percent}% complete` : ''}
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/80">
+            {enrollment.categoryName || 'Module'}
+            {enrollment.percent != null ? ` · ${percent}%` : ''}
           </p>
           <p className="mt-1 font-display text-lg font-bold leading-snug sm:text-xl">
-            {percent > 0 ? `Resume: ${enrollment.courseTitle}` : `Start: ${enrollment.courseTitle}`}
+            {action}: {enrollment.courseTitle}
           </p>
         </div>
       </div>
@@ -43,7 +44,9 @@ function ResumeCard({ enrollment }) {
         <div>
           <h3 className="font-display text-lg font-bold text-charcoal">{enrollment.courseTitle}</h3>
           <p className="mt-1 text-sm text-charcoal-muted">
-            {[enrollment.instructorName, enrollment.percent != null ? `${percent}% completed` : null].filter(Boolean).join(' · ') || 'Continue learning'}
+            {[enrollment.instructorName, enrollment.percent != null ? `${percent}% Completed` : null]
+              .filter(Boolean)
+              .join(' · ') || 'Continue learning'}
           </p>
         </div>
         <Meter value={percent} label="Course progress" />
@@ -52,7 +55,7 @@ function ResumeCard({ enrollment }) {
           className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-4 py-3.5 text-sm font-bold text-white shadow-soft hover:bg-brand-hover"
         >
           <PlayIcon />
-          {percent > 0 ? 'Resume lesson' : 'Start learning'}
+          {action}
         </Link>
       </div>
     </article>
@@ -79,6 +82,10 @@ function CuratedCard({ course }) {
           <span className="absolute right-3 top-3 rounded-full bg-brand px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
             Enrolled
           </span>
+        ) : course.lessonCount ? (
+          <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-charcoal shadow-soft">
+            {course.lessonCount} lessons
+          </span>
         ) : null}
       </div>
       <div className="space-y-3 p-4">
@@ -90,16 +97,25 @@ function CuratedCard({ course }) {
             <p className="mt-1 text-sm text-charcoal-muted">{course.instructorName}</p>
           ) : null}
         </div>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className={`text-base font-extrabold ${course.isFree ? 'text-brand' : 'text-charcoal'}`}>
             {formatPrice(course.price, course.currency)}
           </span>
+          {enrolled ? (
+            <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-bold text-brand">Enrolled</span>
+          ) : (
+            <span className="rounded-full bg-mint px-2.5 py-1 text-[11px] font-bold text-brand">Open</span>
+          )}
         </div>
         <Link
           to={to}
-          className="inline-flex w-full items-center justify-center rounded-2xl bg-brand px-4 py-3 text-sm font-bold text-white hover:bg-brand-hover"
+          className={`inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold ${
+            enrolled
+              ? 'border border-brand/20 bg-brand-soft text-brand hover:bg-brand hover:text-white'
+              : 'bg-brand text-white hover:bg-brand-hover'
+          }`}
         >
-          {enrolled ? 'Open course' : course.isFree ? 'View course' : 'Enroll now'}
+          {enrolled ? 'View syllabus' : '+ Enroll now'}
         </Link>
       </div>
     </article>
@@ -119,11 +135,11 @@ function DeadlineRow({ enrollment, urgent }) {
         <span className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-charcoal">{enrollment.courseTitle}</span>
           <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${urgent ? 'bg-wheat/20 text-wheat-ink' : 'bg-brand-soft text-brand'}`}>
-            {urgent ? 'Due soon' : 'This week'}
+            {urgent ? 'Due Tomorrow' : 'This week'}
           </span>
         </span>
         <span className="mt-0.5 block text-sm text-charcoal-muted">
-          {enrollment.percent ?? 0}% complete — resume to keep moving
+          {urgent ? '11:59 PM' : '5:00 PM'} · {enrollment.percent ?? 0}% complete
         </span>
       </span>
     </Link>
@@ -167,7 +183,7 @@ function HomeBody({ data }) {
           <div className="flex items-start gap-2 rounded-2xl border border-brand/15 bg-brand-soft/90 px-4 py-3 text-sm text-brand [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
             <LeafIcon />
             <div>
-              <p className="font-bold">Weekly goal in sight</p>
+              <p className="font-bold">Weekly Goal in Sight</p>
               <p className="mt-0.5 text-brand/85">
                 {remaining != null && remaining > 0
                   ? `You're ${remaining}% away from completing “${featured.courseTitle}”.`
@@ -224,10 +240,10 @@ function HomeBody({ data }) {
         ) : null}
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h2 id="curated-heading" className="font-display text-xl font-bold text-charcoal">
-              Curated for you
+            <h2 id="curated-heading" className="font-display text-xl font-bold text-charcoal sm:text-2xl">
+              Curated For Your Degree
             </h2>
-            <p className="mt-1 text-sm text-charcoal-muted">Recommended from published courses</p>
+            <p className="mt-1 text-sm text-charcoal-muted">Recommended based on your enrolled courses</p>
           </div>
           <Link to="/learn/courses" className="text-sm font-bold text-brand hover:underline">
             See all
@@ -255,7 +271,7 @@ function HomeBody({ data }) {
         <section aria-labelledby="deadlines-heading" className="space-y-3">
           <div className="flex items-end justify-between gap-3">
             <h2 id="deadlines-heading" className="font-display text-xl font-bold text-charcoal">
-              Upcoming deadlines
+              Upcoming Deadlines
             </h2>
             <p className="text-xs font-semibold uppercase tracking-wide text-charcoal-muted">
               {deadlines.length} pending
