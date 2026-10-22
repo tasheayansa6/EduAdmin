@@ -1,4 +1,4 @@
-import { Link, Navigate, Route, Routes } from 'react-router-dom';
+import { Link, Route, Routes } from 'react-router-dom';
 import { GuestOnly, RequireAdmin, RequireRole, RequireStudent } from './auth/ProtectedRoutes.jsx';
 import { AppShell } from './components/layout/AppShell.jsx';
 import { StudentShell } from './components/layout/StudentShell.jsx';
@@ -22,6 +22,7 @@ import { StudentHomePage } from './pages/StudentHomePage.jsx';
 import { StudentLearningPage } from './pages/StudentLearningPage.jsx';
 import { StudentLocalCoursePage } from './pages/StudentLocalCoursePage.jsx';
 import { StudentLocalPlayerPage } from './pages/StudentLocalPlayerPage.jsx';
+import { StudentProgressPage } from './pages/StudentProgressPage.jsx';
 import { StudentNotificationsPage } from './pages/StudentNotificationsPage.jsx';
 import {
   StudentAccountSecurity,
@@ -67,7 +68,7 @@ export function App() {
           <Route path="learn/favorites" element={<StudentFavoritesPage />} />
           <Route path="learn/checkout/:txRef" element={<StudentCheckoutPage />} />
           <Route path="learn/my-learning" element={<StudentLearningPage />} />
-          <Route path="learn/progress" element={<Navigate to="/learn/my-learning" replace />} />
+          <Route path="learn/progress" element={<StudentProgressPage />} />
           <Route path="learn/notifications" element={<StudentNotificationsPage />} />
           <Route path="learn/profile" element={<StudentProfileLayout />}>
             <Route index element={<StudentPublicProfileForm />} />

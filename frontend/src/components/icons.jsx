@@ -121,3 +121,15 @@ export function LinkIcon() {
 export function AlertIcon() {
   return <Icon><path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L14.7 3.9a2 2 0 0 0-3.4 0z" /></Icon>;
 }
+
+export function CompassIcon() {
+  return <Icon><circle cx="12" cy="12" r="9" /><path d="m16.2 7.8-2.4 6-6 2.4 2.4-6 6-2.4z" /><circle cx="12" cy="12" r="1.2" fill="currentColor" /></Icon>;
+}
+
+export function FlameIcon() {
+  return <Icon><path d="M12 3c2 3 5 4.5 5 8.2A5 5 0 0 1 7 11.5C7 8 9 6 12 3z" /><path d="M10.5 14.5c0 1.5 1 2.5 1.5 3.5.5-1 1.5-2 1.5-3.5" /></Icon>;
+}
+
+export function LeafIcon() {
+  return <Icon><path d="M5 19c8 0 14-6 14-14-8 0-14 6-14 14z" /><path d="M5 19c3-3 6-6 9-8" /></Icon>;
+}

@@ -35,7 +35,7 @@ const NAV = [
 ];
 
 const TITLES = {
-  '/': 'Dashboard',
+  '/': 'Admin management',
   '/students': 'Students',
   '/courses': 'Courses',
   '/enrollments': 'Enrollments',
@@ -44,6 +44,13 @@ const TITLES = {
   '/administrators': 'Administrators',
   '/profile': 'Profile',
 };
+
+const MOBILE_NAV = [
+  { to: '/', label: 'Dashboard', icon: GridIcon, end: true },
+  { to: '/students', label: 'Students', icon: UsersIcon },
+  { to: '/courses', label: 'Courses', icon: BookIcon },
+  { to: '/reports', label: 'Reports', icon: ChartIcon },
+];
 
 function SidebarNav({ user, collapsed, onNavigate }) {
   return (
@@ -275,8 +282,8 @@ export function AppShell() {
         <Mark />
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="truncate text-base font-semibold leading-none text-ink">EduAdmin</p>
-            <p className="mt-1 truncate text-xs text-ink-muted">Administration</p>
+            <p className="truncate font-display text-base font-bold leading-none text-ink">EduAdmin</p>
+            <p className="mt-1 truncate text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">Admin management</p>
           </div>
         ) : null}
       </div>
@@ -297,7 +304,7 @@ export function AppShell() {
   );
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen bg-[#f4f7f4]">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:border focus:border-line focus:bg-white focus:px-3 focus:py-2"
@@ -332,8 +339,8 @@ export function AppShell() {
               <div className="flex items-center gap-3">
                 <Mark />
                 <div>
-                  <p className="text-base font-semibold leading-none text-ink">EduAdmin</p>
-                  <p className="mt-1 text-xs text-ink-muted">Administration</p>
+                  <p className="font-display text-base font-bold leading-none text-ink">EduAdmin</p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">Admin management</p>
                 </div>
               </div>
               <button type="button" className="admin-icon-btn" aria-label="Close navigation" onClick={() => setMobileOpen(false)}>
@@ -393,9 +400,35 @@ export function AppShell() {
               </div>
             </form>
           </header>
-          <main id="main" className="px-4 py-6 sm:px-6 lg:px-8">
+          <main id="main" className="px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">
             <Outlet />
           </main>
+
+          <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Primary">
+            <ul className="flex">
+              {MOBILE_NAV.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.to} className="flex flex-1">
+                    <NavLink
+                      to={item.to}
+                      end={item.end}
+                      className={({ isActive }) =>
+                        `flex flex-1 flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-semibold ${
+                          isActive ? 'text-accent' : 'text-ink-muted'
+                        }`
+                      }
+                    >
+                      <span className="grid h-9 w-9 place-items-center rounded-full [&_svg]:h-[1.15rem] [&_svg]:w-[1.15rem]">
+                        <Icon />
+                      </span>
+                      <span>{item.label}</span>
+                    </NavLink>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
         </div>
       </div>
     </div>

@@ -36,6 +36,7 @@ export default {
       },
       fontFamily: {
         sans: ['"Source Sans 3"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"Source Serif 4"', 'Georgia', 'ui-serif', 'serif'],
       },
       maxWidth: {
         shell: '80rem',

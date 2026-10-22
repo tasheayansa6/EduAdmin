@@ -80,6 +80,10 @@
     @apply inline-grid h-10 w-10 place-items-center rounded-xl border border-line bg-white text-ink-muted shadow-soft hover:bg-slate-50 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
   }
 
+  nav[aria-label='Primary'] a[aria-current='page'] span:first-child {
+    @apply bg-accent/10 text-accent;
+  }
+
   .student-theme :focus-visible {
     @apply outline outline-2 outline-offset-2 outline-brand;
   }
@@ -126,6 +130,34 @@
 
   .eyebrow {
     @apply text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-muted;
+  }
+
+  .student-theme .display-title {
+    @apply font-display tracking-tight text-charcoal;
+  }
+
+  .student-theme .hub-card {
+    @apply overflow-hidden rounded-2xl border border-hairline bg-white shadow-soft;
+  }
+
+  .student-theme .bottom-nav {
+    @apply fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-brand pb-[env(safe-area-inset-bottom)] text-white md:hidden;
+  }
+
+  .student-theme .bottom-nav-link {
+    @apply flex flex-1 flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-semibold tracking-wide text-white/70 transition-colors;
+  }
+
+  .student-theme .bottom-nav-link[aria-current='page'] {
+    @apply text-wheat;
+  }
+
+  .student-theme .bottom-nav-link[aria-current='page'] .bottom-nav-icon {
+    @apply bg-white/15 text-wheat ring-1 ring-wheat/40;
+  }
+
+  .student-theme .bottom-nav-icon {
+    @apply grid h-9 w-9 place-items-center rounded-full [&_svg]:h-[1.15rem] [&_svg]:w-[1.15rem];
   }
 }
 
