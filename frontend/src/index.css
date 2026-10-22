@@ -162,12 +162,17 @@
 
   /* Compact Stitch layout for Explore + Learning only */
   .student-compact {
-    @apply w-full;
+    @apply w-full text-left;
+  }
+
+  .student-compact > header,
+  .student-compact > section {
+    @apply text-left;
   }
 
   .student-compact .hub-card,
   .student-compact article {
-    @apply rounded-2xl;
+    @apply rounded-2xl text-left;
   }
 }
 
