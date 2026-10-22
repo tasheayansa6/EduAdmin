@@ -160,7 +160,11 @@ export function StoreCourseCard({ course }) {
             {course.title}
           </Link>
         </h3>
-        {course.subtitle ? <p className="mt-1 line-clamp-2 text-sm text-charcoal-muted">{course.subtitle}</p> : null}
+        {(course.description || course.subtitle) ? (
+          <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-charcoal-muted">
+            {course.description || course.subtitle}
+          </p>
+        ) : null}
         {course.instructorName ? <p className="mt-2 text-xs font-semibold text-charcoal-muted">{course.instructorName}</p> : null}
         <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-charcoal-muted [&_svg]:h-3.5 [&_svg]:w-3.5">
           {course.lessonCount ? <span>{course.lessonCount} lesson{course.lessonCount === 1 ? '' : 's'}</span> : null}
@@ -197,7 +201,11 @@ export function LocalCourseCard({ course }) {
             {course.title}
           </Link>
         </h3>
-        {course.subtitle ? <p className="mt-1 line-clamp-2 text-sm text-charcoal-muted">{course.subtitle}</p> : null}
+        {(course.description || course.subtitle) ? (
+          <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-charcoal-muted">
+            {course.description || course.subtitle}
+          </p>
+        ) : null}
         {course.instructorName ? <p className="mt-2 text-xs font-semibold text-charcoal-muted">{course.instructorName}</p> : null}
         <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-charcoal-muted [&_svg]:h-3.5 [&_svg]:w-3.5">
           {course.lessonCount ? <span>{course.lessonCount} lesson{course.lessonCount === 1 ? '' : 's'}</span> : null}

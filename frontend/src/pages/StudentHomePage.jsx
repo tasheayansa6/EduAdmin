@@ -95,6 +95,7 @@ function CuratedCard({ course }) {
     || (course.sections || []).reduce((sum, section) => sum + (section.lessons?.length || 0), 0)
     || null;
   const track = course.category || 'Course';
+  const about = String(course.description || course.subtitle || '').trim();
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
@@ -123,15 +124,21 @@ function CuratedCard({ course }) {
           <h3 className="font-display text-base font-bold leading-snug text-charcoal">
             <Link to={to} className="hover:text-brand">{course.title}</Link>
           </h3>
-          <p className="mt-0.5 text-sm text-charcoal-muted">
-            {course.instructorName || 'Instructor TBA'}
-          </p>
+          {about ? (
+            <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-charcoal-muted">{about}</p>
+          ) : (
+            <p className="mt-1.5 text-sm text-charcoal-muted">
+              {course.instructorName || 'Instructor TBA'}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className={`text-base font-extrabold ${course.isFree ? 'text-brand' : 'text-charcoal'}`}>
             {formatPrice(course.price, course.currency)}
           </span>
-          {course.ratingAvg != null ? (
+          {course.instructorName && about ? (
+            <span className="text-sm font-semibold text-charcoal-muted">{course.instructorName}</span>
+          ) : course.ratingAvg != null ? (
             <span className="text-sm font-semibold text-charcoal-muted">
               ★ {Number(course.ratingAvg).toFixed(1)}
               {course.ratingCount ? (

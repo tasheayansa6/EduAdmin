@@ -1,11 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
-import {
-  EXPLORE_GOALS,
-  buildLiveExplore,
-  itemHref,
-} from '../../student/exploreMenu.js';
 import { StudentDataProvider, useStore } from '../../student/StudentData.jsx';
 import { NotificationBell, NotificationsProvider } from '../../student/notifications.jsx';
 import { Avatar } from '../ui.jsx';
@@ -13,8 +8,6 @@ import {
   BookIcon,
   CartIcon,
   ChartIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
   CloseIcon,
   CompassIcon,
   HeartIcon,
@@ -44,6 +37,7 @@ const PAGE_LABELS = {
 };
 
 const DESKTOP_NAV = [
+  { to: '/learn', label: 'Explore', end: true },
   { to: '/learn/courses', label: 'Courses' },
   { to: '/learn/my-learning', label: 'Learning' },
   { to: '/learn/progress', label: 'Progress' },
@@ -88,166 +82,6 @@ function CountLink({ to, label, count, children }) {
         </span>
       ) : null}
     </NavLink>
-  );
-}
-
-function ExploreMenu() {
-  const { catalog } = useStore();
-  const location = useLocation();
-  const wrapper = useRef(null);
-  const [open, setOpen] = useState(false);
-
-  const liveCategories = useMemo(() => buildLiveExplore(catalog.data ?? []), [catalog.data]);
-  const primary = useMemo(
-    () => [
-      ...EXPLORE_GOALS.map((item) => ({ ...item, section: 'goal' })),
-      ...liveCategories.map((item) => ({ ...item, section: 'category' })),
-    ],
-    [liveCategories],
-  );
-  const [activeId, setActiveId] = useState(primary[0]?.id || null);
-  const active = primary.find((item) => item.id === activeId) || primary[0];
-
-  useEffect(() => {
-    if (!primary.some((item) => item.id === activeId) && primary[0]) {
-      setActiveId(primary[0].id);
-    }
-  }, [primary, activeId]);
-
-  useEffect(() => setOpen(false), [location.pathname, location.search]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    function onPointer(event) {
-      if (!wrapper.current?.contains(event.target)) setOpen(false);
-    }
-    function onKey(event) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('mousedown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  return (
-    <div ref={wrapper} className="relative">
-      <button
-        type="button"
-        className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-          open ? 'bg-brand text-white' : 'text-charcoal-muted hover:bg-white hover:text-charcoal'
-        }`}
-        aria-expanded={open}
-        aria-haspopup="true"
-        aria-controls="explore-menu"
-        onClick={() => setOpen((value) => !value)}
-      >
-        Explore
-        <span className={`[&_svg]:h-3.5 [&_svg]:w-3.5 ${open ? 'rotate-180' : ''}`}>
-          <ChevronDownIcon />
-        </span>
-      </button>
-
-      {open ? (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-40 bg-charcoal/25"
-            aria-label="Close Explore menu"
-            onClick={() => setOpen(false)}
-          />
-          <div
-            id="explore-menu"
-            role="menu"
-            className="absolute left-0 top-full z-50 mt-2 flex max-h-[min(36rem,75vh)] overflow-hidden rounded-xl border border-hairline bg-white shadow-lift"
-          >
-            <div className="w-[17.5rem] overflow-y-auto border-r border-hairline py-2">
-              <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
-                Explore by goal
-              </p>
-              {EXPLORE_GOALS.map((item) => {
-                const selected = item.id === active?.id;
-                return (
-                  <Link
-                    key={item.id}
-                    to={itemHref(item)}
-                    role="menuitem"
-                    className={`flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold ${
-                      selected ? 'bg-sand text-charcoal' : 'text-charcoal hover:bg-sand/70'
-                    }`}
-                    onMouseEnter={() => setActiveId(item.id)}
-                    onFocus={() => setActiveId(item.id)}
-                    onClick={() => setOpen(false)}
-                  >
-                    <span>{item.label}</span>
-                    <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
-                  </Link>
-                );
-              })}
-
-              {liveCategories.length ? (
-                <>
-                  <div className="my-2 border-t border-hairline" />
-                  <p className="px-4 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
-                    Categories
-                  </p>
-                  {liveCategories.map((item) => {
-                    const selected = item.id === active?.id;
-                    return (
-                      <Link
-                        key={item.id}
-                        to={itemHref(item)}
-                        role="menuitem"
-                        className={`flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold ${
-                          selected ? 'bg-sand text-charcoal' : 'text-charcoal hover:bg-sand/70'
-                        }`}
-                        onMouseEnter={() => setActiveId(item.id)}
-                        onFocus={() => setActiveId(item.id)}
-                        onClick={() => setOpen(false)}
-                      >
-                        <span>{item.label}</span>
-                        <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
-                      </Link>
-                    );
-                  })}
-                </>
-              ) : null}
-            </div>
-
-            {active?.children?.length ? (
-              <div className="w-[18.5rem] overflow-y-auto py-2">
-                <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
-                  {active.label}
-                </p>
-                {active.children.map((child) => (
-                  <Link
-                    key={`${active.id}-${child.label}`}
-                    to={itemHref(child)}
-                    role="menuitem"
-                    className="flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold text-charcoal hover:bg-sand/70"
-                    onClick={() => setOpen(false)}
-                  >
-                    <span className="line-clamp-2">{child.label}</span>
-                    <span className="shrink-0 text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
-                  </Link>
-                ))}
-                <div className="mt-2 border-t border-hairline px-4 py-3">
-                  <Link
-                    to={itemHref(active)}
-                    className="text-sm font-bold text-brand hover:underline"
-                    onClick={() => setOpen(false)}
-                  >
-                    Explore all {active.label}
-                  </Link>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </>
-      ) : null}
-    </div>
   );
 }
 
@@ -363,27 +197,6 @@ function MobileDrawer({ open, onClose, user, onLogout }) {
               {link.label}
             </NavLink>
           ))}
-          <div className="my-2 border-t border-hairline" />
-          <p className="px-3 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
-            Explore by goal
-          </p>
-          {EXPLORE_GOALS.map((item) => (
-            <Link
-              key={item.id}
-              to={itemHref(item)}
-              onClick={onClose}
-              className="block rounded-xl px-3 py-2.5 text-[15px] font-semibold text-charcoal hover:bg-sand"
-            >
-              {item.label}
-            </Link>
-          ))}
-          <Link
-            to="/learn/courses"
-            onClick={onClose}
-            className="block rounded-xl px-3 py-2.5 text-[15px] font-bold text-brand hover:bg-brand-soft"
-          >
-            Browse all courses
-          </Link>
         </nav>
         <div className="border-t border-hairline p-2">
           <button type="button" className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-charcoal hover:bg-sand" onClick={onLogout}>
@@ -420,7 +233,6 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
         </button>
         <Logo subtitle={subtitle} />
         <nav aria-label="Primary" className="ml-4 hidden items-center gap-1 lg:flex">
-          <ExploreMenu />
           {DESKTOP_NAV.map((item) => (
             <NavLink
               key={item.to}
