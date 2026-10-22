@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import {
-  AILG_ACADEMY_PATH,
   EXPLORE_GOALS,
   buildLiveExplore,
   itemHref,
@@ -101,19 +100,6 @@ function ExploreMenu() {
   const liveCategories = useMemo(() => buildLiveExplore(catalog.data ?? []), [catalog.data]);
   const primary = useMemo(
     () => [
-      {
-        id: 'ailg-academy',
-        label: 'AILG Academy',
-        to: AILG_ACADEMY_PATH,
-        children: [
-          { label: 'Open inside EduAdmin', to: AILG_ACADEMY_PATH },
-          { label: 'Browse all store courses', to: '/learn/courses' },
-          ...liveCategories.slice(0, 8).map((item) => ({
-            label: item.label,
-            category: item.category,
-          })),
-        ],
-      },
       ...EXPLORE_GOALS.map((item) => ({ ...item, section: 'goal' })),
       ...liveCategories.map((item) => ({ ...item, section: 'category' })),
     ],
@@ -179,31 +165,6 @@ function ExploreMenu() {
           >
             <div className="w-[17.5rem] overflow-y-auto border-r border-hairline py-2">
               <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
-                Connected store
-              </p>
-              {primary.filter((item) => item.id === 'ailg-academy').map((item) => {
-                const selected = item.id === active?.id;
-                return (
-                  <Link
-                    key={item.id}
-                    to={itemHref(item)}
-                    role="menuitem"
-                    className={`flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold ${
-                      selected ? 'bg-sand text-charcoal' : 'text-charcoal hover:bg-sand/70'
-                    }`}
-                    onMouseEnter={() => setActiveId(item.id)}
-                    onFocus={() => setActiveId(item.id)}
-                    onClick={() => setOpen(false)}
-                  >
-                    <span>{item.label}</span>
-                    <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
-                  </Link>
-                );
-              })}
-
-              <div className="my-2 border-t border-hairline" />
-
-              <p className="px-4 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
                 Explore by goal
               </p>
               {EXPLORE_GOALS.map((item) => {
@@ -226,42 +187,33 @@ function ExploreMenu() {
                 );
               })}
 
-              <div className="my-2 border-t border-hairline" />
-
-              <p className="px-4 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
-                {liveCategories.length ? 'AILG categories' : 'Categories'}
-              </p>
               {liveCategories.length ? (
-                liveCategories.map((item) => {
-                  const selected = item.id === active?.id;
-                  return (
-                    <Link
-                      key={item.id}
-                      to={itemHref(item)}
-                      role="menuitem"
-                      className={`flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold ${
-                        selected ? 'bg-sand text-charcoal' : 'text-charcoal hover:bg-sand/70'
-                      }`}
-                      onMouseEnter={() => setActiveId(item.id)}
-                      onFocus={() => setActiveId(item.id)}
-                      onClick={() => setOpen(false)}
-                    >
-                      <span>{item.label}</span>
-                      <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
-                    </Link>
-                  );
-                })
-              ) : (
-                <Link
-                  to={AILG_ACADEMY_PATH}
-                  role="menuitem"
-                  className="block px-4 py-2.5 text-sm font-semibold text-brand hover:bg-sand/70"
-                  onMouseEnter={() => setActiveId('ailg-academy')}
-                  onClick={() => setOpen(false)}
-                >
-                  Open AILG Academy inside EduAdmin
-                </Link>
-              )}
+                <>
+                  <div className="my-2 border-t border-hairline" />
+                  <p className="px-4 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
+                    Categories
+                  </p>
+                  {liveCategories.map((item) => {
+                    const selected = item.id === active?.id;
+                    return (
+                      <Link
+                        key={item.id}
+                        to={itemHref(item)}
+                        role="menuitem"
+                        className={`flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold ${
+                          selected ? 'bg-sand text-charcoal' : 'text-charcoal hover:bg-sand/70'
+                        }`}
+                        onMouseEnter={() => setActiveId(item.id)}
+                        onFocus={() => setActiveId(item.id)}
+                        onClick={() => setOpen(false)}
+                      >
+                        <span>{item.label}</span>
+                        <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
+                      </Link>
+                    );
+                  })}
+                </>
+              ) : null}
             </div>
 
             {active?.children?.length ? (
@@ -413,16 +365,6 @@ function MobileDrawer({ open, onClose, user, onLogout }) {
           ))}
           <div className="my-2 border-t border-hairline" />
           <p className="px-3 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
-            Connected store
-          </p>
-          <Link
-            to={AILG_ACADEMY_PATH}
-            onClick={onClose}
-            className="block rounded-xl px-3 py-2.5 text-[15px] font-semibold text-charcoal hover:bg-sand"
-          >
-            AILG Academy (inside EduAdmin)
-          </Link>
-          <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
             Explore by goal
           </p>
           {EXPLORE_GOALS.map((item) => (
