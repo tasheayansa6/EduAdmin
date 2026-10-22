@@ -37,8 +37,8 @@ function ResumeCard({ enrollment }) {
   const resume = lessonLabel(percent);
 
   return (
-    <article className="overflow-hidden rounded-xl bg-white shadow-soft">
-      <div className="relative h-44 bg-sand">
+    <article className="overflow-hidden rounded-xl bg-white shadow-soft md:shadow-md">
+      <div className="relative h-44 bg-sand md:h-56 lg:h-64">
         <CourseCover
           category={enrollment.categoryName}
           title={enrollment.courseTitle}
@@ -49,11 +49,11 @@ function ResumeCard({ enrollment }) {
           <ClockIcon />
           {mins} mins left
         </span>
-        <div className="absolute inset-x-3 bottom-3 text-white">
+        <div className="absolute inset-x-3 bottom-3 text-white md:inset-x-5 md:bottom-4">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/90">
             {moduleLabel(percent)} · {(enrollment.categoryName || 'Optimization').toUpperCase()}
           </p>
-          <p className="mt-0.5 truncate text-base font-semibold">{resume}</p>
+          <p className="mt-0.5 truncate text-base font-semibold md:text-lg">{resume}</p>
         </div>
       </div>
 
@@ -61,10 +61,10 @@ function ResumeCard({ enrollment }) {
         <div className="h-full bg-brand transition-all" style={{ width: `${percent}%` }} />
       </div>
 
-      <div className="flex flex-col gap-3 p-4">
+      <div className="flex flex-col gap-3 p-4 md:gap-4 md:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-display text-xl font-semibold tracking-tight text-charcoal">
+            <h2 className="truncate font-display text-xl font-semibold tracking-tight text-charcoal md:text-2xl">
               {enrollment.courseTitle}
             </h2>
             <p className="mt-1 flex items-center gap-2 text-sm text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4 [&_svg]:text-brand">
@@ -80,7 +80,7 @@ function ResumeCard({ enrollment }) {
 
         <Link
           to={href}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand text-sm font-semibold text-white shadow-soft hover:bg-brand-hover"
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand text-sm font-semibold text-white shadow-soft hover:bg-brand-hover md:max-w-md"
         >
           <PlayIcon />
           <span className="truncate">{resume}</span>
@@ -103,10 +103,10 @@ function CuratedCard({ course }) {
   const students = course.ratingCount != null ? Number(course.ratingCount).toLocaleString() : null;
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl bg-white shadow-soft">
-      <div className="relative h-36 bg-sand">
+    <article className="flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-soft">
+      <div className="relative h-36 shrink-0 bg-sand md:h-40">
         {course.imageUrl ? (
-          <CourseImage course={course} className="!aspect-auto h-full w-full" />
+          <CourseImage course={course} className="!aspect-auto h-full w-full object-cover transition duration-300 group-hover:scale-105" />
         ) : (
           <CourseCover category={course.category} title={course.title} className="!aspect-auto h-full w-full" />
         )}
@@ -121,7 +121,7 @@ function CuratedCard({ course }) {
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-1.5 p-4">
+      <div className="flex flex-1 flex-col gap-1.5 p-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-brand">{track}</span>
           {enrolled && modules ? (
@@ -212,15 +212,15 @@ function HomeBody({ data }) {
   const curated = (category === 'All'
     ? curatedBase
     : curatedBase.filter((course) => course.category === category)
-  ).slice(0, 3);
+  ).slice(0, 6);
   const deadlines = active.filter((row) => (row.percent ?? 0) < 80).slice(0, 2);
   const left = featured ? lessonsLeft(featured.percent) : null;
 
   return (
-    <div className="flex w-full flex-col">
-      <section className="space-y-2 pb-2 pt-1">
-        <div className="mb-1 flex items-center justify-between gap-2">
-          <h1 className="font-display text-[1.625rem] font-bold leading-[1.3] tracking-tight text-charcoal">
+    <div className="flex w-full flex-col md:gap-1">
+      <section className="space-y-2 pb-2 pt-1 md:pb-3 md:pt-2">
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2 md:mb-2">
+          <h1 className="font-display text-[1.625rem] font-bold leading-[1.3] tracking-tight text-charcoal md:text-4xl md:tracking-tight">
             Welcome back, {firstName}!
           </h1>
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.06em] text-brand">
@@ -230,13 +230,13 @@ function HomeBody({ data }) {
         </div>
 
         {featured ? (
-          <div className="flex items-start gap-2 rounded-xl bg-mint-soft p-4 shadow-soft">
+          <div className="flex items-start gap-2 rounded-xl bg-mint-soft p-4 shadow-soft md:max-w-3xl">
             <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand [&_svg]:h-5 [&_svg]:w-5">
               <LeafIcon />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-charcoal">Weekly Goal in Sight</p>
-              <p className="truncate text-xs leading-relaxed text-charcoal-muted">
+              <p className="text-xs leading-relaxed text-charcoal-muted md:text-sm">
                 {left ? (
                   <>
                     You're <span className="font-bold text-brand">{left} lesson{left === 1 ? '' : 's'} away</span>
@@ -322,11 +322,11 @@ function HomeBody({ data }) {
         </div>
 
         {loading ? (
-          <CardGridSkeleton count={3} />
+          <CardGridSkeleton count={6} />
         ) : curated.length ? (
-          <ul className="flex flex-col gap-4">
+          <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 md:gap-5">
             {curated.map((course) => (
-              <li key={course.key || course.id || course.slug}>
+              <li key={course.key || course.id || course.slug} className="group min-w-0">
                 <CuratedCard course={course} />
               </li>
             ))}
@@ -340,16 +340,16 @@ function HomeBody({ data }) {
       </section>
 
       {deadlines.length ? (
-        <section className="space-y-3 pb-2 pt-2" aria-labelledby="deadlines-heading">
+        <section className="space-y-3 pb-2 pt-2 md:pt-4" aria-labelledby="deadlines-heading">
           <div className="flex items-center justify-between gap-2">
-            <h2 id="deadlines-heading" className="font-display text-xl font-semibold tracking-tight text-charcoal">
+            <h2 id="deadlines-heading" className="font-display text-xl font-semibold tracking-tight text-charcoal md:text-2xl">
               Upcoming Deadlines
             </h2>
             <span className="text-[11px] font-bold uppercase tracking-wide text-charcoal-muted">
               {deadlines.length} pending
             </span>
           </div>
-          <ul className="flex flex-col gap-2">
+          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3">
             {deadlines.map((row, index) => (
               <li key={row.id}>
                 <Link to={enrollmentLink(row)} className="block">
