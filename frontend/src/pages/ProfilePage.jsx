@@ -6,8 +6,11 @@ export function ProfilePage() {
   const { user, name, setName, errors, pending, onSubmit } = useProfileForm();
 
   return (
-    <form onSubmit={onSubmit} className="max-w-lg space-y-4 rounded-lg border border-line bg-white p-6 shadow-card" noValidate>
-      <p className="text-sm text-ink-muted">This is the account you use to sign in. Email and role are managed with the existing account record.</p>
+    <form onSubmit={onSubmit} className="surface-card max-w-lg space-y-5 p-6 sm:p-7" noValidate>
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight text-ink">Account settings</h2>
+        <p className="mt-1 text-sm text-ink-muted">This is the account you use to sign in. Email and role stay on the account record.</p>
+      </div>
       <Field id="profile-name" label="Name" error={errors.name}>
         <TextInput id="profile-name" value={name} error={errors.name} onChange={(event) => setName(event.target.value)} />
       </Field>

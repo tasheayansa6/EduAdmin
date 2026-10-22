@@ -11,8 +11,8 @@ export function BootScreen() {
 
 export function PageIntro({ children, action }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="max-w-2xl text-sm text-ink-muted">{children}</p>
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="max-w-2xl text-sm leading-relaxed text-ink-muted">{children}</p>
       {action}
     </div>
   );
@@ -20,7 +20,7 @@ export function PageIntro({ children, action }) {
 
 export function Filters({ onSubmit, children }) {
   return (
-    <form onSubmit={onSubmit} className="mb-4 flex flex-col gap-3 rounded-lg border border-line bg-white p-4 shadow-card sm:flex-row sm:flex-wrap sm:items-end">
+    <form onSubmit={onSubmit} className="mb-5 flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 shadow-card sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 sm:p-5">
       {children}
     </form>
   );
@@ -93,8 +93,8 @@ export function Modal({ title, onClose, children, wide = false }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
       <button type="button" className="absolute inset-0 bg-ink/40" aria-label="Close dialog" onClick={onClose} />
-      <div role="dialog" aria-modal="true" aria-labelledby="dialog-title" className={`relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white p-6 shadow-xl ${wide ? 'max-w-3xl' : 'max-w-lg'}`}>
-        <h2 id="dialog-title" className="text-lg font-semibold">{title}</h2>
+      <div role="dialog" aria-modal="true" aria-labelledby="dialog-title" className={`relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-2xl border border-line bg-white p-6 shadow-lift ${wide ? 'max-w-3xl' : 'max-w-lg'}`}>
+        <h2 id="dialog-title" className="text-lg font-semibold tracking-tight text-ink">{title}</h2>
         <div className="mt-4">{children}</div>
       </div>
     </div>
@@ -114,7 +114,7 @@ export function StatusBadge({ status }) {
     in_progress: 'bg-sky-50 text-sky-950',
   };
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tones[status] || 'bg-slate-100 text-slate-700'}`}>
+    <span className={`inline-flex items-center rounded-full border border-transparent px-2.5 py-1 text-xs font-semibold ${tones[status] || 'bg-slate-100 text-slate-700'}`}>
       {statusLabel(status)}
     </span>
   );
@@ -161,23 +161,25 @@ export function PageHeader({ title, description, actions }) {
 
 export function StatCard({ label, value, detail, icon: Icon, tone = 'accent' }) {
   const tones = {
-    accent: 'bg-accent/10 text-accent',
+    accent: 'bg-teal-50 text-accent',
     sky: 'bg-sky-50 text-sky-800',
     amber: 'bg-amber-50 text-amber-900',
-    violet: 'bg-violet-50 text-violet-800',
+    slate: 'bg-slate-100 text-slate-700',
   };
   return (
-    <article className="surface-card p-5 transition-shadow hover:shadow-md">
+    <article className="surface-card p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-semibold text-ink-muted">{label}</p>
+        <div>
+          <p className="text-sm font-medium text-ink-muted">{label}</p>
+          <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-ink">{value}</p>
+        </div>
         {Icon ? (
-          <span className={`grid h-9 w-9 place-items-center rounded-lg ${tones[tone] || tones.accent}`}>
+          <span className={`grid h-11 w-11 place-items-center rounded-2xl ${tones[tone] || tones.accent}`}>
             <Icon />
           </span>
         ) : null}
       </div>
-      <p className="mt-3 text-3xl font-semibold tracking-tight tabular-nums text-ink">{value}</p>
-      {detail ? <p className="mt-1 text-sm text-ink-muted">{detail}</p> : null}
+      {detail ? <p className="mt-3 text-sm text-ink-muted">{detail}</p> : null}
     </article>
   );
 }

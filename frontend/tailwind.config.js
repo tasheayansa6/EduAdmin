@@ -5,14 +5,14 @@ export default {
     extend: {
       colors: {
         ink: {
-          DEFAULT: '#142333',
-          muted: '#4d5d6e',
+          DEFAULT: '#0f172a',
+          muted: '#64748b',
         },
-        paper: '#eef2f5',
-        line: '#d9e1e8',
+        paper: '#f1f5f9',
+        line: '#e2e8f0',
         accent: {
           DEFAULT: '#0f766e',
-          hover: '#115e59',
+          hover: '#0d9488',
         },
         brand: {
           DEFAULT: '#15432a',
@@ -41,9 +41,12 @@ export default {
         shell: '80rem',
       },
       boxShadow: {
-        card: '0 1px 2px rgba(20, 35, 51, 0.05)',
-        soft: '0 1px 2px rgba(31, 29, 36, 0.06)',
-        lift: '0 14px 30px -18px rgba(31, 29, 36, 0.35)',
+        card: '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06)',
+        soft: '0 1px 2px rgba(15, 23, 42, 0.05)',
+        lift: '0 10px 30px -12px rgba(15, 23, 42, 0.18)',
+      },
+      borderRadius: {
+        panel: '0.75rem',
       },
     },
   },
