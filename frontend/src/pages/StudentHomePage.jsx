@@ -23,15 +23,19 @@ function moduleLabel(percent) {
   return `Module ${module}`;
 }
 
+function lessonLabel(percent, title) {
+  const lesson = Math.max(1, Math.min(24, Math.ceil((percent || 8) / 5)));
+  if (percent <= 0) return `Start ${title}`;
+  return `Resume Lesson ${lesson}`;
+}
+
 function ResumeCard({ enrollment }) {
   const percent = enrollment.percent ?? 0;
   const href = enrollmentLink(enrollment);
   const mins = enrollment.totalMinutes
     ? Math.max(15, Math.round((Number(enrollment.totalMinutes) || 60) * (1 - percent / 100) / 4))
     : 35;
-  const action = percent > 0
-    ? `Resume ${enrollment.courseTitle}`
-    : `Start ${enrollment.courseTitle}`;
+  const resume = lessonLabel(percent, enrollment.courseTitle);
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
@@ -51,9 +55,8 @@ function ResumeCard({ enrollment }) {
             {moduleLabel(percent)} · {(enrollment.categoryName || 'Optimization').toUpperCase()}
           </p>
           <p className="font-display text-lg font-bold leading-snug sm:text-xl">
-            {percent > 0 ? 'Resume lesson' : 'Start learning'}
+            {resume}
           </p>
-          <p className="line-clamp-1 text-sm text-white/85">{enrollment.courseTitle}</p>
         </div>
       </div>
       <div className="space-y-3 p-3.5 sm:p-4">
@@ -76,7 +79,7 @@ function ResumeCard({ enrollment }) {
           className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white shadow-soft hover:bg-brand-hover"
         >
           <PlayIcon />
-          <span className="truncate">{action}</span>
+          <span className="truncate">{resume}</span>
         </Link>
       </div>
     </article>
@@ -112,14 +115,10 @@ function CuratedCard({ course }) {
         )}
       </div>
       <div className="space-y-2.5 p-3.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand">
-            {track}
-          </span>
-          {modules ? (
-            <span className="text-[11px] font-semibold text-charcoal-muted">{modules} modules</span>
-          ) : null}
-        </div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
+          {track}
+          {modules ? ` · ${modules} modules` : ''}
+        </p>
         <div>
           <h3 className="font-display text-base font-bold leading-snug text-charcoal">
             <Link to={to} className="hover:text-brand">{course.title}</Link>
@@ -205,25 +204,25 @@ function HomeBody({ data }) {
   const left = featured ? lessonsLeft(featured.percent) : null;
 
   return (
-    <div className="student-compact mx-auto w-full max-w-3xl space-y-5">
-      <header className="space-y-3 text-center">
-        <div className="flex flex-wrap items-center justify-center gap-2">
+    <div className="student-compact space-y-5">
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-display text-[1.75rem] font-bold leading-tight tracking-tight text-charcoal sm:text-4xl">
             Welcome back, {firstName}!
           </h1>
           <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-bold text-brand ring-1 ring-brand/10">
-            Undergraduate · Student
+            · Undergraduate · Year 3
           </span>
         </div>
 
         {featured ? (
-          <div className="mx-auto flex max-w-2xl items-start gap-2 rounded-2xl bg-brand-soft px-3 py-3 text-left text-sm text-brand ring-1 ring-brand/10 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
+          <div className="flex items-start gap-2 rounded-2xl bg-brand-soft px-3 py-3 text-sm text-brand ring-1 ring-brand/10 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
             <LeafIcon />
             <div className="min-w-0">
               <p className="font-bold">Weekly Goal in Sight</p>
               <p className="mt-0.5 leading-snug text-brand/85">
                 {left
-                  ? `You're ${left} lesson${left === 1 ? '' : 's'} away from completing “${featured.courseTitle}”.`
+                  ? `You're ${left} lesson${left === 1 ? '' : 's'} away from completing “${featured.courseTitle}” this week.`
                   : `Keep going in “${featured.courseTitle}”.`}
               </p>
             </div>
@@ -235,16 +234,13 @@ function HomeBody({ data }) {
 
       {featured ? (
         <section aria-labelledby="in-progress-heading" className="space-y-2.5">
-          <div className="flex items-end justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">In progress</p>
-              <h2 id="in-progress-heading" className="font-display text-lg font-bold text-charcoal sm:text-xl">
-                {active.length} active course{active.length === 1 ? '' : 's'}
-              </h2>
-            </div>
-            <Link to="/learn/my-learning" className="shrink-0 text-sm font-bold text-brand hover:underline">
-              View all
-            </Link>
+          <div className="flex items-center justify-between gap-2">
+            <p id="in-progress-heading" className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">
+              In progress
+            </p>
+            <p className="text-sm font-semibold text-charcoal-muted">
+              {active.length} active course{active.length === 1 ? '' : 's'}
+            </p>
           </div>
           <ResumeCard enrollment={featured} />
         </section>
@@ -265,7 +261,7 @@ function HomeBody({ data }) {
             View hierarchy
           </Link>
         </div>
-        <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-0 sm:px-0">
+        <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {(categories.length > 1 ? categories : ['All']).map((item) => (
             <button
               key={item}
@@ -293,7 +289,7 @@ function HomeBody({ data }) {
               Recommended based on completed prerequisites
             </p>
           </div>
-          <Link to="/learn/courses" className="shrink-0 text-sm font-bold text-brand hover:underline">
+          <Link to="/learn/courses" className="shrink-0 text-sm font-bold text-brand hover:underline" aria-label="Filter courses">
             Filter
           </Link>
         </div>
