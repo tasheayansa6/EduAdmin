@@ -24,7 +24,7 @@ The header search looks through published course titles, categories, and descrip
 
 - **Home** greets the student, summarizes enrolled and completed courses with average progress, lists active enrollments under **Continue learning**, and shows categories and published courses not yet joined.
 - **Explore courses** lists every published course. Filter by category or by enrolled / not enrolled, and sort by title. **View course** opens the course page.
-- **Course page** shows the title, description, category, and the student's enrollment. **Enroll in this course** (or **Enroll again** after a withdrawal) saves the enrollment in the database and starts progress at 0%.
+- **Course page** shows the title, description, category, and the student's enrollment. **Enroll in this course** (or **Enroll again** after a withdrawal) saves the enrollment in the database and starts progress at 0%. After enrolling, **Start learning** / **Continue learning** opens the lesson player (video, PDF, or reading).
 - **My learning** lists the student's enrollments by status (all, active, completed, withdrawn) with stored progress, and can be searched.
 - **Profile** has a **Public profile** form (first and last name, a 60-character headline, biography without links, language, website and social usernames), **Account security** (change password; this signs the student out everywhere else), and **View public profile**, a preview only the student can see. Email is read-only.
 - **Explore courses** and **Home** list both the courses administrators publish in EduAdmin and the AILG Academy store. EduAdmin courses have a price set by the administrator: free courses enroll from the course page; paid courses use **Add to cart**, **Favorites**, and Chapa checkout — the same cart students already use for AILG courses. If the AILG Academy API is offline, a notice says so and the EduAdmin courses stay listed.
@@ -32,7 +32,7 @@ The header search looks through published course titles, categories, and descrip
 - **Notifications** lists real events: welcome on sign-up, enrollments made by the student or an administrator, status changes by an administrator, Chapa payments received or not completed, finishing every lesson in a course, and password changes. The badge shows the unread count, refreshed every minute and when the tab regains focus.
 - Students cannot open the admin dashboard, reports, or another student's record.
 
-Courses have no image, instructor, duration, rating, price, or lesson content in the database, so the student pages do not show them. Course covers are a neutral design tinted by category.
+Administrators can set price, instructor, cover image, and an outline of lessons with optional video or PDF URLs. Students watch or open those materials in the course player after enrolling. Course covers without an image use a neutral design tinted by category.
 
 ## Dashboard
 
@@ -50,7 +50,8 @@ Students can also register themselves through the student portal.
 ## Courses
 
 - Search and filter by status (draft / published) or category.
-- Create a course with title, description, category, and status.
+- Create a course with title, description, category, price, and status.
+- Add sections and lessons under **Lessons (video / PDF / reading)**. Paste YouTube, Vimeo, direct video, or PDF links so enrolled students can open them in the player.
 - Publish or unpublish via edit, or use **Unpublish** (soft delete) to set a course back to draft while keeping history.
 - Only **published** courses accept new enrollments.
 
@@ -63,7 +64,7 @@ Students can also register themselves through the student portal.
 
 ## Progress
 
-Read-only list of enrollment-level progress (`percent` and status such as not started / in progress / completed). Filter by search, progress status, and course. Lesson-level tracking is not available.
+Read-only list of enrollment-level progress (`percent` and status such as not started / in progress / completed). Filter by search, progress status, and course. Students mark lessons done in the player; that updates the same progress percent.
 
 ## Reports & analytics
 

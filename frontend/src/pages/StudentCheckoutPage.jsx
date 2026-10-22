@@ -62,7 +62,11 @@ export function StudentCheckoutPage() {
           {order.items.map((item) => (
             <div key={item.slug ?? item.title} className="flex justify-between gap-3">
               <dt className="truncate">
-                {order.status === 'paid' && item.slug ? <Link to={`/learn/courses/${item.slug}/learn`} className="font-semibold text-brand hover:underline">{item.title}</Link> : item.title}
+                {order.status === 'paid' && item.slug ? (
+                  <Link to={`/learn/courses/${item.slug}/learn`} className="font-semibold text-brand hover:underline">{item.title}</Link>
+                ) : order.status === 'paid' && (item.courseId || item.id) ? (
+                  <Link to={`/learn/my-courses/${item.courseId ?? item.id}/learn`} className="font-semibold text-brand hover:underline">{item.title}</Link>
+                ) : item.title}
               </dt>
               <dd className="shrink-0 font-semibold">{formatPrice(item.price, order.currency)}</dd>
             </div>

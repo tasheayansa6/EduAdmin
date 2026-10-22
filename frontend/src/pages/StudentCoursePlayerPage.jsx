@@ -20,6 +20,22 @@ function LessonBody({ lesson }) {
       </div>
     );
   }
+  if (lesson.pdfUrl) {
+    return (
+      <div className="bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-4 py-3 sm:px-6">
+          <div>
+            <p className="eyebrow">PDF</p>
+            <h2 className="text-lg font-bold text-charcoal">{lesson.title}</h2>
+          </div>
+          <a href={lesson.pdfUrl} target="_blank" rel="noreferrer" className="btn-outline py-2 text-sm">
+            Open PDF
+          </a>
+        </div>
+        <iframe title={lesson.title} src={lesson.pdfUrl} className="h-[70vh] w-full bg-sand" />
+      </div>
+    );
+  }
   return (
     <div className="bg-white px-6 py-8 sm:px-10">
       <p className="eyebrow">Reading</p>
@@ -94,7 +110,7 @@ function CourseContent({ sections, currentId, busyId, onSelect, onToggle }) {
                         </span>
                         <span className="mt-1 flex items-center gap-1 text-xs text-charcoal-muted [&_svg]:h-3.5 [&_svg]:w-3.5">
                           {lesson.videoUrl ? <PlayIcon /> : <ClockIcon />}
-                          {formatMinutes(lesson.durationMinutes) || (lesson.videoUrl ? 'Video' : 'Reading')}
+                          {formatMinutes(lesson.durationMinutes) || (lesson.videoUrl ? 'Video' : lesson.pdfUrl ? 'PDF' : 'Reading')}
                         </span>
                       </button>
                     </li>

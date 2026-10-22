@@ -150,7 +150,7 @@ describe('Notifications', () => {
     const after = await request('/api/v1/student/notifications', { token });
     const [completed, added] = after.payload.data.items;
     assert.equal(added.title, `You were enrolled in ${course.title}`);
-    assert.equal(added.link, `/learn/my-courses/${course.id}`);
+    assert.equal(added.link, `/learn/my-courses/${course.id}/learn`);
     assert.equal(completed.title, `Your enrollment in ${course.title} is marked completed`);
     assert.equal(after.payload.data.unread, 3);
 
@@ -235,6 +235,57 @@ describe('Courses added by an administrator', () => {
     assert.ok(carted.payload.data.items.some((item) => item.courseId === courseId && item.local));
     await request(`/api/v1/student/cart/local/${courseId}`, { method: 'DELETE', token });
     await request(`/api/v1/student/favorites/local/${courseId}`, { method: 'DELETE', token });
+  });
+});
+
+describe('Local course lessons', () => {
+  test('return video and PDF URLs and track completion for enrolled students', async () => {
+    const token = await login({ email, password: PASSWORD });
+    const adminToken = await login(ADMIN);
+    const course = await createCourse(request, adminToken, {
+      title: `Local Lessons ${Date.now()}`,
+      price: 0,
+      extra: {
+        outline: [{
+          title: 'Week 1',
+          lessons: [
+            { title: 'Welcome video', type: 'video', durationMinutes: 4, videoUrl: 'https://videos.example.org/welcome.mp4', isPreview: true },
+            { title: 'Field guide', type: 'pdf', durationMinutes: 10, pdfUrl: 'https://files.example.org/guide.pdf' },
+          ],
+        }],
+      },
+    });
+    const enrolled = await request('/api/v1/student/enrollments', { method: 'POST', token, body: { courseId: course.id } });
+    assert.equal(enrolled.status, 201);
+
+    const locked = await request(`/api/v1/student/learn/local/${course.id}`, { token: await login(ADMIN) });
+    assert.equal(locked.status, 403);
+
+    const open = await request(`/api/v1/student/learn/local/${course.id}`, { token });
+    assert.equal(open.status, 200);
+    assert.equal(open.payload.data.courseId, course.id);
+    const lessons = open.payload.data.sections[0].lessons;
+    assert.equal(lessons[0].videoUrl, 'https://videos.example.org/welcome.mp4');
+    assert.equal(lessons[1].pdfUrl, 'https://files.example.org/guide.pdf');
+    assert.equal(open.payload.data.progress.percent, 0);
+
+    const done = await request(`/api/v1/student/learn/local/${course.id}/lessons/${lessons[0].id}`, {
+      method: 'PUT',
+      token,
+      body: { completed: true },
+    });
+    assert.equal(done.status, 200);
+    assert.equal(done.payload.data.progress.completedLessons, 1);
+    assert.equal(done.payload.data.progress.percent, 50);
+
+    const finished = await request(`/api/v1/student/learn/local/${course.id}/lessons/${lessons[1].id}`, {
+      method: 'PUT',
+      token,
+      body: { completed: true },
+    });
+    assert.equal(finished.status, 200);
+    assert.equal(finished.payload.data.progress.percent, 100);
+    assert.equal(finished.payload.data.enrollmentStatus, 'completed');
   });
 });
 

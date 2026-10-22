@@ -4,7 +4,7 @@ import { useToast } from '../context/ToastContext.jsx';
 import { useListParams } from '../hooks/useListParams.js';
 import { useResource } from '../hooks/useResource.js';
 import { fieldErrors, formatDate } from '../lib/format.js';
-import { linesToList, textToOutline, validateCourse } from '../lib/validate.js';
+import { linesToList, validateCourse } from '../lib/validate.js';
 import {
   DataPanel,
   Field,
@@ -18,6 +18,19 @@ import {
   TextArea,
   TextInput,
 } from '../components/ui.jsx';
+
+const emptyLesson = () => ({
+  id: null,
+  title: '',
+  type: 'video',
+  durationMinutes: '',
+  videoUrl: '',
+  pdfUrl: '',
+  content: '',
+  isPreview: false,
+});
+
+const emptySection = () => ({ id: null, title: '', lessons: [emptyLesson()] });
 
 const emptyCourse = {
   title: '',
@@ -35,10 +48,26 @@ const emptyCourse = {
   outcomesText: '',
   requirementsText: '',
   includesText: '',
-  outlineText: '',
+  sections: [emptySection()],
 };
 
 function toForm(course) {
+  const sections = Array.isArray(course.outline) && course.outline.length
+    ? course.outline.map((section) => ({
+      id: section.id ?? null,
+      title: section.title || '',
+      lessons: (section.lessons || []).map((lesson) => ({
+        id: lesson.id ?? null,
+        title: lesson.title || '',
+        type: lesson.type === 'lesson' ? (lesson.videoUrl ? 'video' : lesson.pdfUrl ? 'pdf' : 'article') : (lesson.type || 'video'),
+        durationMinutes: lesson.durationMinutes == null ? '' : String(lesson.durationMinutes),
+        videoUrl: lesson.videoUrl || '',
+        pdfUrl: lesson.pdfUrl || '',
+        content: lesson.content || '',
+        isPreview: Boolean(lesson.isPreview),
+      })),
+    }))
+    : [emptySection()];
   return {
     title: course.title || '',
     subtitle: course.subtitle || '',
@@ -55,8 +84,29 @@ function toForm(course) {
     outcomesText: course.outcomesText ?? (course.outcomes || []).join('\n'),
     requirementsText: course.requirementsText ?? (course.requirements || []).join('\n'),
     includesText: course.includesText ?? (course.includes || []).join('\n'),
-    outlineText: course.outlineText || '',
+    sections,
   };
+}
+
+function sectionsPayload(sections) {
+  return sections
+    .map((section) => ({
+      id: section.id || undefined,
+      title: section.title.trim(),
+      lessons: section.lessons
+        .filter((lesson) => lesson.title.trim())
+        .map((lesson) => ({
+          id: lesson.id || undefined,
+          title: lesson.title.trim(),
+          type: lesson.type || 'article',
+          durationMinutes: lesson.durationMinutes === '' ? null : Number(lesson.durationMinutes),
+          videoUrl: lesson.videoUrl.trim() || null,
+          pdfUrl: lesson.pdfUrl.trim() || null,
+          content: lesson.content.trim() || null,
+          isPreview: Boolean(lesson.isPreview),
+        })),
+    }))
+    .filter((section) => section.title && section.lessons.length);
 }
 
 export function CoursesPage() {
@@ -176,6 +226,151 @@ export function CoursesPage() {
   );
 }
 
+function OutlineEditor({ sections, onChange, error }) {
+  function patchSection(index, patch) {
+    onChange(sections.map((section, i) => (i === index ? { ...section, ...patch } : section)));
+  }
+
+  function patchLesson(sectionIndex, lessonIndex, patch) {
+    onChange(sections.map((section, i) => {
+      if (i !== sectionIndex) return section;
+      return {
+        ...section,
+        lessons: section.lessons.map((lesson, j) => (j === lessonIndex ? { ...lesson, ...patch } : lesson)),
+      };
+    }));
+  }
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-ink">Lessons (video / PDF / reading)</h4>
+          <p className="text-xs text-ink-muted">Paste YouTube, Vimeo, direct video, or PDF links. Students open them in the course player after enrolling.</p>
+        </div>
+        <button type="button" className="btn-secondary" onClick={() => onChange([...sections, emptySection()])}>Add section</button>
+      </div>
+      {error ? <p className="mb-2 text-sm text-red-800">{typeof error === 'string' ? error : 'Check the outline.'}</p> : null}
+      <div className="space-y-4">
+        {sections.map((section, sectionIndex) => (
+          <div key={sectionIndex} className="rounded-xl border border-line bg-slate-50/60 p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <Field id={`section-title-${sectionIndex}`} label={`Section ${sectionIndex + 1}`} className="min-w-0 flex-1">
+                <TextInput
+                  id={`section-title-${sectionIndex}`}
+                  value={section.title}
+                  onChange={(event) => patchSection(sectionIndex, { title: event.target.value })}
+                  placeholder="Getting started"
+                />
+              </Field>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={sections.length <= 1}
+                onClick={() => onChange(sections.filter((_, i) => i !== sectionIndex))}
+              >
+                Remove section
+              </button>
+            </div>
+            <ul className="mt-3 space-y-3">
+              {section.lessons.map((lesson, lessonIndex) => (
+                <li key={lessonIndex} className="rounded-xl border border-line bg-white p-3">
+                  <div className="grid gap-3 sm:grid-cols-[1fr_8rem_6rem]">
+                    <Field id={`lesson-title-${sectionIndex}-${lessonIndex}`} label="Lesson title">
+                      <TextInput
+                        id={`lesson-title-${sectionIndex}-${lessonIndex}`}
+                        value={lesson.title}
+                        onChange={(event) => patchLesson(sectionIndex, lessonIndex, { title: event.target.value })}
+                        placeholder="Welcome video"
+                      />
+                    </Field>
+                    <Field id={`lesson-type-${sectionIndex}-${lessonIndex}`} label="Type">
+                      <SelectInput
+                        id={`lesson-type-${sectionIndex}-${lessonIndex}`}
+                        value={lesson.type}
+                        onChange={(event) => patchLesson(sectionIndex, lessonIndex, { type: event.target.value })}
+                      >
+                        <option value="video">Video</option>
+                        <option value="pdf">PDF</option>
+                        <option value="article">Reading</option>
+                      </SelectInput>
+                    </Field>
+                    <Field id={`lesson-mins-${sectionIndex}-${lessonIndex}`} label="Minutes">
+                      <TextInput
+                        id={`lesson-mins-${sectionIndex}-${lessonIndex}`}
+                        type="number"
+                        min="0"
+                        value={lesson.durationMinutes}
+                        onChange={(event) => patchLesson(sectionIndex, lessonIndex, { durationMinutes: event.target.value })}
+                      />
+                    </Field>
+                  </div>
+                  {lesson.type === 'video' ? (
+                    <Field id={`lesson-video-${sectionIndex}-${lessonIndex}`} label="Video URL" className="mt-3">
+                      <TextInput
+                        id={`lesson-video-${sectionIndex}-${lessonIndex}`}
+                        value={lesson.videoUrl}
+                        onChange={(event) => patchLesson(sectionIndex, lessonIndex, { videoUrl: event.target.value })}
+                        placeholder="https://youtube.com/… or direct .mp4"
+                      />
+                    </Field>
+                  ) : null}
+                  {lesson.type === 'pdf' ? (
+                    <Field id={`lesson-pdf-${sectionIndex}-${lessonIndex}`} label="PDF URL" className="mt-3">
+                      <TextInput
+                        id={`lesson-pdf-${sectionIndex}-${lessonIndex}`}
+                        value={lesson.pdfUrl}
+                        onChange={(event) => patchLesson(sectionIndex, lessonIndex, { pdfUrl: event.target.value })}
+                        placeholder="https://…/file.pdf"
+                      />
+                    </Field>
+                  ) : null}
+                  {lesson.type === 'article' ? (
+                    <Field id={`lesson-content-${sectionIndex}-${lessonIndex}`} label="Reading text" className="mt-3">
+                      <TextArea
+                        id={`lesson-content-${sectionIndex}-${lessonIndex}`}
+                        rows="3"
+                        value={lesson.content}
+                        onChange={(event) => patchLesson(sectionIndex, lessonIndex, { content: event.target.value })}
+                        placeholder="Optional article or notes for this lesson"
+                      />
+                    </Field>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <label className="flex items-center gap-2 text-sm text-ink">
+                      <input
+                        type="checkbox"
+                        checked={lesson.isPreview}
+                        onChange={(event) => patchLesson(sectionIndex, lessonIndex, { isPreview: event.target.checked })}
+                      />
+                      Free preview (visible before enroll)
+                    </label>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      disabled={section.lessons.length <= 1}
+                      onClick={() => patchSection(sectionIndex, { lessons: section.lessons.filter((_, j) => j !== lessonIndex) })}
+                    >
+                      Remove lesson
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              className="btn-secondary mt-3"
+              onClick={() => patchSection(sectionIndex, { lessons: [...section.lessons, emptyLesson()] })}
+            >
+              Add lesson
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CourseDialog({ course, categories, onClose, onSaved }) {
   const toast = useToast();
   const [form, setForm] = useState(() => toForm(course.id ? course : emptyCourse));
@@ -211,7 +406,7 @@ function CourseDialog({ course, categories, onClose, onSaved }) {
       outcomes: linesToList(form.outcomesText),
       requirements: linesToList(form.requirementsText),
       includes: linesToList(form.includesText),
-      outline: textToOutline(form.outlineText),
+      outline: sectionsPayload(form.sections),
     };
     setPending(true);
     try {
@@ -330,12 +525,11 @@ function CourseDialog({ course, categories, onClose, onSaved }) {
           <Field id="course-includes" label="This course includes" error={errors.includes}>
             <TextArea id="course-includes" name="includesText" rows="3" value={form.includesText} error={errors.includes} onChange={update} placeholder="One item per line" />
           </Field>
-          <Field id="course-outline" label="Course outline" error={errors.outline}>
-            <TextArea id="course-outline" name="outlineText" rows="8" value={form.outlineText} error={errors.outline} onChange={update} className="font-mono text-sm" />
-            <p className="mt-1 text-xs text-ink-muted">
-              Use <code className="rounded bg-sand px-1">## Section title</code> then lines like <code className="rounded bg-sand px-1">- Lesson name (15)</code> for minutes.
-            </p>
-          </Field>
+          <OutlineEditor
+            sections={form.sections}
+            error={errors.outline}
+            onChange={(sections) => setForm((current) => ({ ...current, sections }))}
+          />
         </section>
 
         {confirming ? (

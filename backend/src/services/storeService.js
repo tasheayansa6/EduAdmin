@@ -505,7 +505,7 @@ export async function confirmOrder(txRef, userId = null) {
       link: loaded.items.length === 1
         ? (loaded.items[0].source_slug
           ? `/learn/courses/${loaded.items[0].source_slug}/learn`
-          : `/learn/my-courses/${loaded.items[0].course_id}`)
+          : `/learn/my-courses/${loaded.items[0].course_id}/learn`)
         : '/learn/my-learning',
     });
   });

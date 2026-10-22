@@ -15,22 +15,74 @@ export function asStringList(value) {
   return list.map((item) => String(item).trim()).filter(Boolean).slice(0, 40);
 }
 
+function cleanUrl(value) {
+  if (value == null || String(value).trim() === '') return null;
+  const url = String(value).trim().slice(0, 500);
+  if (!/^https?:\/\//i.test(url)) return null;
+  return url;
+}
+
+function lessonType(lesson) {
+  const raw = String(lesson?.type || '').trim().toLowerCase();
+  if (['video', 'pdf', 'article', 'lesson'].includes(raw)) {
+    if (raw === 'lesson' && lesson?.videoUrl) return 'video';
+    if (raw === 'lesson' && lesson?.pdfUrl) return 'pdf';
+    return raw === 'lesson' ? 'article' : raw;
+  }
+  if (lesson?.videoUrl) return 'video';
+  if (lesson?.pdfUrl) return 'pdf';
+  return 'article';
+}
+
 export function asOutline(value) {
   const sections = parseJson(value, []);
   if (!Array.isArray(sections)) return [];
   return sections.slice(0, 40).map((section) => ({
+    id: section?.id == null || section.id === '' ? null : Math.max(1, Number(section.id) || 0) || null,
     title: String(section?.title || 'Section').slice(0, 160),
     lessons: Array.isArray(section?.lessons)
-      ? section.lessons.slice(0, 80).map((lesson) => ({
-        title: String(lesson?.title || 'Lesson').slice(0, 180),
-        durationMinutes: lesson?.durationMinutes == null || lesson.durationMinutes === ''
+      ? section.lessons.slice(0, 80).map((lesson) => {
+        const videoUrl = cleanUrl(lesson?.videoUrl);
+        const pdfUrl = cleanUrl(lesson?.pdfUrl);
+        const content = lesson?.content == null || String(lesson.content).trim() === ''
           ? null
-          : Math.max(0, Math.min(24 * 60, Number(lesson.durationMinutes) || 0)),
-        type: String(lesson?.type || 'lesson').slice(0, 40),
-        isPreview: Boolean(lesson?.isPreview),
-      }))
+          : String(lesson.content).trim().slice(0, 20000);
+        return {
+          id: lesson?.id == null || lesson.id === '' ? null : Math.max(1, Number(lesson.id) || 0) || null,
+          title: String(lesson?.title || 'Lesson').slice(0, 180),
+          durationMinutes: lesson?.durationMinutes == null || lesson.durationMinutes === ''
+            ? null
+            : Math.max(0, Math.min(24 * 60, Number(lesson.durationMinutes) || 0)),
+          type: lessonType({ ...lesson, videoUrl, pdfUrl }),
+          videoUrl,
+          pdfUrl,
+          content,
+          isPreview: Boolean(lesson?.isPreview),
+        };
+      })
       : [],
   })).filter((section) => section.lessons.length || section.title);
+}
+
+/** Ensures every section/lesson has a stable numeric id for progress tracking. */
+export function assignLessonIds(sections) {
+  const list = asOutline(sections);
+  let max = 0;
+  for (const section of list) {
+    if (section.id) max = Math.max(max, section.id);
+    for (const lesson of section.lessons) {
+      if (lesson.id) max = Math.max(max, lesson.id);
+    }
+  }
+  let next = max + 1;
+  return list.map((section, sectionIndex) => ({
+    ...section,
+    id: section.id || sectionIndex + 1,
+    lessons: section.lessons.map((lesson) => ({
+      ...lesson,
+      id: lesson.id || next++,
+    })),
+  }));
 }
 
 /** Turns newline text from the admin form into a string list. */
@@ -66,10 +118,10 @@ export function textToOutline(text) {
     const body = bullet[1].trim();
     const timed = body.match(/^(.*?)\s*\((\d+)\s*m(?:in(?:utes)?)?\)$/i);
     current.lessons.push(timed
-      ? { title: timed[1].trim().slice(0, 180), durationMinutes: Number(timed[2]), type: 'lesson', isPreview: false }
-      : { title: body.slice(0, 180), durationMinutes: null, type: 'lesson', isPreview: false });
+      ? { title: timed[1].trim().slice(0, 180), durationMinutes: Number(timed[2]), type: 'article', isPreview: false }
+      : { title: body.slice(0, 180), durationMinutes: null, type: 'article', isPreview: false });
   }
-  return asOutline(sections);
+  return assignLessonIds(asOutline(sections));
 }
 
 export function outlineToText(sections) {

@@ -21,6 +21,7 @@ import { StudentFavoritesPage } from './pages/StudentFavoritesPage.jsx';
 import { StudentHomePage } from './pages/StudentHomePage.jsx';
 import { StudentLearningPage } from './pages/StudentLearningPage.jsx';
 import { StudentLocalCoursePage } from './pages/StudentLocalCoursePage.jsx';
+import { StudentLocalPlayerPage } from './pages/StudentLocalPlayerPage.jsx';
 import { StudentNotificationsPage } from './pages/StudentNotificationsPage.jsx';
 import {
   StudentAccountSecurity,
@@ -61,6 +62,7 @@ export function App() {
           <Route path="learn/courses/:slug" element={<StudentCourseDetailPage />} />
           <Route path="learn/courses/:slug/learn" element={<StudentCoursePlayerPage />} />
           <Route path="learn/my-courses/:courseId" element={<StudentLocalCoursePage />} />
+          <Route path="learn/my-courses/:courseId/learn" element={<StudentLocalPlayerPage />} />
           <Route path="learn/cart" element={<StudentCartPage />} />
           <Route path="learn/favorites" element={<StudentFavoritesPage />} />
           <Route path="learn/checkout/:txRef" element={<StudentCheckoutPage />} />

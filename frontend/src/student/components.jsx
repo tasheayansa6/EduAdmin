@@ -43,7 +43,9 @@ export function CourseCover({ category, title, className = '' }) {
 
 /** Courses sold from AilgAdmin open by slug; older EduAdmin-only courses open by id. */
 export function enrollmentLink(enrollment) {
-  return enrollment.courseSlug ? `/learn/courses/${enrollment.courseSlug}/learn` : `/learn/my-courses/${enrollment.courseId}`;
+  return enrollment.courseSlug
+    ? `/learn/courses/${enrollment.courseSlug}/learn`
+    : `/learn/my-courses/${enrollment.courseId}/learn`;
 }
 
 export function formatPrice(price, currency) {

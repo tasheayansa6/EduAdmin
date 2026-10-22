@@ -1,5 +1,6 @@
 import { pool } from '../db/pool.js';
 import { getCourseContent } from '../lib/ailgCatalog.js';
+import { assignLessonIds, asOutline } from '../lib/courseDetails.js';
 import { AppError } from '../lib/errors.js';
 import { notify } from '../lib/notify.js';
 
@@ -87,6 +88,109 @@ export async function setLessonCompleted(userId, slug, lessonId, completed) {
           title: `You completed ${content.title}`,
           body: `All ${ids.length} lesson${ids.length === 1 ? '' : 's'} are done. Well done!`,
           link: `/learn/courses/${slug}/learn`,
+        });
+      }
+    }
+    await connection.commit();
+    return { lessonId, completed, enrollmentStatus, progress };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function enrolledLocalCourse(executor, userId, courseId, lock = false) {
+  const [rows] = await executor.query(
+    `SELECT c.id AS course_id, c.title, c.outline, c.status AS course_status, e.id AS enrollment_id, e.status
+     FROM courses c
+     JOIN enrollments e ON e.course_id = c.id AND e.user_id = ?
+     WHERE c.id = ? AND c.source_slug IS NULL AND e.status <> 'withdrawn'${lock ? ' FOR UPDATE' : ''}`,
+    [userId, courseId],
+  );
+  if (!rows[0]) throw new AppError(403, 'Enroll in this course to open its lessons.');
+  if (rows[0].course_status !== 'published' && rows[0].status === 'active') {
+    // Already enrolled students can keep learning even if later unpublished.
+  }
+  return rows[0];
+}
+
+function localContent(row) {
+  const sections = assignLessonIds(asOutline(row.outline));
+  return {
+    courseId: row.course_id,
+    title: row.title,
+    sections: sections.map((section) => ({
+      id: section.id,
+      title: section.title,
+      lessons: section.lessons.map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        type: lesson.type,
+        durationMinutes: lesson.durationMinutes,
+        videoUrl: lesson.videoUrl,
+        pdfUrl: lesson.pdfUrl,
+        content: lesson.content,
+        isPreview: lesson.isPreview,
+      })),
+    })),
+  };
+}
+
+/** Full lesson list for an enrolled student on a local EduAdmin course. */
+export async function getLocalLearning(userId, courseId) {
+  const row = await enrolledLocalCourse(pool, userId, courseId);
+  const content = localContent(row);
+  const ids = lessonIds(content);
+  const done = await completedIds(pool, userId, row.course_id);
+  return {
+    courseId: content.courseId,
+    title: content.title,
+    local: true,
+    enrollmentStatus: row.status,
+    progress: summary(ids, done),
+    sections: content.sections.map((section) => ({
+      id: section.id,
+      title: section.title,
+      lessons: section.lessons.map((lesson) => ({ ...lesson, completed: done.has(lesson.id) })),
+    })),
+  };
+}
+
+/** Ticks or unticks one local-course lesson and updates stored progress. */
+export async function setLocalLessonCompleted(userId, courseId, lessonId, completed) {
+  const preview = await enrolledLocalCourse(pool, userId, courseId);
+  const content = localContent(preview);
+  const ids = lessonIds(content);
+  if (!ids.includes(lessonId)) throw new AppError(404, 'Lesson not found in this course.');
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const course = await enrolledLocalCourse(connection, userId, courseId, true);
+    if (completed) {
+      await connection.query('INSERT IGNORE INTO lesson_progress (user_id, course_id, lesson_id) VALUES (?, ?, ?)', [userId, course.course_id, lessonId]);
+    } else {
+      await connection.query('DELETE FROM lesson_progress WHERE user_id = ? AND course_id = ? AND lesson_id = ?', [userId, course.course_id, lessonId]);
+    }
+    const progress = summary(ids, await completedIds(connection, userId, course.course_id));
+    await connection.query(
+      `INSERT INTO progress (user_id, course_id, percent, status) VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE percent = VALUES(percent), status = VALUES(status)`,
+      [userId, course.course_id, progress.percent, progress.status],
+    );
+    let enrollmentStatus = course.status;
+    if (progress.status === 'completed' && course.status === 'active') enrollmentStatus = 'completed';
+    if (progress.status !== 'completed' && course.status === 'completed') enrollmentStatus = 'active';
+    if (enrollmentStatus !== course.status) {
+      await connection.query('UPDATE enrollments SET status = ? WHERE id = ?', [enrollmentStatus, course.enrollment_id]);
+      if (enrollmentStatus === 'completed') {
+        await notify(connection, userId, {
+          type: 'completion',
+          title: `You completed ${content.title}`,
+          body: `All ${ids.length} lesson${ids.length === 1 ? '' : 's'} are done. Well done!`,
+          link: `/learn/my-courses/${courseId}/learn`,
         });
       }
     }

@@ -4,6 +4,7 @@ import { logActivity } from '../lib/activity.js';
 import { notifyAllStudents } from '../lib/notify.js';
 import {
   asOutline,
+  assignLessonIds,
   asStringList,
   outlineToText,
   parseJson,
@@ -81,7 +82,7 @@ const courseSelect = `
 `;
 
 function detailValues(body) {
-  const outline = body.outline ?? [];
+  const outline = assignLessonIds(body.outline ?? []);
   const minutes = body.totalMinutes == null ? totalMinutesFromOutline(outline) : body.totalMinutes;
   return {
     subtitle: body.subtitle ?? null,
@@ -94,7 +95,7 @@ function detailValues(body) {
     outcomes: JSON.stringify(body.outcomes ?? []),
     requirements: JSON.stringify(body.requirements ?? []),
     includes: JSON.stringify(body.includes ?? []),
-    outline: JSON.stringify(asOutline(outline)),
+    outline: JSON.stringify(outline),
   };
 }
 

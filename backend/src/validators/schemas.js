@@ -112,11 +112,19 @@ const optionalText = (max) => z.preprocess(
 );
 const stringList = z.array(z.string().trim().min(1).max(240)).max(40).optional().default([]);
 const outlineSchema = z.array(z.object({
+  id: z.number().int().positive().nullable().optional(),
   title: z.string().trim().min(1).max(160),
   lessons: z.array(z.object({
+    id: z.number().int().positive().nullable().optional(),
     title: z.string().trim().min(1).max(180),
     durationMinutes: z.number().int().min(0).max(24 * 60).nullable().optional(),
-    type: z.string().trim().max(40).optional().default('lesson'),
+    type: z.enum(['video', 'pdf', 'article', 'lesson']).optional().default('article'),
+    videoUrl: optionalUrl.optional(),
+    pdfUrl: optionalUrl.optional(),
+    content: z.preprocess(
+      (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+      z.string().max(20000).nullable(),
+    ).optional(),
     isPreview: z.boolean().optional().default(false),
   })).max(80).default([]),
 })).max(40).optional().default([]);
@@ -343,6 +351,14 @@ export const notificationReadSchema = {
 
 export const lessonCompletionSchema = {
   params: z.object({ slug: courseSlug, lessonId: z.coerce.number().int().positive() }),
+  body: z.object({ completed: z.boolean() }),
+};
+
+export const localLessonCompletionSchema = {
+  params: z.object({
+    courseId: z.coerce.number().int().positive(),
+    lessonId: z.coerce.number().int().positive(),
+  }),
   body: z.object({ completed: z.boolean() }),
 };
 

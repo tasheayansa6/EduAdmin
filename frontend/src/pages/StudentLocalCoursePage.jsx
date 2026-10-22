@@ -76,7 +76,10 @@ function ActionCard({ course }) {
                 </p>
               </div>
             )}
-            <Link to="/learn/my-learning" className="btn-brand w-full py-3 text-base">Go to My learning</Link>
+            <Link to={`/learn/my-courses/${course.id}/learn`} className="btn-brand w-full py-3 text-base">
+              {enrollment.status === 'completed' ? 'Review lessons' : enrollment.percent > 0 ? 'Continue learning' : 'Start learning'}
+            </Link>
+            <Link to="/learn/my-learning" className="btn-outline w-full py-3 text-base">Go to My learning</Link>
           </>
         ) : course.published ? (
           <>

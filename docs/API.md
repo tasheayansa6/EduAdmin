@@ -34,6 +34,12 @@ Authentication: `Authorization: Bearer <jwt>` on protected routes. Login returns
 | POST | `/api/v1/student/password` | Body: `{ currentPassword, newPassword }`. Wrong current password returns `400`. Bumps the session version (other sessions get `401`) and returns a new `{ token }`. |
 | GET | `/api/v1/student/notifications?limit=20` | `{ items: [{ id, type, title, body, link, read, createdAt }], unread }`, newest first. Types: `welcome`, `enrollment`, `payment`, `completion`, `security`. |
 | POST | `/api/v1/student/notifications/read` | Body: `{ ids?: number[] }`. Marks those (or all) of the caller's notifications read. |
+| GET | `/api/v1/student/learn/local/:courseId` | Enrolled student's lesson list for a local EduAdmin course (sections with `videoUrl` / `pdfUrl` / `content`, progress). `403` if not enrolled. |
+| PUT | `/api/v1/student/learn/local/:courseId/lessons/:lessonId` | Body: `{ completed: boolean }`. Updates lesson progress and enrollment-level percent. |
+| GET | `/api/v1/student/learn/:slug` | Same for an AILG store course (by slug). |
+| PUT | `/api/v1/student/learn/:slug/lessons/:lessonId` | Mark an AILG lesson complete / incomplete. |
+
+Course create/update `outline` lessons may include `type` (`video` \| `pdf` \| `article`), `videoUrl`, `pdfUrl`, `content`, `durationMinutes`, and `isPreview`.
 
 ## Protected (admin / super_admin)
 

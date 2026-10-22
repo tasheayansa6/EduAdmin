@@ -17,5 +17,5 @@ export async function notifyAllStudents(executor, { type, title, body = null, li
 }
 
 export function courseLink({ source_slug: slug, id }) {
-  return slug ? `/learn/courses/${slug}/learn` : `/learn/my-courses/${id}`;
+  return slug ? `/learn/courses/${slug}/learn` : `/learn/my-courses/${id}/learn`;
 }

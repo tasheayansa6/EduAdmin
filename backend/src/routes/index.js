@@ -21,7 +21,7 @@ import { getLookups } from '../services/lookupService.js';
 import { getStudentHome } from '../services/studentPortalService.js';
 import * as store from '../services/storeService.js';
 import { assertLocalCourse } from '../services/storeService.js';
-import { getLearning, setLessonCompleted } from '../services/learningService.js';
+import { getLearning, getLocalLearning, setLessonCompleted, setLocalLessonCompleted } from '../services/learningService.js';
 import * as account from '../services/studentAccountService.js';
 import {
   adminCreateSchema,
@@ -49,6 +49,7 @@ import {
   savedItemBody,
   localCourseParams,
   slugParams,
+  localLessonCompletionSchema,
   studentCreateSchema,
   studentEnrollSchema,
   studentListSchema,
@@ -268,6 +269,13 @@ portalRouter.get('/notifications', validate(notificationListSchema), asyncHandle
 }));
 portalRouter.post('/notifications/read', validate(notificationReadSchema), asyncHandler(async (req, res) => {
   res.json({ data: await account.markNotificationsRead(req.user.id, req.valid.body.ids) });
+}));
+portalRouter.get('/learn/local/:courseId', validate(localCourseParams), asyncHandler(async (req, res) => {
+  res.json({ data: await getLocalLearning(req.user.id, req.valid.params.courseId) });
+}));
+portalRouter.put('/learn/local/:courseId/lessons/:lessonId', validate(localLessonCompletionSchema), asyncHandler(async (req, res) => {
+  const { courseId, lessonId } = req.valid.params;
+  res.json({ data: await setLocalLessonCompleted(req.user.id, courseId, lessonId, req.valid.body.completed) });
 }));
 portalRouter.get('/learn/:slug', validate(slugParams), asyncHandler(async (req, res) => {
   res.json({ data: await getLearning(req.user.id, req.valid.params.slug) });
