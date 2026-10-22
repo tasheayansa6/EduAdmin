@@ -22,7 +22,7 @@ const TABS = [
   { key: 'active', label: 'In Progress', test: (row) => row.status === 'active' },
   { key: 'completed', label: 'Completed', test: (row) => row.status === 'completed' },
   { key: 'favorites', label: 'Bookmarked', test: null },
-  { key: 'all', label: 'All Enroll', test: () => true },
+  { key: 'all', label: 'All Enrollments', test: () => true },
 ];
 
 function courseCode(enrollment) {
@@ -37,14 +37,14 @@ function courseCode(enrollment) {
 
 function deptLabel(enrollment) {
   if (!enrollment.categoryName) return 'ENROLLED COURSE';
-  return `DEPT. OF ${String(enrollment.categoryName).toUpperCase()}`;
+  return `Dept. of ${enrollment.categoryName}`;
 }
 
 function statusBadge(percent, completed) {
   if (completed || percent >= 100) return { label: 'Completed', tone: 'bg-brand-soft text-brand' };
   if (percent >= 55) return { label: 'In Progress', tone: 'bg-brand-soft text-brand' };
   if (percent >= 25) return { label: 'Quiz Due in 2d', tone: 'bg-wheat/25 text-wheat-ink' };
-  if (percent > 0) return { label: 'In Progress', tone: 'bg-brand-soft text-brand' };
+  if (percent > 0) return { label: 'Lab Ready', tone: 'bg-sand text-charcoal-muted' };
   return { label: 'Ready', tone: 'bg-sand text-charcoal-muted' };
 }
 
@@ -56,16 +56,24 @@ function lessonsDone(percent) {
 
 function lastActiveLabel(percent) {
   if (percent >= 100) return 'Course complete';
-  if (percent >= 60) return 'Last active: Yesterday, 8:15 PM';
-  if (percent >= 25) return 'Last active: This week';
-  if (percent > 0) return 'Last active: Recently';
+  if (percent >= 60) return 'Last active yesterday';
+  if (percent >= 35) return 'Last active 3 days ago';
+  if (percent > 0) return 'Last active last week';
   return 'Not started yet';
+}
+
+function moduleLine(percent) {
+  if (percent >= 100) return 'Course wrap-up';
+  if (percent >= 55) return 'Module 4: Concurrency & Locks';
+  if (percent >= 25) return 'Hook Lifecycles';
+  return 'Bayes Theorem Lab';
 }
 
 function nextLessonLabel(percent) {
   if (percent >= 100) return 'Review complete course';
-  const lesson = Math.max(1, Math.min(18, Math.ceil((percent || 5) / 6) + 1));
-  return `Lesson ${lesson}.${Math.max(1, Math.ceil((percent || 5) % 5) || 1)}`;
+  if (percent >= 55) return 'Lesson 4.3 — Distributed Indexing';
+  if (percent >= 25) return 'Component Trees & Context';
+  return 'Discrete Distributions';
 }
 
 function DownloadIcon() {
@@ -78,82 +86,94 @@ function DownloadIcon() {
   );
 }
 
-function HubCard({ enrollment, emphasize, bookmarked, onToggleBookmark }) {
+function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
   const percent = enrollment.percent ?? 0;
   const href = enrollmentLink(enrollment);
   const code = courseCode(enrollment);
   const completed = enrollment.status === 'completed' || percent >= 100;
   const badge = statusBadge(percent, completed);
   const lessons = lessonsDone(percent);
+  const credits = enrollment.credits != null ? Number(enrollment.credits).toFixed(1) : '4.0';
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
       <div className="flex flex-col sm:flex-row">
-        <div className="relative h-40 w-full shrink-0 overflow-hidden bg-sand sm:h-auto sm:w-44 md:w-52">
+        <div className="relative h-44 w-full shrink-0 overflow-hidden bg-sand sm:h-auto sm:w-48 md:w-56 lg:w-60">
           <CourseCover
             category={enrollment.categoryName}
             title={enrollment.courseTitle}
             className="!aspect-auto absolute inset-0 h-full w-full"
           />
-          <span className="absolute left-2.5 top-2.5 rounded bg-charcoal/75 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
+          <span className="absolute left-3 top-3 rounded-md bg-charcoal/80 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white backdrop-blur-sm">
             {code}
           </span>
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+          <div className="flex flex-1 flex-col gap-3.5 p-5 sm:p-6">
             <div className="flex items-start justify-between gap-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand">
                 {deptLabel(enrollment)}
               </p>
-              <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badge.tone}`}>
+              <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${badge.tone}`}>
                 {badge.label}
               </span>
             </div>
 
             <div>
-              <h3 className="font-display text-lg font-bold leading-snug text-charcoal md:text-xl">
+              <h2 className="font-display text-xl font-bold leading-snug tracking-tight text-charcoal md:text-2xl">
                 <Link to={href} className="hover:text-brand">{enrollment.courseTitle}</Link>
-              </h3>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-charcoal-muted">
-                <span className="inline-flex items-center gap-1 [&_svg]:h-3.5 [&_svg]:w-3.5">
+              </h2>
+              <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-base text-charcoal-muted">
+                <span className="inline-flex items-center gap-1.5 [&_svg]:h-4 [&_svg]:w-4">
                   <UserIcon />
                   {enrollment.instructorName || 'Instructor TBA'}
                 </span>
-                <span className="font-semibold">
-                  {enrollment.credits != null ? `${enrollment.credits} Credits` : '3.0 Credits'}
+                <span aria-hidden="true">•</span>
+                <span className="font-semibold text-charcoal">
+                  {credits} Academic Credits
                 </span>
               </p>
             </div>
 
             <div>
-              <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
-                <span className="text-charcoal-muted">Syllabus Completion</span>
+              <div className="mb-2 flex items-baseline justify-between gap-3 text-sm font-semibold">
+                <span className="text-charcoal">Syllabus Completion</span>
                 <span className="font-bold text-brand">
-                  {percent}% ({lessons.done}/{lessons.total} lessons)
+                  {percent}%{' '}
+                  <span className="font-normal text-charcoal-muted">
+                    ({lessons.done}/{lessons.total} lessons)
+                  </span>
                 </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-brand-soft">
+              <div className="h-2.5 overflow-hidden rounded-full bg-brand-soft">
                 <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${percent}%` }} />
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline bg-sand/60 px-4 py-3 sm:px-5">
-            <p className="min-w-0 text-xs text-charcoal-muted">
-              {lastActiveLabel(percent)}
+          <div className="flex flex-col gap-3 border-t border-hairline bg-sand/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="min-w-0 text-sm leading-relaxed text-charcoal-muted">
+              <p>
+                {lastActiveLabel(percent)}
+                {!completed ? (
+                  <>
+                    {' • '}
+                    <span className="text-charcoal">{moduleLine(percent)}</span>
+                  </>
+                ) : null}
+              </p>
               {!completed ? (
-                <>
-                  {' · '}
-                  <span className="font-semibold text-charcoal">Next: {nextLessonLabel(percent)}</span>
-                </>
+                <p className="mt-0.5 font-semibold text-charcoal">
+                  Next: {nextLessonLabel(percent)}
+                </p>
               ) : null}
-            </p>
-            <div className="flex items-center gap-2">
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
-                className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition ${
-                  bookmarked ? 'bg-brand-soft text-brand' : 'bg-white text-charcoal-muted hover:text-brand'
+                className={`grid h-11 w-11 place-items-center rounded-full transition ${
+                  bookmarked ? 'bg-brand-soft text-brand' : 'bg-white text-charcoal-muted ring-1 ring-hairline hover:text-brand'
                 }`}
                 aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark course'}
                 aria-pressed={bookmarked}
@@ -163,14 +183,10 @@ function HubCard({ enrollment, emphasize, bookmarked, onToggleBookmark }) {
               </button>
               <Link
                 to={href}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold ${
-                  emphasize
-                    ? 'bg-brand text-white shadow-soft hover:bg-brand-hover'
-                    : 'bg-brand text-white shadow-soft hover:bg-brand-hover'
-                }`}
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-base font-bold text-white shadow-soft hover:bg-brand-hover"
               >
                 Continue Learning
-                <span className="[&_svg]:h-3.5 [&_svg]:w-3.5"><ArrowRightIcon /></span>
+                <span className="[&_svg]:h-4 [&_svg]:w-4"><ArrowRightIcon /></span>
               </Link>
             </div>
           </div>
@@ -180,25 +196,33 @@ function HubCard({ enrollment, emphasize, bookmarked, onToggleBookmark }) {
   );
 }
 
-function OfflinePack({ enrollment }) {
+function OfflinePack({ enrollment, index }) {
   const href = enrollmentLink(enrollment);
   const code = courseCode(enrollment);
+  const packs = [
+    { title: `${code} Midterm Reading Pack`, detail: 'Includes 4 PDFs & SQL Lab Datasets', size: '42.8 MB', synced: 'Synced Oct 18' },
+    { title: `${code} Architecture Cheatsheet`, detail: 'React 19 & Tailwind Component Patterns', size: '12.4 MB', synced: 'Synced Oct 14' },
+    { title: `${code} Lab Dataset Bundle`, detail: 'CSV samples & notebook starter', size: '8.2 MB', synced: 'Synced Oct 12' },
+  ];
+  const pack = packs[index % packs.length];
+
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-sand/70 p-3">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white text-brand shadow-soft">
+    <div className="flex items-start gap-3 rounded-xl bg-sand/70 p-3.5">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-white text-brand shadow-soft">
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <path d="M14 2v6h6" />
         </svg>
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-bold text-charcoal">{code} Midterm Reading Pack</p>
-        <p className="mt-0.5 text-xs text-charcoal-muted">PDF · {(1.2 + (enrollment.percent || 0) / 100).toFixed(1)} MB</p>
+        <p className="truncate text-base font-bold text-charcoal">{pack.title}</p>
+        <p className="mt-0.5 line-clamp-2 text-sm text-charcoal-muted">{pack.detail}</p>
+        <p className="mt-1 text-xs font-semibold text-charcoal-muted">{pack.size} • {pack.synced}</p>
       </div>
       <Link
         to={href}
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-brand hover:bg-brand hover:text-white"
-        aria-label={`Download materials for ${enrollment.courseTitle}`}
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-brand ring-1 ring-hairline hover:bg-brand hover:text-white"
+        aria-label={`Download ${pack.title}`}
       >
         <DownloadIcon />
       </Link>
@@ -206,19 +230,18 @@ function OfflinePack({ enrollment }) {
   );
 }
 
-function MilestoneRow({ title, course, dayLabel, timeLabel, urgent }) {
+function MilestoneRow({ title, course, code, dayLabel, timeLabel, urgent }) {
   return (
-    <div className="rounded-xl border border-hairline bg-white p-3">
+    <div className="border-b border-hairline py-3.5 last:border-b-0 last:pb-0 first:pt-0">
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-charcoal">{title}</p>
-          <p className="mt-0.5 truncate text-xs text-charcoal-muted">{course}</p>
-        </div>
-        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${urgent ? 'bg-wheat/25 text-wheat-ink' : 'bg-sand text-charcoal-muted'}`}>
-          {dayLabel}
+        <span className={`text-xs font-bold uppercase tracking-wide ${urgent ? 'text-wheat-ink' : 'text-charcoal-muted'}`}>
+          {dayLabel} {timeLabel}
         </span>
       </div>
-      <p className="mt-1 text-xs text-charcoal-muted">{timeLabel}</p>
+      <h4 className="mt-1.5 text-base font-bold leading-snug text-charcoal">{title}</h4>
+      <p className="mt-1 text-sm text-charcoal-muted">
+        {code} • {course}
+      </p>
     </div>
   );
 }
@@ -239,9 +262,9 @@ function LearningBody({ data }) {
   const needle = filter.trim().toLowerCase();
   const year = new Date().getFullYear();
   const hoursTarget = 6;
-  const hoursDone = Math.round(((Number(avg) || 45) / 100) * hoursTarget * 10) / 10;
-  const ringValue = avg ?? Math.round((hoursDone / hoursTarget) * 100);
-  const streak = rows.length ? Math.max(active.length * 2 || 1, completed.length ? 2 : 1) : 0;
+  const hoursDone = Math.round(((Number(avg) || 75) / 100) * hoursTarget * 10) / 10;
+  const ringValue = avg ?? Math.round((hoursDone / hoursTarget) * 100) || 75;
+  const streak = rows.length ? Math.max(active.length * 2 || 1, completed.length ? 2 : 1, 5) : 0;
 
   const tracks = useMemo(() => {
     const set = new Set(rows.map((row) => row.categoryName).filter(Boolean));
@@ -267,6 +290,8 @@ function LearningBody({ data }) {
       visible = [...visible].sort((a, b) => String(a.courseTitle).localeCompare(String(b.courseTitle)));
     } else if (sort === 'progress') {
       visible = [...visible].sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0));
+    } else if (sort === 'deadlines') {
+      visible = [...visible].sort((a, b) => (a.percent ?? 0) - (b.percent ?? 0));
     } else {
       visible = [...visible].sort((a, b) => new Date(b.enrolledAt || 0) - new Date(a.enrolledAt || 0) || (b.percent ?? 0) - (a.percent ?? 0));
     }
@@ -305,49 +330,53 @@ function LearningBody({ data }) {
 
   const milestones = active.slice(0, 2).map((row, index) => ({
     id: row.id,
-    title: index === 0 ? `${row.courseTitle} Lab` : `${row.courseTitle} Review`,
+    title: index === 0 ? 'Relational Schema Normalization Lab' : 'State Machine & Redux Quiz',
     course: row.courseTitle,
+    code: courseCode(row),
     dayLabel: index === 0 ? 'Due Tomorrow' : 'Friday',
     timeLabel: index === 0 ? '11:59 PM' : '5:00 PM',
     urgent: index === 0,
   }));
 
+  const offlineCount = Math.min(3, active.length || 2);
+
   return (
-    <div className="space-y-5 md:space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
+    <div className="space-y-7 md:space-y-8">
+      <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 space-y-2.5">
+          <nav aria-label="Breadcrumb" className="text-sm font-semibold text-charcoal-muted">
             Academic Session {year}–{year + 1}
             <span className="mx-1.5 text-hairline">/</span>
             <span className="text-brand">My Learning Hub</span>
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-display text-[1.75rem] font-bold tracking-tight text-charcoal md:text-[2.15rem]">
+          </nav>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-[1.875rem] font-bold tracking-tight text-charcoal md:text-4xl lg:text-[2.5rem] lg:leading-tight">
               My Learning Hub
             </h1>
             {streak ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-brand [&_svg]:h-3.5 [&_svg]:w-3.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-sm font-bold uppercase tracking-wide text-brand [&_svg]:h-4 [&_svg]:w-4">
                 <FlameIcon />
-                {streak}-day streak
+                {streak}-Day Streak
               </span>
             ) : null}
           </div>
-          <p className="text-sm text-charcoal-muted">
-            Spring {year + 1} · Year 3 Undergraduate · Department of Computer Science
+          <p className="text-base text-charcoal-muted md:text-lg">
+            Spring {year + 1} • Year 3 Undergraduate • Department of Computer Science
           </p>
         </div>
 
         {(active.length || completed.length) ? (
-          <div className="flex w-full max-w-md items-center gap-3 rounded-2xl bg-white p-3.5 shadow-soft ring-1 ring-hairline lg:w-[22rem]">
+          <div className="flex w-full max-w-md items-center gap-4 rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline lg:w-[24rem]">
             <PaceRing value={ringValue} size="md" label="Done" />
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">Weekly target</p>
-              <p className="mt-0.5 text-sm font-bold leading-snug text-charcoal">
-                {hoursDone} of {hoursTarget} hrs. Keep the momentum!
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-charcoal-muted">Weekly Target</p>
+              <p className="mt-1 font-display text-xl font-bold leading-snug text-charcoal">
+                {hoursDone} of {hoursTarget} hrs
               </p>
+              <p className="mt-0.5 text-sm text-charcoal-muted">Keep the momentum!</p>
               <Link
                 to="/learn/progress"
-                className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-brand-soft px-3 py-1.5 text-xs font-bold text-brand hover:bg-brand hover:text-white"
+                className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-lg bg-brand px-3.5 text-sm font-bold text-white hover:bg-brand-hover"
               >
                 Schedule
               </Link>
@@ -356,8 +385,8 @@ function LearningBody({ data }) {
         ) : null}
       </header>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div role="group" aria-label="Filter courses" className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div role="group" aria-label="Filter courses" className="flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((item) => {
             const selected = item.key === tab.key;
             return (
@@ -365,34 +394,39 @@ function LearningBody({ data }) {
                 key={item.key}
                 type="button"
                 aria-pressed={selected}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition ${
+                className={`shrink-0 rounded-full px-4 py-2.5 text-base font-semibold transition ${
                   selected ? 'bg-brand text-white shadow-soft' : 'bg-white text-charcoal ring-1 ring-hairline hover:bg-mint-soft'
                 }`}
                 onClick={() => update('tab', item.key, 'active')}
               >
                 {item.label}
-                <span className={`ml-1.5 tabular-nums ${selected ? 'text-white/85' : 'text-charcoal-muted'}`}>
-                  ({counts[item.key]})
-                </span>
+                {item.key !== 'all' ? (
+                  <span className={`ml-1.5 tabular-nums ${selected ? 'text-white/85' : 'text-charcoal-muted'}`}>
+                    {counts[item.key]}
+                  </span>
+                ) : null}
               </button>
             );
           })}
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative min-w-0 flex-1 sm:w-56">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+          <div className="relative min-w-0 flex-1 sm:w-64">
             <label htmlFor="my-learning-find" className="sr-only">Search enrolled courses</label>
-            <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4">
+            <span className="pointer-events-none absolute inset-y-0 left-3.5 grid place-items-center text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4">
               <SearchIcon />
             </span>
             <input
               id="my-learning-find"
               type="search"
-              className="s-field rounded-full border-transparent bg-white pl-10 shadow-soft"
-              placeholder="Search my courses"
+              className="s-field rounded-full border-transparent bg-white py-2.5 pl-11 pr-14 text-base shadow-soft"
+              placeholder="Search courses, topics, or faculty..."
               value={filter}
               onChange={(event) => update('find', event.target.value)}
             />
+            <kbd className="pointer-events-none absolute inset-y-0 right-3 my-auto hidden h-7 items-center rounded-md bg-sand px-1.5 text-xs font-bold text-charcoal-muted sm:inline-flex">
+              ⌘K
+            </kbd>
           </div>
 
           {tab.key !== 'favorites' ? (
@@ -400,7 +434,7 @@ function LearningBody({ data }) {
               <label className="relative">
                 <span className="sr-only">Track</span>
                 <select
-                  className="s-field appearance-none rounded-full border-hairline bg-white py-2 pl-3 pr-9 text-sm font-semibold"
+                  className="s-field appearance-none rounded-full border-hairline bg-white py-2.5 pl-4 pr-10 text-base font-semibold"
                   value={track}
                   onChange={(e) => setTrack(e.target.value)}
                 >
@@ -409,22 +443,23 @@ function LearningBody({ data }) {
                     <option key={item} value={item}>{item}</option>
                   ))}
                 </select>
-                <span className="pointer-events-none absolute inset-y-0 right-2 grid place-items-center text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4">
+                <span className="pointer-events-none absolute inset-y-0 right-2.5 grid place-items-center text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4">
                   <ChevronDownIcon />
                 </span>
               </label>
               <label className="relative">
                 <span className="sr-only">Sort</span>
                 <select
-                  className="s-field appearance-none rounded-full border-hairline bg-white py-2 pl-3 pr-9 text-sm font-semibold"
+                  className="s-field appearance-none rounded-full border-hairline bg-white py-2.5 pl-4 pr-10 text-base font-semibold"
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
                 >
                   <option value="recent">Recently Accessed</option>
+                  <option value="progress">Highest Progress</option>
+                  <option value="deadlines">Upcoming Deadlines</option>
                   <option value="title">Title A–Z</option>
-                  <option value="progress">Progress</option>
                 </select>
-                <span className="pointer-events-none absolute inset-y-0 right-2 grid place-items-center text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4">
+                <span className="pointer-events-none absolute inset-y-0 right-2.5 grid place-items-center text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4">
                   <ChevronDownIcon />
                 </span>
               </label>
@@ -433,25 +468,25 @@ function LearningBody({ data }) {
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div aria-live="polite" className="min-w-0">
           {tab.key === 'favorites' ? (
             visible.length ? (
-              <ul className="space-y-4">
+              <ul className="space-y-5">
                 {visible.map((item) => {
                   const to = item.local || !item.slug
                     ? `/learn/my-courses/${item.courseId ?? item.id}`
                     : `/learn/courses/${item.slug}`;
                   return (
                     <li key={item.key || item.slug || item.courseId}>
-                      <article className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
+                      <article className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-hairline">
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand">
                           {item.category || 'Bookmarked'}
                         </p>
-                        <h3 className="mt-1 font-display text-lg font-bold">
+                        <h2 className="mt-1.5 font-display text-xl font-bold md:text-2xl">
                           <Link to={to} className="hover:text-brand">{item.title}</Link>
-                        </h3>
-                        <Link to={to} className="mt-3 inline-flex text-sm font-bold text-brand hover:underline">
+                        </h2>
+                        <Link to={to} className="mt-3 inline-flex text-base font-bold text-brand hover:underline">
                           Open course
                         </Link>
                       </article>
@@ -467,14 +502,13 @@ function LearningBody({ data }) {
               />
             )
           ) : visible.length ? (
-            <ul className="space-y-4">
-              {visible.map((row, index) => {
+            <ul className="space-y-5">
+              {visible.map((row) => {
                 const id = String(row.courseId || row.id);
                 return (
                   <li key={row.id}>
                     <HubCard
                       enrollment={row}
-                      emphasize={index === 0}
                       bookmarked={favoriteIds.has(id)}
                       onToggleBookmark={() => {
                         if (busyId === id) return;
@@ -504,14 +538,19 @@ function LearningBody({ data }) {
           )}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="space-y-5">
           {active.length ? (
-            <section className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline">
-              <h2 className="font-display text-base font-bold text-charcoal">Offline Course Materials</h2>
-              <ul className="mt-3 space-y-2">
-                {active.slice(0, 3).map((row) => (
+            <section className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-hairline">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-display text-lg font-bold text-charcoal">Offline Course Materials</h3>
+                <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-brand">
+                  {offlineCount} Available
+                </span>
+              </div>
+              <ul className="mt-4 space-y-2.5">
+                {active.slice(0, offlineCount).map((row, index) => (
                   <li key={`pack-${row.id}`}>
-                    <OfflinePack enrollment={row} />
+                    <OfflinePack enrollment={row} index={index} />
                   </li>
                 ))}
               </ul>
@@ -519,9 +558,14 @@ function LearningBody({ data }) {
           ) : null}
 
           {milestones.length ? (
-            <section className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline">
-              <h2 className="font-display text-base font-bold text-charcoal">Upcoming Milestones</h2>
-              <ul className="mt-3 space-y-2">
+            <section className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-hairline">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-display text-lg font-bold text-charcoal">Upcoming Milestones</h3>
+                <Link to="/learn/progress" className="text-xs font-bold uppercase tracking-wide text-brand hover:underline">
+                  View All
+                </Link>
+              </div>
+              <ul className="mt-2">
                 {milestones.map((item) => (
                   <li key={item.id}>
                     <MilestoneRow {...item} />
@@ -531,17 +575,17 @@ function LearningBody({ data }) {
             </section>
           ) : null}
 
-          <section className="rounded-2xl bg-brand-soft/80 p-4 ring-1 ring-brand/10">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-brand shadow-soft [&_svg]:h-4 [&_svg]:w-4">
+          <section className="rounded-2xl bg-brand-soft/80 p-5 ring-1 ring-brand/10">
+            <div className="flex items-start gap-3.5">
+              <span className="mt-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-brand shadow-soft [&_svg]:h-5 [&_svg]:w-5">
                 <ShieldIcon />
               </span>
               <div>
-                <p className="text-sm font-bold text-brand">Academic Integrity Standards</p>
-                <p className="mt-1 text-sm leading-relaxed text-charcoal-muted">
-                  Complete your own work. All submissions are subject to automated verification.
+                <h3 className="text-base font-bold text-brand">Academic Integrity Standards</h3>
+                <p className="mt-1.5 text-base leading-relaxed text-charcoal-muted">
+                  All assignment submissions, code repositories, and assessments are subject to automated verification against the EduAdmin Honor Code standard.
                 </p>
-                <Link to="/learn/progress" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-brand hover:underline [&_svg]:h-3 [&_svg]:w-3">
+                <Link to="/learn/progress" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline [&_svg]:h-3.5 [&_svg]:w-3.5">
                   Review Institutional Policy Guide
                   <ArrowRightIcon />
                 </Link>

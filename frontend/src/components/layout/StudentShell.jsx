@@ -328,7 +328,7 @@ export function StudentShell() {
               fullBleed
                 ? 'w-full flex-1 pb-28 focus:outline-none md:pb-8'
                 : exploreHome || learningHub
-                  ? 'mx-auto w-full max-w-lg flex-1 px-4 py-4 pb-28 focus:outline-none sm:max-w-2xl sm:px-5 md:max-w-5xl md:px-6 md:py-6 md:pb-8 lg:max-w-6xl'
+                  ? 'mx-auto w-full max-w-lg flex-1 px-4 py-5 pb-28 text-base focus:outline-none sm:max-w-2xl sm:px-5 md:max-w-6xl md:px-6 md:py-7 md:pb-8 lg:max-w-7xl'
                   : 'mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8'
             }
           >

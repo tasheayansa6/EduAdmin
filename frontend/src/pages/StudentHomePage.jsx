@@ -73,7 +73,7 @@ function FeatureResume({ enrollment }) {
               </span>
             </div>
 
-            <h2 className="font-display text-2xl font-bold leading-snug tracking-tight text-charcoal md:text-3xl">
+            <h2 className="font-display text-2xl font-bold leading-snug tracking-tight text-charcoal md:text-[1.75rem] lg:text-3xl">
               {enrollment.courseTitle}
             </h2>
 
@@ -313,7 +313,7 @@ function HomeBody({ data }) {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-3xl font-bold tracking-tight text-charcoal md:text-4xl">
+              <h1 className="font-display text-[1.875rem] font-bold tracking-tight text-charcoal md:text-4xl lg:text-[2.5rem] lg:leading-tight">
                 Welcome back, {firstName}!
               </h1>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand">
@@ -321,7 +321,7 @@ function HomeBody({ data }) {
                 Term Active
               </span>
             </div>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-charcoal-muted md:text-base">
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-base text-charcoal-muted md:text-lg">
               <span>Undergraduate</span>
               <span className="text-hairline">•</span>
               <span>Year 3</span>
@@ -400,10 +400,10 @@ function HomeBody({ data }) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">Academic Catalog</p>
-            <h2 id="curated-heading" className="mt-1 font-display text-2xl font-bold tracking-tight text-charcoal">
+            <h2 id="curated-heading" className="mt-1 font-display text-2xl font-bold tracking-tight text-charcoal md:text-3xl">
               Curated For Your Degree
             </h2>
-            <p className="mt-0.5 text-sm text-charcoal-muted">
+            <p className="mt-1 text-base text-charcoal-muted">
               Recommended based on completed prerequisites and academic track.
             </p>
           </div>
