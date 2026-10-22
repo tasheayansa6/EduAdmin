@@ -263,7 +263,7 @@ function LearningBody({ data }) {
   const year = new Date().getFullYear();
   const hoursTarget = 6;
   const hoursDone = Math.round(((Number(avg) || 75) / 100) * hoursTarget * 10) / 10;
-  const ringValue = avg ?? Math.round((hoursDone / hoursTarget) * 100) || 75;
+    const ringValue = (avg ?? Math.round((hoursDone / hoursTarget) * 100)) || 75;
   const streak = rows.length ? Math.max(active.length * 2 || 1, completed.length ? 2 : 1, 5) : 0;
 
   const tracks = useMemo(() => {
