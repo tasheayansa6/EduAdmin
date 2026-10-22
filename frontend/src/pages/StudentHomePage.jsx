@@ -205,9 +205,9 @@ function HomeBody({ data }) {
   const left = featured ? lessonsLeft(featured.percent) : null;
 
   return (
-    <div className="student-compact space-y-5">
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="student-compact mx-auto w-full max-w-3xl space-y-5">
+      <header className="space-y-3 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <h1 className="font-display text-[1.75rem] font-bold leading-tight tracking-tight text-charcoal sm:text-4xl">
             Welcome back, {firstName}!
           </h1>
@@ -217,7 +217,7 @@ function HomeBody({ data }) {
         </div>
 
         {featured ? (
-          <div className="flex items-start gap-2 rounded-2xl bg-brand-soft px-3 py-3 text-sm text-brand ring-1 ring-brand/10 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
+          <div className="mx-auto flex max-w-2xl items-start gap-2 rounded-2xl bg-brand-soft px-3 py-3 text-left text-sm text-brand ring-1 ring-brand/10 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
             <LeafIcon />
             <div className="min-w-0">
               <p className="font-bold">Weekly Goal in Sight</p>

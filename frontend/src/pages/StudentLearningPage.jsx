@@ -251,13 +251,13 @@ function LearningBody({ data }) {
   };
 
   return (
-    <div className="student-compact space-y-4">
-      <header className="space-y-3">
+    <div className="student-compact mx-auto w-full max-w-3xl space-y-4">
+      <header className="space-y-3 text-center">
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
           Academic session {year}-{year + 1}
         </p>
 
-        <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <h1 className="font-display text-[1.75rem] font-bold tracking-tight text-charcoal sm:text-[2.35rem]">
             My Learning Hub
           </h1>
