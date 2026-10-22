@@ -205,21 +205,21 @@ function HomeBody({ data }) {
   const left = featured ? lessonsLeft(featured.percent) : null;
 
   return (
-    <div className="student-compact space-y-5 text-left">
-      <header className="space-y-3 text-left">
-        <div className="flex flex-wrap items-center justify-start gap-2">
-          <h1 className="m-0 font-display text-[1.85rem] font-bold leading-[1.15] tracking-tight text-charcoal sm:text-[2.25rem]">
+    <div className="student-compact space-y-5">
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="font-display text-[1.75rem] font-bold leading-tight tracking-tight text-charcoal sm:text-4xl">
             Welcome back, {firstName}!
           </h1>
-          <span className="inline-flex shrink-0 items-center rounded-full bg-brand-soft px-3 py-1 text-[11px] font-bold text-brand ring-1 ring-brand/15">
-            Undergraduate · Year 3
+          <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-bold text-brand ring-1 ring-brand/10">
+            Undergraduate · Student
           </span>
         </div>
 
         {featured ? (
-          <div className="flex w-full items-start gap-2.5 rounded-2xl bg-brand-soft px-3.5 py-3 text-left text-sm text-brand ring-1 ring-brand/10 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
+          <div className="flex items-start gap-2 rounded-2xl bg-brand-soft px-3 py-3 text-sm text-brand ring-1 ring-brand/10 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
             <LeafIcon />
-            <div className="min-w-0 flex-1 text-left">
+            <div className="min-w-0">
               <p className="font-bold">Weekly Goal in Sight</p>
               <p className="mt-0.5 leading-snug text-brand/85">
                 {left
@@ -229,7 +229,7 @@ function HomeBody({ data }) {
             </div>
           </div>
         ) : (
-          <p className="text-left text-sm text-charcoal-muted">Browse curated courses and enroll to start learning.</p>
+          <p className="text-sm text-charcoal-muted">Browse curated courses and enroll to start learning.</p>
         )}
       </header>
 
@@ -265,7 +265,7 @@ function HomeBody({ data }) {
             View hierarchy
           </Link>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-0 sm:px-0">
           {(categories.length > 1 ? categories : ['All']).map((item) => (
             <button
               key={item}

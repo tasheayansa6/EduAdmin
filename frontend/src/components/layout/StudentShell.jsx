@@ -322,7 +322,7 @@ export function StudentShell() {
             tabIndex={-1}
             className={
               compactLayout
-                ? 'student-compact-shell ml-0 mr-auto w-full max-w-lg flex-1 px-4 py-4 pb-28 text-left focus:outline-none sm:max-w-xl sm:px-5 sm:py-5 md:pb-8'
+                ? 'student-compact-shell mx-auto w-full max-w-lg flex-1 px-3 py-4 pb-28 focus:outline-none sm:max-w-2xl sm:px-4 sm:py-5 md:pb-8'
                 : 'mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8'
             }
           >
