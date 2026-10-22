@@ -11,13 +11,13 @@ export default {
         paper: '#f1f5f9',
         line: '#e2e8f0',
         accent: {
-          DEFAULT: '#0f766e',
-          hover: '#0d9488',
+          DEFAULT: '#15432a',
+          hover: '#1d5a38',
         },
         brand: {
           DEFAULT: '#15432a',
           hover: '#1d5a38',
-          soft: '#eef5f0',
+          soft: '#e8f1ea',
           muted: '#b9d4c2',
         },
         wheat: {
@@ -30,9 +30,13 @@ export default {
           DEFAULT: '#191c1a',
           muted: '#59615b',
         },
-        canvas: '#f8faf6',
+        canvas: '#e9f0ea',
         sand: '#f0f4ee',
-        hairline: '#dfe5dc',
+        hairline: '#d5e0d7',
+        mint: {
+          DEFAULT: '#dce8df',
+          soft: '#f3f7f4',
+        },
       },
       fontFamily: {
         sans: ['"Source Sans 3"', 'ui-sans-serif', 'system-ui', 'sans-serif'],

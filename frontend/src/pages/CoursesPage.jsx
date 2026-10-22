@@ -151,7 +151,7 @@ export function CoursesPage() {
   return (
     <>
       <PageIntro action={<button type="button" className="btn-primary" onClick={() => setEditing(emptyCourse)}>New course</button>}>
-        Build the student catalog: cover image, outcomes, outline, price, and publish. Students see the same details on Explore and the course page.
+        Build student courses: cover image, outcomes, outline, price, and publish. Students see the same details on Explore and the course page.
       </PageIntro>
       <Filters onSubmit={(event) => {
         event.preventDefault();
@@ -182,7 +182,7 @@ export function CoursesPage() {
         onRetry={resource.reload}
         isEmpty={rows.length === 0}
         emptyTitle={filtered ? 'No matching courses' : 'No courses yet'}
-        emptyMessage={filtered ? 'Try another title, category, or status.' : 'Create the first course to build the catalog.'}
+        emptyMessage={filtered ? 'Try another title, category, or status.' : 'Create the first course for students.'}
         skeleton={<TableSkeleton />}
       >
         <div className="table-wrap overflow-x-auto">
@@ -556,7 +556,7 @@ function CourseDialog({ course, categories, onClose, onSaved }) {
         {confirming ? (
           <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
             <p className="text-sm text-ink">
-              Unpublish “{course.title}”? The course stays in the catalog as a draft. Existing enrollments and progress are kept.
+              Unpublish “{course.title}”? The course stays as a draft. Existing enrollments and progress are kept.
             </p>
             <div className="mt-3 flex justify-end gap-2">
               <button type="button" className="btn-secondary" onClick={() => setConfirming(false)}>Keep published</button>

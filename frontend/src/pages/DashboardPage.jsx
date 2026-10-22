@@ -123,7 +123,7 @@ export function DashboardPage() {
         <div className="space-y-6">
           <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-emerald-800">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-accent">
                 {roleLabel(user.role)}
               </span>
               <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
@@ -152,7 +152,7 @@ export function DashboardPage() {
               badgeTone={data.draftCourses ? 'warn' : 'muted'}
             >
               <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-muted [&_svg]:h-3.5 [&_svg]:w-3.5">
-                <BookIcon /> {data.courses} total in catalog
+                <BookIcon /> {data.courses} total courses
               </p>
             </MetricCard>
             <MetricCard label="Avg. completion" value={`${data.averageProgress}%`} badge={data.averageProgress >= 70 ? 'On track' : 'Watch'}>
@@ -201,7 +201,7 @@ export function DashboardPage() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="font-display text-xl font-bold text-ink">
-                    {tab === 'students' ? 'Active roster' : tab === 'courses' ? 'Catalog snapshot' : 'Needs attention'}
+                    {tab === 'students' ? 'Active roster' : tab === 'courses' ? 'Courses snapshot' : 'Needs attention'}
                   </h3>
                   <p className="mt-0.5 text-sm text-ink-muted">
                     {tab === 'students' ? 'Newest student accounts' : tab === 'courses' ? 'Published vs draft split' : 'Active enrollments under 40%'}

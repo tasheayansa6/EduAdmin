@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { SearchIcon } from '../components/icons.jsx';
 import { useAllCourses, useDocumentTitle } from '../student/StudentData.jsx';
-import { CARD_GRID, CatalogCard, PageSkeleton, PageTitle, StoreOutageNotice, StudentEmpty, StudentError } from '../student/components.jsx';
+import { CARD_GRID, CatalogCard, PageSkeleton, PageTitle, StudentEmpty } from '../student/components.jsx';
 
 const SORTS = {
   newest: { label: 'Newest', compare: (a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0) },
@@ -73,7 +73,7 @@ function ExploreBody({ catalog }) {
   return (
     <>
       <PageTitle
-        title="Explore courses"
+        title="Courses"
         description={`${catalog.length} published course${catalog.length === 1 ? '' : 's'}. New courses appear here as soon as an administrator publishes them.`}
       >
         <SearchBox value={q} onSearch={(text) => update('q', text)} />
@@ -138,16 +138,8 @@ function ExploreBody({ catalog }) {
 }
 
 export function StudentCoursesPage() {
-  useDocumentTitle('Explore courses');
-  const { courses, loading, storeError, reloadStore } = useAllCourses();
+  useDocumentTitle('Courses');
+  const { courses, loading } = useAllCourses();
   if (loading) return <PageSkeleton label="Loading courses" />;
-  if (storeError && !courses.length) {
-    return <StudentError title="The course catalog could not be loaded" error={storeError} onRetry={reloadStore} />;
-  }
-  return (
-    <>
-      {storeError ? <StoreOutageNotice error={storeError} onRetry={reloadStore} /> : null}
-      <ExploreBody catalog={courses} />
-    </>
-  );
+  return <ExploreBody catalog={courses} />;
 }

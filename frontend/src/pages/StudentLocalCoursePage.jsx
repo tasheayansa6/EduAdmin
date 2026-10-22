@@ -206,7 +206,7 @@ function DetailBody({ data, courseId }) {
     return (
       <StudentEmpty
         title="Course not found"
-        message="This course is not in the published catalog and is not on your learning record."
+        message="This course is not published and is not on your learning record."
         action={<Link to="/learn/courses" className="btn-brand">Explore courses</Link>}
       />
     );

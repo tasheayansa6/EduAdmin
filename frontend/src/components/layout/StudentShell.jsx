@@ -24,20 +24,44 @@ const SECTIONS = [
   { to: '/learn/profile', label: 'Account', icon: UserIcon },
 ];
 
-const DESKTOP_LINKS = [
+const PAGE_LABELS = {
+  '/learn': 'HOME',
+  '/learn/courses': 'COURSES',
+  '/learn/my-learning': 'MY LEARNING',
+  '/learn/progress': 'MY PROGRESS',
+  '/learn/profile': 'ACCOUNT',
+  '/learn/favorites': 'FAVORITES',
+  '/learn/cart': 'CART',
+  '/learn/notifications': 'NOTIFICATIONS',
+};
+
+const DESKTOP_NAV = [
   { to: '/learn', label: 'Explore', end: true },
-  { to: '/learn/courses', label: 'Catalog' },
-  { to: '/learn/my-learning', label: 'My learning' },
+  { to: '/learn/courses', label: 'Courses' },
+  { to: '/learn/my-learning', label: 'Learning' },
   { to: '/learn/progress', label: 'Progress' },
 ];
 
-function Logo() {
+function pageLabel(pathname) {
+  if (PAGE_LABELS[pathname]) return PAGE_LABELS[pathname];
+  if (pathname.startsWith('/learn/courses/')) return 'COURSE';
+  if (pathname.startsWith('/learn/my-courses/')) return 'COURSE';
+  if (pathname.startsWith('/learn/profile')) return 'ACCOUNT';
+  return 'LEARNING';
+}
+
+function Logo({ subtitle }) {
   return (
-    <Link to="/learn" className="flex shrink-0 items-center gap-2.5 rounded-md">
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand text-sm font-bold text-wheat">EA</span>
-      <span className="leading-none">
+    <Link to="/learn" className="flex min-w-0 items-center gap-2.5">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand text-wheat shadow-soft">
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+          <path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3z" />
+          <path d="M5 13.18V17c0 1.66 3.13 3 7 3s7-1.34 7-3v-3.82l-7 3.82-7-3.82z" opacity=".85" />
+        </svg>
+      </span>
+      <span className="min-w-0 leading-none">
         <span className="block font-display text-lg font-bold tracking-tight text-brand">EduAdmin</span>
-        <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-[0.16em] text-charcoal-muted">Learning</span>
+        <span className="mt-1 block truncate text-[10px] font-bold uppercase tracking-[0.16em] text-charcoal-muted">{subtitle}</span>
       </span>
     </Link>
   );
@@ -63,7 +87,6 @@ function CountLink({ to, label, count, children }) {
 function ProfileMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef(null);
-  const button = useRef(null);
   const location = useLocation();
 
   useEffect(() => setOpen(false), [location.pathname]);
@@ -74,10 +97,7 @@ function ProfileMenu({ user, onLogout }) {
       if (!wrapper.current?.contains(event.target)) setOpen(false);
     }
     function onKey(event) {
-      if (event.key === 'Escape') {
-        setOpen(false);
-        button.current?.focus();
-      }
+      if (event.key === 'Escape') setOpen(false);
     }
     document.addEventListener('mousedown', onPointer);
     document.addEventListener('keydown', onKey);
@@ -90,9 +110,8 @@ function ProfileMenu({ user, onLogout }) {
   return (
     <div ref={wrapper} className="relative">
       <button
-        ref={button}
         type="button"
-        className="rounded-full p-0.5 ring-2 ring-transparent hover:ring-brand/20"
+        className="rounded-full p-0.5 ring-2 ring-brand/15 hover:ring-brand/35"
         aria-expanded={open}
         aria-controls="profile-menu"
         onClick={() => setOpen((value) => !value)}
@@ -166,7 +185,7 @@ function MobileDrawer({ open, onClose, user, onLogout }) {
           </button>
         </div>
         <nav aria-label="Student menu" className="flex-1 overflow-y-auto p-2">
-          {[...DESKTOP_LINKS, { to: '/learn/favorites', label: 'Favorites' }, { to: '/learn/cart', label: 'Cart' }, { to: '/learn/notifications', label: 'Notifications' }, { to: '/learn/profile', label: 'Profile' }].map((link) => (
+          {[...SECTIONS, { to: '/learn/courses', label: 'Courses' }, { to: '/learn/favorites', label: 'Favorites' }, { to: '/learn/cart', label: 'Cart' }, { to: '/learn/notifications', label: 'Notifications' }].map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -193,6 +212,7 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
   const { cart, favorites } = useStore();
   const location = useLocation();
   const navigate = useNavigate();
+  const subtitle = pageLabel(location.pathname);
   const searchTo = location.pathname.startsWith('/learn/my-learning')
     ? '/learn/my-learning'
     : '/learn/courses';
@@ -204,35 +224,39 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-hairline bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
-      <div className="flex h-14 items-center gap-3 px-3 sm:px-4 lg:px-5">
-        <button type="button" className="-ml-1 rounded-md p-2 text-charcoal hover:bg-sand md:hidden" aria-label="Open menu" onClick={onOpenMenu}>
+    <header className="sticky top-0 z-30 border-b border-hairline/80 bg-mint-soft/95 backdrop-blur supports-[backdrop-filter]:bg-mint-soft/90">
+      <div className="flex h-16 items-center gap-3 px-3 sm:px-5">
+        <button type="button" className="-ml-1 rounded-xl p-2 text-charcoal hover:bg-white md:hidden" aria-label="Open menu" onClick={onOpenMenu}>
           <MenuIcon />
         </button>
-        <Logo />
-        <nav aria-label="Student" className="ml-4 hidden md:block">
-          <ul className="flex items-center gap-0.5">
-            {DESKTOP_LINKS.map((link) => (
-              <li key={link.to}>
-                <NavLink
-                  to={link.to}
-                  end={link.end}
-                  className={({ isActive }) => `inline-flex whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors ${isActive ? 'bg-brand text-white' : 'text-charcoal hover:bg-brand-soft hover:text-brand'}`}
-                >
-                  {link.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
+        <Logo subtitle={subtitle} />
+        <nav aria-label="Primary" className="ml-4 hidden items-center gap-1 lg:flex">
+          {DESKTOP_NAV.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                `rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                  isActive ? 'bg-brand text-white' : 'text-charcoal-muted hover:bg-white hover:text-charcoal'
+                }`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
-        <form onSubmit={onSearch} className="relative ml-auto hidden max-w-xs flex-1 lg:block" role="search">
+        <form onSubmit={onSearch} className="relative ml-auto hidden max-w-xs flex-1 md:block" role="search">
           <label className="sr-only" htmlFor="student-shell-search">Search courses</label>
           <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4">
             <SearchIcon />
           </span>
-          <input id="student-shell-search" name="q" className="s-field rounded-full pl-10" placeholder="Search courses" />
+          <input id="student-shell-search" name="q" className="s-field rounded-full border-transparent bg-white pl-10 shadow-soft" placeholder="Search courses" />
         </form>
-        <div className="ml-auto flex items-center gap-0.5 md:ml-2 lg:ml-1">
+        <div className="ml-auto flex items-center gap-0.5 md:ml-2">
+          <Link to={searchTo} className="icon-btn md:hidden" aria-label="Search">
+            <SearchIcon />
+          </Link>
           <CountLink to="/learn/favorites" label="Favorites" count={favorites.length}><HeartIcon /></CountLink>
           <CountLink to="/learn/cart" label="Cart" count={cart.items.length}><CartIcon /></CountLink>
           <NotificationBell />
@@ -246,16 +270,12 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
 function BottomNav() {
   return (
     <nav className="bottom-nav" aria-label="Primary">
-      <ul className="flex">
+      <ul className="mx-auto flex max-w-lg">
         {SECTIONS.map((item) => {
           const Icon = item.icon;
           return (
             <li key={item.to} className="flex flex-1">
-              <NavLink
-                to={item.to}
-                end={item.end}
-                className="bottom-nav-link"
-              >
+              <NavLink to={item.to} end={item.end} className="bottom-nav-link">
                 <span className="bottom-nav-icon">
                   <Icon />
                 </span>
@@ -294,13 +314,10 @@ export function StudentShell() {
             Skip to content
           </a>
           <HeaderBar user={user} onLogout={onLogout} onOpenMenu={() => setDrawer(true)} />
-
           <MobileDrawer open={drawer} onClose={closeDrawer} user={user} onLogout={onLogout} />
-
-          <main id="main" tabIndex={-1} className="mx-auto w-full max-w-shell flex-1 px-4 py-6 pb-28 focus:outline-none sm:px-6 lg:px-8 lg:py-8">
+          <main id="main" tabIndex={-1} className="mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8">
             <Outlet />
           </main>
-
           <BottomNav />
         </div>
       </NotificationsProvider>

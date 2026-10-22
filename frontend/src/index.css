@@ -141,19 +141,19 @@
   }
 
   .student-theme .bottom-nav {
-    @apply fixed inset-x-0 bottom-0 z-40 border-t border-brand/40 bg-brand pb-[env(safe-area-inset-bottom)] text-white shadow-[0_-8px_24px_rgba(21,67,42,0.18)];
+    @apply fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-white/95 pb-[env(safe-area-inset-bottom)] text-charcoal shadow-[0_-8px_28px_rgba(21,67,42,0.08)] backdrop-blur md:hidden;
   }
 
   .student-theme .bottom-nav-link {
-    @apply flex flex-1 flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-semibold tracking-wide text-white/70 transition-colors;
+    @apply flex flex-1 flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-semibold tracking-wide text-charcoal-muted transition-colors;
   }
 
   .student-theme .bottom-nav-link[aria-current='page'] {
-    @apply text-wheat;
+    @apply text-brand;
   }
 
   .student-theme .bottom-nav-link[aria-current='page'] .bottom-nav-icon {
-    @apply bg-white/15 text-wheat ring-1 ring-wheat/40;
+    @apply bg-brand-soft text-brand;
   }
 
   .student-theme .bottom-nav-icon {

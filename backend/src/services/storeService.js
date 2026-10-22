@@ -54,7 +54,13 @@ function withState(course, state) {
 }
 
 export async function getCatalog(userId) {
-  const courses = await listCatalogCourses();
+  let courses = [];
+  try {
+    courses = await listCatalogCourses();
+  } catch {
+    // AILG store can be offline; EduAdmin-published courses still load from /student/home.
+    return [];
+  }
   const state = await studentState(userId, courses.map((course) => course.slug));
   return courses.map((course) => withState(course, state.get(course.slug)));
 }

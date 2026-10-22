@@ -1,16 +1,15 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { AlertIcon, LeafIcon, PlayIcon } from '../components/icons.jsx';
+import { AlertIcon, CheckIcon, LeafIcon, PlayIcon } from '../components/icons.jsx';
 import { currentEnrollments, useAllCourses, useDocumentTitle, useStudentData } from '../student/StudentData.jsx';
 import {
   CardGridSkeleton,
   CourseCover,
   CourseImage,
   Meter,
-  StoreOutageNotice,
   StudentData,
   StudentEmpty,
-  StudentError,
   enrollmentLink,
   formatPrice,
 } from '../student/components.jsx';
@@ -19,33 +18,42 @@ function ResumeCard({ enrollment }) {
   const percent = enrollment.percent ?? 0;
   const href = enrollmentLink(enrollment);
   return (
-    <article className="overflow-hidden rounded-3xl bg-brand text-white shadow-lift">
-      <div className="relative min-h-[16rem] sm:min-h-[18rem]">
+    <article className="overflow-hidden rounded-[1.75rem] border border-hairline bg-white shadow-soft">
+      <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[2.1/1]">
         <CourseCover
           category={enrollment.categoryName}
           title={enrollment.courseTitle}
-          className="!aspect-auto absolute inset-0 h-full w-full opacity-40"
+          className="!aspect-auto absolute inset-0 h-full w-full"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand via-brand/70 to-brand/20" />
-        <div className="relative flex h-full flex-col justify-end gap-3 p-5 sm:p-7">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-wheat">
-            Continue learning
+        <div className="absolute inset-0 bg-gradient-to-t from-charcoal/85 via-charcoal/35 to-transparent" />
+        <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-charcoal shadow-soft">
+          Continue
+        </span>
+        <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/75">
+            {enrollment.categoryName || 'In progress'}
             {enrollment.percent != null ? ` · ${percent}% complete` : ''}
           </p>
-          <h2 className="font-display text-2xl font-bold leading-tight sm:text-4xl">{enrollment.courseTitle}</h2>
-          {enrollment.instructorName ? (
-            <p className="text-sm text-white/80">with {enrollment.instructorName}</p>
-          ) : enrollment.categoryName ? (
-            <p className="text-sm text-white/80">{enrollment.categoryName}</p>
-          ) : null}
-          <div className="max-w-md [&_[role=progressbar]]:bg-white/20 [&_[role=progressbar]>div]:bg-wheat">
-            <Meter value={percent} label="Course progress" />
-          </div>
-          <Link to={href} className="btn inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-base font-bold text-brand hover:bg-sand sm:w-auto sm:min-w-[18rem]">
-            <PlayIcon />
-            {percent > 0 ? 'Resume lesson' : 'Start learning'}
-          </Link>
+          <p className="mt-1 font-display text-lg font-bold leading-snug sm:text-xl">
+            {percent > 0 ? `Resume: ${enrollment.courseTitle}` : `Start: ${enrollment.courseTitle}`}
+          </p>
         </div>
+      </div>
+      <div className="space-y-4 p-4 sm:p-5">
+        <div>
+          <h3 className="font-display text-lg font-bold text-charcoal">{enrollment.courseTitle}</h3>
+          <p className="mt-1 text-sm text-charcoal-muted">
+            {[enrollment.instructorName, enrollment.percent != null ? `${percent}% completed` : null].filter(Boolean).join(' · ') || 'Continue learning'}
+          </p>
+        </div>
+        <Meter value={percent} label="Course progress" />
+        <Link
+          to={href}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-4 py-3.5 text-sm font-bold text-white shadow-soft hover:bg-brand-hover"
+        >
+          <PlayIcon />
+          {percent > 0 ? 'Resume lesson' : 'Start learning'}
+        </Link>
       </div>
     </article>
   );
@@ -57,14 +65,14 @@ function CuratedCard({ course }) {
     : `/learn/courses/${course.slug}`;
   const enrolled = course.enrollment && course.enrollment.status !== 'withdrawn';
   return (
-    <article className="flex w-[17.5rem] shrink-0 flex-col overflow-hidden rounded-3xl border border-hairline bg-white shadow-soft sm:w-[19rem]">
-      <div className="relative">
+    <article className="overflow-hidden rounded-[1.5rem] border border-hairline bg-white shadow-soft">
+      <div className="relative aspect-[16/9] bg-sand">
         {course.imageUrl ? (
-          <CourseImage course={course} className="aspect-[16/10]" />
+          <CourseImage course={course} className="h-full w-full object-cover" />
         ) : (
-          <CourseCover category={course.category} title={course.title} className="aspect-[16/10]" />
+          <CourseCover category={course.category} title={course.title} className="!aspect-auto h-full w-full" />
         )}
-        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand">
+        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand shadow-soft">
           {course.category || 'Course'}
         </span>
         {enrolled ? (
@@ -73,151 +81,162 @@ function CuratedCard({ course }) {
           </span>
         ) : null}
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="line-clamp-2 font-display text-lg font-bold leading-snug text-charcoal">
-          <Link to={to} className="hover:text-brand">{course.title}</Link>
-        </h3>
-        {course.instructorName ? (
-          <p className="text-xs font-semibold text-charcoal-muted">{course.instructorName}</p>
-        ) : null}
-        <p className="mt-auto flex items-center justify-between gap-2 pt-2 text-sm">
-          <span className={`font-extrabold ${course.isFree ? 'text-brand' : 'text-charcoal'}`}>
+      <div className="space-y-3 p-4">
+        <div>
+          <h3 className="font-display text-lg font-bold leading-snug text-charcoal">
+            <Link to={to} className="hover:text-brand">{course.title}</Link>
+          </h3>
+          {course.instructorName ? (
+            <p className="mt-1 text-sm text-charcoal-muted">{course.instructorName}</p>
+          ) : null}
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className={`text-base font-extrabold ${course.isFree ? 'text-brand' : 'text-charcoal'}`}>
             {formatPrice(course.price, course.currency)}
           </span>
-          <Link to={to} className="font-bold text-brand hover:underline">
-            {enrolled ? 'Open' : 'View'} →
-          </Link>
-        </p>
+        </div>
+        <Link
+          to={to}
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-brand px-4 py-3 text-sm font-bold text-white hover:bg-brand-hover"
+        >
+          {enrolled ? 'Open course' : course.isFree ? 'View course' : 'Enroll now'}
+        </Link>
       </div>
     </article>
   );
 }
 
-function AttentionList({ rows }) {
-  if (!rows.length) return null;
+function DeadlineRow({ enrollment, urgent }) {
   return (
-    <section aria-labelledby="attention-title" className="space-y-3">
-      <div className="flex items-end justify-between gap-3">
-        <h2 id="attention-title" className="font-display text-xl font-bold text-charcoal">Upcoming focus</h2>
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-muted">{rows.length} pending</p>
-      </div>
-      <ul className="space-y-2">
-        {rows.map((row) => (
-          <li key={row.id}>
-            <Link
-              to={enrollmentLink(row)}
-              className="flex items-start gap-3 rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 transition hover:border-amber-300"
-            >
-              <span className="mt-0.5 text-amber-700 [&_svg]:h-5 [&_svg]:w-5"><AlertIcon /></span>
-              <span className="min-w-0">
-                <span className="block truncate font-semibold text-charcoal">{row.courseTitle}</span>
-                <span className="mt-0.5 block text-sm text-charcoal-muted">
-                  {row.percent ?? 0}% complete — resume to keep moving.
-                </span>
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <Link
+      to={enrollmentLink(enrollment)}
+      className="flex items-start gap-3 rounded-2xl border border-hairline bg-white p-3.5 shadow-soft transition hover:border-brand/30"
+    >
+      <span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl ${urgent ? 'bg-wheat/20 text-wheat' : 'bg-brand-soft text-brand'}`}>
+        {urgent ? <AlertIcon /> : <CheckIcon />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="font-bold text-charcoal">{enrollment.courseTitle}</span>
+          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${urgent ? 'bg-wheat/20 text-wheat-ink' : 'bg-brand-soft text-brand'}`}>
+            {urgent ? 'Due soon' : 'This week'}
+          </span>
+        </span>
+        <span className="mt-0.5 block text-sm text-charcoal-muted">
+          {enrollment.percent ?? 0}% complete — resume to keep moving
+        </span>
+      </span>
+    </Link>
   );
 }
 
 function HomeBody({ data }) {
   const { user } = useAuth();
   const firstName = user.name.trim().split(/\s+/)[0];
+  const [category, setCategory] = useState('All');
   const current = currentEnrollments(data);
   const active = current
     .filter((row) => row.status === 'active')
     .sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0));
   const featured = active[0];
-  const { courses, loading, storeError, reloadStore } = useAllCourses();
-  const available = courses
-    .filter((course) => !course.enrollment)
-    .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
-  const categories = [...courses.reduce((map, course) => map.set(course.category, (map.get(course.category) || 0) + 1), new Map())]
-    .filter(([name]) => name)
-    .sort((a, b) => a[0].localeCompare(b[0]));
-  const attention = active.filter((row) => (row.percent ?? 0) < 40).slice(0, 3);
+  const { courses, loading } = useAllCourses();
+  const available = courses.filter((course) => !course.enrollment);
+  const categories = ['All', ...[...new Set(courses.map((course) => course.category).filter(Boolean))].sort()];
+  const curatedBase = available.length ? available : courses;
+  const curated = (category === 'All'
+    ? curatedBase
+    : curatedBase.filter((course) => course.category === category)
+  ).slice(0, 6);
+  const deadlines = active.filter((row) => (row.percent ?? 0) < 70).slice(0, 2);
   const remaining = featured && featured.percent != null
     ? Math.max(0, 100 - featured.percent)
     : null;
-  const curated = available.length ? available.slice(0, 8) : courses.slice(0, 8);
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-3xl border border-hairline bg-gradient-to-br from-brand-soft via-canvas to-white p-5 sm:p-7">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Explore</p>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-charcoal sm:text-5xl">
-            Welcome back, {firstName}
+    <div className="space-y-7">
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-charcoal sm:text-[2.15rem]">
+            Welcome back, {firstName}!
           </h1>
-          {current.length ? (
-            <span className="rounded-full bg-brand px-3 py-1 text-xs font-bold text-white">
-              {active.length} in progress · {data.summary?.completed ?? 0} done
-            </span>
-          ) : null}
+          <span className="rounded-full bg-brand px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+            Student
+          </span>
         </div>
         {featured ? (
-          <p className="mt-4 inline-flex max-w-2xl items-start gap-2 rounded-2xl bg-white/80 px-3.5 py-2.5 text-sm text-brand shadow-soft [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
+          <div className="flex items-start gap-2 rounded-2xl border border-brand/15 bg-brand-soft/90 px-4 py-3 text-sm text-brand [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
             <LeafIcon />
-            <span>
-              {remaining != null && remaining > 0
-                ? `Weekly goal in sight: you are ${remaining}% away from finishing “${featured.courseTitle}”.`
-                : `Pick up “${featured.courseTitle}” and keep learning.`}
-            </span>
-          </p>
+            <div>
+              <p className="font-bold">Weekly goal in sight</p>
+              <p className="mt-0.5 text-brand/85">
+                {remaining != null && remaining > 0
+                  ? `You're ${remaining}% away from completing “${featured.courseTitle}”.`
+                  : `Keep going in “${featured.courseTitle}”.`}
+              </p>
+            </div>
+          </div>
         ) : (
-          <p className="mt-3 max-w-xl text-base text-charcoal-muted">
-            Find a course below. Enrolling saves it to My learning.
-          </p>
+          <p className="text-sm text-charcoal-muted">Browse courses and enroll to start learning.</p>
         )}
-      </section>
+      </header>
 
       {featured ? (
-        <section aria-labelledby="resume-title">
-          <h2 id="resume-title" className="sr-only">Continue learning</h2>
+        <section aria-labelledby="in-progress-heading" className="space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">In progress</p>
+              <h2 id="in-progress-heading" className="font-display text-xl font-bold text-charcoal">
+                {active.length} active course{active.length === 1 ? '' : 's'}
+              </h2>
+            </div>
+            <Link to="/learn/my-learning" className="text-sm font-bold text-brand hover:underline">
+              View all
+            </Link>
+          </div>
           <ResumeCard enrollment={featured} />
         </section>
       ) : (
         <StudentEmpty
           title="You have not enrolled in a course yet"
-          message="Browse curated courses below, or open the full catalog."
+          message="Browse curated courses below, or open all courses."
           action={<Link to="/learn/courses" className="btn-brand">Explore courses</Link>}
         />
       )}
 
-      {categories.length ? (
-        <section aria-labelledby="categories-title" className="space-y-3">
-          <h2 id="categories-title" className="font-display text-lg font-bold text-charcoal">Browse by category</h2>
-          <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-            <li>
-              <Link to="/learn/courses" className="chip-on">All</Link>
-            </li>
-            {categories.map(([category, count]) => (
-              <li key={category}>
-                <Link to={`/learn/courses?category=${encodeURIComponent(category)}`} className="chip-off">
-                  {category}
-                  <span className="text-charcoal-muted">{count}</span>
-                </Link>
-              </li>
+      <section aria-labelledby="curated-heading" className="space-y-4">
+        {categories.length > 1 ? (
+          <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {categories.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setCategory(item)}
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition ${
+                  category === item
+                    ? 'bg-brand text-white shadow-soft'
+                    : 'bg-white text-charcoal ring-1 ring-hairline hover:bg-mint-soft'
+                }`}
+              >
+                {item}
+              </button>
             ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <section aria-labelledby="curated-title" className="space-y-4">
-        <div>
-          <h2 id="curated-title" className="font-display text-2xl font-bold text-charcoal">Curated for you</h2>
-          <p className="mt-1 text-sm text-charcoal-muted">Recommended from the open catalog.</p>
+          </div>
+        ) : null}
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <h2 id="curated-heading" className="font-display text-xl font-bold text-charcoal">
+              Curated for you
+            </h2>
+            <p className="mt-1 text-sm text-charcoal-muted">Recommended from published courses</p>
+          </div>
+          <Link to="/learn/courses" className="text-sm font-bold text-brand hover:underline">
+            See all
+          </Link>
         </div>
-        {storeError && courses.length ? <StoreOutageNotice error={storeError} onRetry={reloadStore} /> : null}
         {loading ? (
           <CardGridSkeleton count={3} />
-        ) : storeError && !courses.length ? (
-          <StudentError title="The course catalog could not be loaded" error={storeError} onRetry={reloadStore} />
         ) : curated.length ? (
-          <ul className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:-mx-0 sm:px-0">
+          <ul className="space-y-4">
             {curated.map((course) => (
               <li key={course.key || course.id || course.slug}>
                 <CuratedCard course={course} />
@@ -230,12 +249,27 @@ function HomeBody({ data }) {
             message="Courses appear here once an administrator publishes them."
           />
         )}
-        <div>
-          <Link to="/learn/courses" className="btn-quiet px-0">See all courses →</Link>
-        </div>
       </section>
 
-      <AttentionList rows={attention} />
+      {deadlines.length ? (
+        <section aria-labelledby="deadlines-heading" className="space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <h2 id="deadlines-heading" className="font-display text-xl font-bold text-charcoal">
+              Upcoming deadlines
+            </h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-charcoal-muted">
+              {deadlines.length} pending
+            </p>
+          </div>
+          <ul className="space-y-3">
+            {deadlines.map((row, index) => (
+              <li key={row.id}>
+                <DeadlineRow enrollment={row} urgent={index === 0} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

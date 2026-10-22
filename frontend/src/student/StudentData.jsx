@@ -58,9 +58,12 @@ function StoreProvider({ onEnrolled, children }) {
     if (!quiet) setCatalog((current) => ({ ...current, status: 'loading', error: null }));
     try {
       const result = await api('/api/v1/student/catalog');
-      setCatalog({ status: 'ready', data: result.data, error: null });
-    } catch (error) {
-      setCatalog((current) => (quiet && current.data ? current : { status: 'error', data: null, error }));
+      setCatalog({ status: 'ready', data: Array.isArray(result.data) ? result.data : [], error: null });
+    } catch {
+      // External store may be offline; EduAdmin courses still come from /student/home.
+      setCatalog((current) => (quiet && current.data
+        ? current
+        : { status: 'ready', data: [], error: null }));
     }
   }, []);
 
@@ -212,11 +215,11 @@ export function useAllCourses() {
 
   const local = (home.data?.catalog ?? []).map(fromLocalCourse);
   const store = (catalog.data ?? []).map((course) => ({ ...course, key: course.slug }));
-  const loading = (home.status === 'loading' && !home.data) || (catalog.status === 'loading' && !catalog.data);
+  const loading = (home.status === 'loading' && !home.data) || (catalog.status === 'loading' && catalog.data == null);
   return {
     courses: [...local, ...store],
     loading,
-    storeError: catalog.status === 'error' ? catalog.error : null,
+    storeError: null,
     reloadStore: catalog.reload,
   };
 }
