@@ -316,8 +316,10 @@ function LearningBody({ data }) {
     <div className="space-y-5 md:space-y-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
-            Academic session {year}–{year + 1}
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
+            Academic Session {year}–{year + 1}
+            <span className="mx-1.5 text-hairline">/</span>
+            <span className="text-brand">My Learning Hub</span>
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-display text-[1.75rem] font-bold tracking-tight text-charcoal md:text-[2.15rem]">
@@ -336,16 +338,16 @@ function LearningBody({ data }) {
         </div>
 
         {(active.length || completed.length) ? (
-          <div className="flex w-full max-w-sm items-center gap-3 rounded-2xl bg-white p-3.5 shadow-soft ring-1 ring-hairline lg:w-80">
+          <div className="flex w-full max-w-md items-center gap-3 rounded-2xl bg-white p-3.5 shadow-soft ring-1 ring-hairline lg:w-[22rem]">
             <PaceRing value={ringValue} size="md" label="Done" />
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">Weekly target</p>
-              <p className="mt-0.5 text-sm font-bold text-charcoal">
-                {hoursDone} of {hoursTarget} hrs
+              <p className="mt-0.5 text-sm font-bold leading-snug text-charcoal">
+                {hoursDone} of {hoursTarget} hrs. Keep the momentum!
               </p>
               <Link
                 to="/learn/progress"
-                className="mt-2 inline-flex rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-hover"
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-brand-soft px-3 py-1.5 text-xs font-bold text-brand hover:bg-brand hover:text-white"
               >
                 Schedule
               </Link>
@@ -539,8 +541,9 @@ function LearningBody({ data }) {
                 <p className="mt-1 text-sm leading-relaxed text-charcoal-muted">
                   Complete your own work. All submissions are subject to automated verification.
                 </p>
-                <Link to="/learn/progress" className="mt-2 inline-flex text-xs font-bold text-brand hover:underline">
-                  Institutional Policy Guide
+                <Link to="/learn/progress" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-brand hover:underline [&_svg]:h-3 [&_svg]:w-3">
+                  Review Institutional Policy Guide
+                  <ArrowRightIcon />
                 </Link>
               </div>
             </div>
