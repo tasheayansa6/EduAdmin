@@ -225,7 +225,7 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-hairline/80 bg-mint-soft/95 backdrop-blur supports-[backdrop-filter]:bg-mint-soft/90">
-      <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-3 sm:px-4">
+      <div className="flex h-16 items-center gap-3 px-3 sm:px-5">
         <button type="button" className="-ml-1 rounded-xl p-2 text-charcoal hover:bg-white md:hidden" aria-label="Open menu" onClick={onOpenMenu}>
           <MenuIcon />
         </button>
@@ -295,6 +295,7 @@ export function StudentShell() {
   const location = useLocation();
   const [drawer, setDrawer] = useState(false);
   const closeDrawer = useCallback(() => setDrawer(false), []);
+  const compactLayout = location.pathname === '/learn' || location.pathname === '/learn/my-learning';
 
   useEffect(() => {
     setDrawer(false);
@@ -315,7 +316,15 @@ export function StudentShell() {
           </a>
           <HeaderBar user={user} onLogout={onLogout} onOpenMenu={() => setDrawer(true)} />
           <MobileDrawer open={drawer} onClose={closeDrawer} user={user} onLogout={onLogout} />
-          <main id="main" tabIndex={-1} className="mx-auto w-full max-w-lg flex-1 px-3 py-4 pb-28 focus:outline-none sm:max-w-2xl sm:px-4 sm:py-5 md:max-w-3xl md:pb-8">
+          <main
+            id="main"
+            tabIndex={-1}
+            className={
+              compactLayout
+                ? 'mx-auto w-full max-w-lg flex-1 px-3 py-4 pb-28 focus:outline-none sm:max-w-2xl sm:px-4 sm:py-5 md:pb-8'
+                : 'mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8'
+            }
+          >
             <Outlet />
           </main>
           <BottomNav />
