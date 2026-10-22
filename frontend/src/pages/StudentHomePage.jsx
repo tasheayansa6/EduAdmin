@@ -73,7 +73,7 @@ function FeatureResume({ enrollment }) {
               </span>
             </div>
 
-            <h2 className="font-display text-3xl font-extrabold leading-snug tracking-tight text-charcoal md:text-[2rem] lg:text-4xl">
+            <h2 className="font-display text-3xl font-extrabold leading-snug tracking-tight text-charcoal md:text-4xl lg:text-5xl">
               {enrollment.courseTitle}
             </h2>
 
@@ -196,7 +196,7 @@ function CuratedCard({ course }) {
             <span className="ml-1 font-normal text-charcoal-muted">({ratingCount})</span>
           </span>
         </div>
-        <h3 className="font-display text-xl font-extrabold leading-snug text-charcoal md:text-2xl">
+        <h3 className="font-display text-2xl font-extrabold leading-snug text-charcoal md:text-3xl">
           <Link to={to} className="hover:text-brand">{course.title}</Link>
         </h3>
         <p className="line-clamp-2 text-sm leading-relaxed text-charcoal-muted">{about}</p>
@@ -313,7 +313,7 @@ function HomeBody({ data }) {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-4xl font-extrabold tracking-tight text-charcoal md:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
+              <h1 className="font-display text-5xl font-extrabold tracking-tight text-charcoal md:text-6xl lg:text-[4rem] lg:leading-[1.05]">
                 Welcome back, {firstName}!
               </h1>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand">
@@ -321,7 +321,7 @@ function HomeBody({ data }) {
                 Term Active
               </span>
             </div>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-lg font-medium text-charcoal-muted md:text-xl">
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xl font-medium text-charcoal-muted md:text-2xl">
               <span>Undergraduate</span>
               <span className="text-hairline">•</span>
               <span>Year 3</span>
@@ -400,10 +400,10 @@ function HomeBody({ data }) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">Academic Catalog</p>
-            <h2 id="curated-heading" className="mt-1 font-display text-3xl font-extrabold tracking-tight text-charcoal md:text-4xl">
+            <h2 id="curated-heading" className="mt-1 font-display text-4xl font-extrabold tracking-tight text-charcoal md:text-5xl">
               Curated For Your Degree
             </h2>
-            <p className="mt-1 text-lg text-charcoal-muted">
+            <p className="mt-1 text-xl text-charcoal-muted">
               Recommended based on completed prerequisites and academic track.
             </p>
           </div>

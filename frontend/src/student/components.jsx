@@ -7,6 +7,15 @@ import { useStore } from './StudentData.jsx';
 
 export const CARD_GRID = 'grid gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4';
 
+const COVER_PHOTOS = [
+  '/covers/servers.jpg',
+  '/covers/coding.jpg',
+  '/covers/data.jpg',
+  '/covers/cloud.jpg',
+  '/covers/math.jpg',
+  '/covers/design.jpg',
+];
+
 const COVER_TONES = [
   { bg: '#e4eee6', line: '#7fa58b' },
   { bg: '#fbf3d6', line: '#c9a53c' },
@@ -16,27 +25,60 @@ const COVER_TONES = [
   { bg: '#f6f0dc', line: '#b8a160' },
 ];
 
-function toneFor(key) {
+function hashKey(key) {
   let hash = 0;
   for (const char of String(key || '')) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return COVER_TONES[hash % COVER_TONES.length];
+  return hash;
 }
 
-/** Courses have no image field, so every cover is the same neutral design tinted by category. */
+function toneFor(key) {
+  return COVER_TONES[hashKey(key) % COVER_TONES.length];
+}
+
+function coverPhotoFor(category, title) {
+  const text = `${category || ''} ${title || ''}`.toLowerCase();
+  if (/database|server|sql|postgres|data\b|infra/.test(text)) return '/covers/servers.jpg';
+  if (/react|web|stack|front|software|code|program/.test(text)) return '/covers/coding.jpg';
+  if (/math|stat|probab|calculus|algebra/.test(text)) return '/covers/math.jpg';
+  if (/design|ui|ux|interface|human/.test(text)) return '/covers/design.jpg';
+  if (/cloud|kubernetes|devops|distribut/.test(text)) return '/covers/cloud.jpg';
+  if (/machine|ai|analytics|ml\b|engineer/.test(text)) return '/covers/data.jpg';
+  return COVER_PHOTOS[hashKey(title || category) % COVER_PHOTOS.length];
+}
+
+/** Photo cover for courses without an uploaded image (category-aware stock art). */
 export function CourseCover({ category, title, className = '' }) {
-  const tone = toneFor(category);
+  const [broken, setBroken] = useState(false);
+  const tone = toneFor(category || title);
+  const src = coverPhotoFor(category, title);
   const initial = String(title || category || '').trim().charAt(0).toUpperCase();
+
+  if (broken) {
+    return (
+      <div className={`relative aspect-[16/9] overflow-hidden ${className}`} style={{ backgroundColor: tone.bg }} aria-hidden="true">
+        <svg className="absolute -right-6 -top-6 h-[120%] w-auto" viewBox="0 0 200 200" fill="none" stroke={tone.line} strokeWidth="1.2">
+          <circle cx="140" cy="60" r="34" />
+          <circle cx="140" cy="60" r="58" />
+          <circle cx="140" cy="60" r="82" />
+          <circle cx="140" cy="60" r="106" />
+        </svg>
+        <span className="absolute bottom-2 left-4 text-6xl font-bold leading-none" style={{ color: tone.line }}>
+          {initial}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className={`relative aspect-[16/9] overflow-hidden ${className}`} style={{ backgroundColor: tone.bg }} aria-hidden="true">
-      <svg className="absolute -right-6 -top-6 h-[120%] w-auto" viewBox="0 0 200 200" fill="none" stroke={tone.line} strokeWidth="1.2">
-        <circle cx="140" cy="60" r="34" />
-        <circle cx="140" cy="60" r="58" />
-        <circle cx="140" cy="60" r="82" />
-        <circle cx="140" cy="60" r="106" />
-      </svg>
-      <span className="absolute bottom-2 left-4 text-6xl font-bold leading-none" style={{ color: tone.line }}>
-        {initial}
-      </span>
+    <div className={`relative aspect-[16/9] overflow-hidden bg-sand ${className}`} aria-hidden="true">
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        className="absolute inset-0 h-full w-full object-cover"
+        onError={() => setBroken(true)}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/25 via-transparent to-transparent" />
     </div>
   );
 }
