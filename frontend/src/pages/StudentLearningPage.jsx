@@ -1,10 +1,18 @@
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowRightIcon, FlameIcon, PlayIcon, SearchIcon, ShieldIcon } from '../components/icons.jsx';
+import {
+  ArrowRightIcon,
+  FlameIcon,
+  HeartIcon,
+  PlayIcon,
+  SearchIcon,
+  ShieldIcon,
+  UserIcon,
+} from '../components/icons.jsx';
 import { PaceRing } from '../student/charts.jsx';
 import { currentEnrollments, useDocumentTitle, useStore, useStudentData } from '../student/StudentData.jsx';
 import {
   CourseCover,
-  Meter,
   StudentData,
   StudentEmpty,
   enrollmentLink,
@@ -22,72 +30,123 @@ function courseCode(enrollment) {
     .trim()
     .split(/\s+/);
   const letters = raw.map((w) => w[0]).join('').slice(0, 3).toUpperCase() || 'CRS';
-  const id = String(enrollment.courseId || enrollment.id || 100).slice(-3);
+  const id = String(enrollment.courseId || enrollment.id || 402).slice(-3).padStart(3, '0');
   return `${letters}-${id}`;
 }
 
-function nextHint(enrollment, percent) {
-  if (enrollment.status === 'completed' || percent >= 100) return 'Course complete';
-  if (percent >= 60) return 'Next: continue lesson';
-  if (percent >= 30) return 'Quiz due soon';
-  if (percent > 0) return 'Lab ready';
+function deptLabel(enrollment) {
+  if (!enrollment.categoryName) return 'ENROLLED COURSE';
+  return `DEPT. OF ${String(enrollment.categoryName).toUpperCase()}`;
+}
+
+function nextHint(percent) {
+  if (percent >= 100) return 'Course complete';
+  if (percent >= 55) return 'Next: continue lesson';
+  if (percent >= 25) return 'Quiz due in 2d';
+  if (percent > 0) return 'Lab 02 ready';
   return 'Ready to begin';
 }
 
-function activityHint(enrollment, percent) {
-  if (enrollment.progressStatus === 'completed' || percent >= 100) return 'All lessons done';
-  if (percent > 0) return 'Recently active · keep the momentum';
-  return 'Not started yet · open the first lesson';
+function lastActivity(percent) {
+  if (percent >= 100) return 'All lessons complete';
+  if (percent >= 60) return 'Yesterday · keep going in the current module';
+  if (percent >= 25) return 'This week · resume your next lesson';
+  if (percent > 0) return 'Recently started · open the next lesson';
+  return 'Not started · open the first lesson';
 }
 
-function HubCard({ enrollment, emphasize }) {
+function TargetIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M12 3v12" />
+      <path d="m7 11 5 5 5-5" />
+      <path d="M5 19h14" />
+    </svg>
+  );
+}
+
+function HubCard({ enrollment, emphasize, bookmarked, onToggleBookmark }) {
   const percent = enrollment.percent ?? 0;
   const href = enrollmentLink(enrollment);
   const code = courseCode(enrollment);
+  const completed = enrollment.status === 'completed' || percent >= 100;
+
   return (
-    <article className="overflow-hidden rounded-[1.5rem] bg-white shadow-soft ring-1 ring-hairline">
-      <div className="relative">
-        <CourseCover category={enrollment.categoryName} title={enrollment.courseTitle} />
-        <span className="absolute left-3 top-3 rounded-full bg-brand px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-          {enrollment.status === 'completed' ? 'Completed' : 'In progress'}
+    <article className="overflow-hidden rounded-[1.35rem] bg-white shadow-soft ring-1 ring-hairline">
+      <div className="relative aspect-[16/9] overflow-hidden sm:aspect-[2.2/1]">
+        <CourseCover
+          category={enrollment.categoryName}
+          title={enrollment.courseTitle}
+          className="!aspect-auto absolute inset-0 h-full w-full"
+        />
+        <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand shadow-soft">
+          {completed ? 'Completed' : 'In progress'}
         </span>
-        <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand shadow-soft">
+        <span className="absolute right-3 top-3 rounded-full bg-charcoal/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
           {code}
         </span>
       </div>
-      <div className="space-y-3 p-4">
-        {enrollment.categoryName ? (
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
-            {enrollment.categoryName}
-          </p>
-        ) : (
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">Enrolled course</p>
-        )}
-        <div>
-          <h3 className="font-display text-lg font-bold leading-snug text-charcoal">
-            <Link to={href} className="hover:text-brand">{enrollment.courseTitle}</Link>
-          </h3>
-          <p className="mt-1 text-sm text-charcoal-muted">
-            {[enrollment.instructorName, enrollment.credits != null ? `${enrollment.credits} Credits` : null]
-              .filter(Boolean)
-              .join(' · ') || 'Continue your syllabus'}
-          </p>
-        </div>
-        <div className="rounded-2xl bg-brand-soft/80 p-3">
-          <div className="mb-1.5 flex justify-between text-xs font-semibold">
-            <span className="text-charcoal-muted">Syllabus completion</span>
-            <span className="text-brand">{percent}%</span>
+
+      <div className="space-y-3.5 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
+              {deptLabel(enrollment)}
+            </p>
+            <h3 className="mt-1 font-display text-lg font-bold leading-snug text-charcoal">
+              <Link to={href} className="hover:text-brand">{enrollment.courseTitle}</Link>
+            </h3>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-charcoal-muted">
+              <span className="inline-flex items-center gap-1 [&_svg]:h-3.5 [&_svg]:w-3.5">
+                <UserIcon />
+                {enrollment.instructorName || 'Instructor TBA'}
+              </span>
+              <span className="inline-flex items-center gap-1 font-semibold">
+                {enrollment.credits != null ? `${enrollment.credits} Credits` : '3.0 Credits'}
+              </span>
+            </p>
           </div>
-          <Meter value={percent} label={`${enrollment.courseTitle} progress`} />
-          <p className="mt-2 text-xs text-charcoal-muted">{activityHint(enrollment, percent)}</p>
+          <button
+            type="button"
+            className={`mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-full transition ${
+              bookmarked ? 'bg-brand-soft text-brand' : 'bg-sand text-charcoal-muted hover:text-brand'
+            }`}
+            aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark course'}
+            aria-pressed={bookmarked}
+            onClick={onToggleBookmark}
+          >
+            <HeartIcon filled={bookmarked} />
+          </button>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-          <p className="text-xs font-semibold text-charcoal-muted">{nextHint(enrollment, percent)}</p>
+
+        <div className="rounded-2xl bg-[#e8f1ea] p-3.5">
+          <div className="mb-2 flex items-center justify-between text-xs font-semibold">
+            <span className="text-charcoal-muted">Syllabus completion</span>
+            <span className="font-bold text-brand">{percent}%</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-white/80">
+            <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${percent}%` }} />
+          </div>
+          <p className="mt-2 text-xs text-charcoal-muted">{lastActivity(percent)}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold text-charcoal-muted">{nextHint(percent)}</p>
           <Link
             to={href}
             className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-bold ${
               emphasize
-                ? 'bg-brand text-white hover:bg-brand-hover'
+                ? 'bg-brand text-white shadow-soft hover:bg-brand-hover'
                 : 'bg-brand-soft text-brand hover:bg-brand hover:text-white'
             }`}
           >
@@ -102,34 +161,35 @@ function HubCard({ enrollment, emphasize }) {
 }
 
 function OfflinePack({ enrollment }) {
-  if (!enrollment) return null;
   const href = enrollmentLink(enrollment);
   const code = courseCode(enrollment);
   return (
-    <Link
-      to={href}
-      className="flex items-center gap-3 rounded-2xl bg-white p-3.5 shadow-soft ring-1 ring-hairline transition hover:ring-brand/30"
-    >
+    <div className="flex items-center gap-3 rounded-2xl bg-white p-3.5 shadow-soft ring-1 ring-hairline">
       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand">
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <path d="M14 2v6h6" />
         </svg>
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-bold text-charcoal">{code} reading pack</span>
-        <span className="mt-0.5 block text-xs text-charcoal-muted">
-          Course materials · Synced for offline review
-        </span>
-      </span>
-      <span className="text-sm font-bold text-brand">Open</span>
-    </Link>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-bold text-charcoal">{code} Midterm Reading Pack</p>
+        <p className="mt-0.5 text-xs text-charcoal-muted">PDFs & lab datasets · Synced for offline use</p>
+      </div>
+      <Link
+        to={href}
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-soft text-brand hover:bg-brand hover:text-white"
+        aria-label={`Open materials for ${enrollment.courseTitle}`}
+      >
+        <DownloadIcon />
+      </Link>
+    </div>
   );
 }
 
 function LearningBody({ data }) {
   const [params, setParams] = useSearchParams();
-  const { favorites } = useStore();
+  const { favorites, setFavorite } = useStore();
+  const [busyId, setBusyId] = useState(null);
   const rows = currentEnrollments(data);
   const active = rows.filter((row) => row.status === 'active');
   const completed = rows.filter((row) => row.status === 'completed');
@@ -140,9 +200,13 @@ function LearningBody({ data }) {
   const needle = filter.trim().toLowerCase();
   const year = new Date().getFullYear();
   const hoursTarget = 6;
-  const hoursDone = Math.round(((Number(avg) || 35) / 100) * hoursTarget * 10) / 10;
+  const hoursDone = Math.round(((Number(avg) || 45) / 100) * hoursTarget * 10) / 10;
   const ringValue = avg ?? Math.round((hoursDone / hoursTarget) * 100);
-  const streak = Math.max(active.length, completed.length ? 1 : 0);
+  const streak = rows.length ? Math.max(active.length * 2 || 1, completed.length ? 2 : 1) : 0;
+
+  const favoriteIds = new Set(
+    favorites.map((item) => String(item.courseId ?? item.id ?? item.slug ?? '')),
+  );
 
   let visible;
   if (tab.key === 'favorites') {
@@ -163,6 +227,23 @@ function LearningBody({ data }) {
     setParams(next, { replace: true });
   }
 
+  async function toggleBookmark(enrollment) {
+    const courseId = enrollment.courseId || enrollment.id;
+    const key = String(courseId);
+    const on = !favoriteIds.has(key);
+    setBusyId(key);
+    try {
+      await setFavorite(
+        enrollment.courseSlug
+          ? { slug: enrollment.courseSlug, title: enrollment.courseTitle }
+          : { local: true, id: courseId, courseId, title: enrollment.courseTitle },
+        on,
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const counts = {
     active: active.length,
     completed: completed.length,
@@ -172,33 +253,36 @@ function LearningBody({ data }) {
   return (
     <div className="space-y-5">
       <header className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
-            Academic session {year}-{year + 1}
-          </p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
+          Academic session {year}-{year + 1}
+        </p>
+
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-charcoal sm:text-[2.35rem]">
+            My Learning Hub
+          </h1>
           {streak ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand [&_svg]:h-3.5 [&_svg]:w-3.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-xs font-bold text-brand [&_svg]:h-3.5 [&_svg]:w-3.5">
               <FlameIcon />
               {streak} day streak
             </span>
           ) : null}
         </div>
 
-        <h1 className="font-display text-3xl font-bold tracking-tight text-charcoal sm:text-4xl">
-          My Learning Hub
-        </h1>
-
         {(active.length || completed.length) ? (
-          <div className="flex items-center justify-between gap-4 rounded-[1.5rem] bg-white p-4 shadow-soft ring-1 ring-hairline">
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-charcoal">
+          <div className="flex items-center gap-3 rounded-[1.35rem] bg-white p-4 shadow-soft ring-1 ring-hairline sm:gap-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+              <TargetIcon />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-charcoal sm:text-[15px]">
                 Weekly target: {hoursDone} of {hoursTarget} hrs
               </p>
               <p className="mt-1 text-sm text-charcoal-muted">
                 {ringValue}% completed · Keep the momentum!
               </p>
             </div>
-            <PaceRing value={ringValue} size="lg" label="Done" />
+            <PaceRing value={ringValue} size="md" label="Done" />
           </div>
         ) : null}
       </header>
@@ -232,7 +316,11 @@ function LearningBody({ data }) {
               onClick={() => update('tab', item.key, 'active')}
             >
               {item.label}
-              <span className="ml-1.5 tabular-nums text-charcoal-muted">({counts[item.key]})</span>
+              <span className={`ml-1.5 inline-flex min-w-[1.25rem] justify-center rounded-full px-1.5 py-0.5 text-[11px] tabular-nums ${
+                selected ? 'bg-brand-soft text-brand' : 'text-charcoal-muted'
+              }`}>
+                {counts[item.key]}
+              </span>
             </button>
           );
         })}
@@ -248,12 +336,16 @@ function LearningBody({ data }) {
                   : `/learn/courses/${item.slug}`;
                 return (
                   <li key={item.key || item.slug || item.courseId}>
-                    <article className="rounded-[1.5rem] bg-white p-4 shadow-soft ring-1 ring-hairline">
-                      <p className="eyebrow">{item.category || 'Favorite'}</p>
+                    <article className="rounded-[1.35rem] bg-white p-4 shadow-soft ring-1 ring-hairline">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
+                        {item.category || 'Bookmarked'}
+                      </p>
                       <h3 className="mt-1 font-display text-lg font-bold">
                         <Link to={to} className="hover:text-brand">{item.title}</Link>
                       </h3>
-                      <Link to={to} className="btn-quiet mt-3 px-0">Open course</Link>
+                      <Link to={to} className="mt-3 inline-flex text-sm font-bold text-brand hover:underline">
+                        Open course
+                      </Link>
                     </article>
                   </li>
                 );
@@ -268,11 +360,22 @@ function LearningBody({ data }) {
           )
         ) : visible.length ? (
           <ul className="space-y-4">
-            {visible.map((row, index) => (
-              <li key={row.id}>
-                <HubCard enrollment={row} emphasize={index === 0 || (row.percent ?? 0) >= 50} />
-              </li>
-            ))}
+            {visible.map((row, index) => {
+              const id = String(row.courseId || row.id);
+              return (
+                <li key={row.id}>
+                  <HubCard
+                    enrollment={row}
+                    emphasize={index === 0}
+                    bookmarked={favoriteIds.has(id)}
+                    onToggleBookmark={() => {
+                      if (busyId === id) return;
+                      toggleBookmark(row);
+                    }}
+                  />
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <StudentEmpty
@@ -293,7 +396,7 @@ function LearningBody({ data }) {
               {Math.min(active.length, 3)} available
             </span>
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {active.slice(0, 3).map((row) => (
               <li key={`pack-${row.id}`}>
                 <OfflinePack enrollment={row} />
@@ -303,14 +406,14 @@ function LearningBody({ data }) {
         </section>
       ) : null}
 
-      <section className="flex items-start gap-3 rounded-2xl bg-brand-soft/70 p-4 ring-1 ring-brand/10">
-        <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-brand [&_svg]:h-4 [&_svg]:w-4">
+      <section className="flex items-start gap-3 rounded-2xl bg-brand-soft/80 p-4 ring-1 ring-brand/10">
+        <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-brand shadow-soft [&_svg]:h-4 [&_svg]:w-4">
           <ShieldIcon />
         </span>
         <div>
           <p className="text-sm font-bold text-brand">Academic integrity & institutional honor code</p>
-          <p className="mt-1 text-sm text-charcoal-muted">
-            Complete your own work. Submissions may be checked for academic integrity.
+          <p className="mt-1 text-sm leading-relaxed text-charcoal-muted">
+            Complete your own work. All submissions are subject to automated verification.
           </p>
         </div>
       </section>
