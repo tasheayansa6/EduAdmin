@@ -88,6 +88,19 @@ function toForm(course) {
   };
 }
 
+/** Adds https:// when admins paste youtu.be / www.youtube.com without a protocol. */
+function normalizeMediaUrl(value) {
+  let url = String(value || '').trim();
+  if (!url) return null;
+  if (/^\/\//.test(url)) url = `https:${url}`;
+  else if (!/^https?:\/\//i.test(url)
+    && /^(www\.|youtu\.be\/|m\.youtube\.com\/|music\.youtube\.com\/|youtube\.com\/|youtube-nocookie\.com\/|vimeo\.com\/|player\.vimeo\.com\/)/i.test(url)) {
+    url = `https://${url}`;
+  }
+  if (!/^https?:\/\//i.test(url)) return null;
+  return url.slice(0, 500);
+}
+
 function sectionsPayload(sections) {
   return sections
     .map((section) => ({
@@ -95,16 +108,23 @@ function sectionsPayload(sections) {
       title: section.title.trim(),
       lessons: section.lessons
         .filter((lesson) => lesson.title.trim())
-        .map((lesson) => ({
-          id: lesson.id || undefined,
-          title: lesson.title.trim(),
-          type: lesson.type || 'article',
-          durationMinutes: lesson.durationMinutes === '' ? null : Number(lesson.durationMinutes),
-          videoUrl: lesson.videoUrl.trim() || null,
-          pdfUrl: lesson.pdfUrl.trim() || null,
-          content: lesson.content.trim() || null,
-          isPreview: Boolean(lesson.isPreview),
-        })),
+        .map((lesson) => {
+          const videoUrl = normalizeMediaUrl(lesson.videoUrl);
+          const pdfUrl = normalizeMediaUrl(lesson.pdfUrl);
+          let type = lesson.type || 'article';
+          if (videoUrl && type === 'article') type = 'video';
+          if (pdfUrl && !videoUrl && type === 'article') type = 'pdf';
+          return {
+            id: lesson.id || undefined,
+            title: lesson.title.trim(),
+            type,
+            durationMinutes: lesson.durationMinutes === '' ? null : Number(lesson.durationMinutes),
+            videoUrl,
+            pdfUrl,
+            content: lesson.content.trim() || null,
+            isPreview: Boolean(lesson.isPreview),
+          };
+        }),
     }))
     .filter((section) => section.title && section.lessons.length);
 }
@@ -311,8 +331,9 @@ function OutlineEditor({ sections, onChange, error }) {
                         id={`lesson-video-${sectionIndex}-${lessonIndex}`}
                         value={lesson.videoUrl}
                         onChange={(event) => patchLesson(sectionIndex, lessonIndex, { videoUrl: event.target.value })}
-                        placeholder="https://youtube.com/… or direct .mp4"
+                        placeholder="youtu.be/… or https://youtube.com/watch?v=…"
                       />
+                      <p className="mt-1 text-xs text-ink-muted">YouTube, Vimeo, or a direct .mp4 link. https:// is added automatically if missing.</p>
                     </Field>
                   ) : null}
                   {lesson.type === 'pdf' ? (
@@ -398,8 +419,8 @@ function CourseDialog({ course, categories, onClose, onSaved }) {
       status: form.status,
       price: Number(form.price),
       currency: form.currency.trim().toUpperCase() || 'ETB',
-      imageUrl: form.imageUrl.trim() || null,
-      previewVideoUrl: form.previewVideoUrl.trim() || null,
+      imageUrl: normalizeMediaUrl(form.imageUrl) || (form.imageUrl.trim() || null),
+      previewVideoUrl: normalizeMediaUrl(form.previewVideoUrl),
       instructorName: form.instructorName.trim() || null,
       level: form.level || null,
       language: form.language.trim() || 'English',

@@ -31,7 +31,28 @@ export function validateCourse(input) {
   }
   for (const [key, label] of [['imageUrl', 'cover image'], ['previewVideoUrl', 'preview video']]) {
     const value = String(input[key] || '').trim();
-    if (value && !/^https?:\/\//i.test(value)) errors[key] = `Enter a full ${label} address starting with http:// or https://.`;
+    if (!value) continue;
+    const looksOk = /^https?:\/\//i.test(value)
+      || /^(www\.|youtu\.be\/|youtube\.com\/|vimeo\.com\/)/i.test(value);
+    if (!looksOk) errors[key] = `Enter a full ${label} address (YouTube, Vimeo, or https://…).`;
+  }
+  if (Array.isArray(input.sections)) {
+    for (const section of input.sections) {
+      for (const lesson of section.lessons || []) {
+        for (const [field, label] of [['videoUrl', 'video'], ['pdfUrl', 'PDF']]) {
+          const value = String(lesson[field] || '').trim();
+          if (!value) continue;
+          const looksOk = /^https?:\/\//i.test(value)
+            || /^(www\.|youtu\.be\/|youtube\.com\/|vimeo\.com\/)/i.test(value);
+          if (!looksOk) {
+            errors.outline = `Lesson “${lesson.title || 'Untitled'}” needs a valid ${label} link.`;
+            break;
+          }
+        }
+        if (errors.outline) break;
+      }
+      if (errors.outline) break;
+    }
   }
   return errors;
 }

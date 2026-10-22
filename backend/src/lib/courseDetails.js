@@ -15,11 +15,30 @@ export function asStringList(value) {
   return list.map((item) => String(item).trim()).filter(Boolean).slice(0, 40);
 }
 
+/** Accepts pasted links with or without https:// (common for YouTube / Vimeo). */
+export function normalizeMediaUrl(value) {
+  if (value == null) return null;
+  let url = String(value).trim().slice(0, 500);
+  if (!url) return null;
+  if (/^\/\//.test(url)) url = `https:${url}`;
+  else if (!/^https?:\/\//i.test(url)) {
+    if (/^(www\.|youtu\.be\/|m\.youtube\.com\/|music\.youtube\.com\/|youtube\.com\/|youtube-nocookie\.com\/|vimeo\.com\/|player\.vimeo\.com\/)/i.test(url)) {
+      url = `https://${url}`;
+    } else {
+      return null;
+    }
+  }
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 function cleanUrl(value) {
-  if (value == null || String(value).trim() === '') return null;
-  const url = String(value).trim().slice(0, 500);
-  if (!/^https?:\/\//i.test(url)) return null;
-  return url;
+  return normalizeMediaUrl(value);
 }
 
 function lessonType(lesson) {

@@ -102,8 +102,19 @@ export const courseListSchema = {
 
 const coursePrice = z.coerce.number().min(0, 'Price cannot be negative.').max(1_000_000, 'Enter a lower price.');
 const courseCurrency = z.string().trim().toUpperCase().length(3, 'Use a 3-letter currency code.').default('ETB');
+function normalizeOptionalUrl(value) {
+  if (value == null || String(value).trim() === '') return null;
+  let url = String(value).trim().slice(0, 500);
+  if (/^\/\//.test(url)) url = `https:${url}`;
+  else if (!/^https?:\/\//i.test(url)
+    && /^(www\.|youtu\.be\/|m\.youtube\.com\/|music\.youtube\.com\/|youtube\.com\/|youtube-nocookie\.com\/|vimeo\.com\/|player\.vimeo\.com\/)/i.test(url)) {
+    url = `https://${url}`;
+  }
+  return url;
+}
+
 const optionalUrl = z.preprocess(
-  (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+  normalizeOptionalUrl,
   z.string().url('Enter a full web address starting with http:// or https://.').max(500).nullable(),
 );
 const optionalText = (max) => z.preprocess(
