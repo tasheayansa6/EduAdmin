@@ -82,31 +82,31 @@ function HubCard({ enrollment, emphasize, bookmarked, onToggleBookmark }) {
   const completed = enrollment.status === 'completed' || percent >= 100;
 
   return (
-    <article className="overflow-hidden rounded-[1.35rem] bg-white shadow-soft ring-1 ring-hairline">
+    <article className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
       <div className="relative aspect-[16/9] overflow-hidden sm:aspect-[2.2/1]">
         <CourseCover
           category={enrollment.categoryName}
           title={enrollment.courseTitle}
           className="!aspect-auto absolute inset-0 h-full w-full"
         />
-        <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand shadow-soft">
+        <span className="absolute left-2.5 top-2.5 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand shadow-soft">
           {completed ? 'Completed' : 'In progress'}
         </span>
-        <span className="absolute right-3 top-3 rounded-full bg-charcoal/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
+        <span className="absolute right-2.5 top-2.5 rounded-full bg-charcoal/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
           {code}
         </span>
       </div>
 
-      <div className="space-y-3.5 p-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="space-y-3 p-3.5">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
               {deptLabel(enrollment)}
             </p>
-            <h3 className="mt-1 font-display text-lg font-bold leading-snug text-charcoal">
+            <h3 className="mt-1 font-display text-base font-bold leading-snug text-charcoal sm:text-lg">
               <Link to={href} className="hover:text-brand">{enrollment.courseTitle}</Link>
             </h3>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-charcoal-muted">
+            <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-charcoal-muted">
               <span className="inline-flex items-center gap-1 [&_svg]:h-3.5 [&_svg]:w-3.5">
                 <UserIcon />
                 {enrollment.instructorName || 'Instructor TBA'}
@@ -118,7 +118,7 @@ function HubCard({ enrollment, emphasize, bookmarked, onToggleBookmark }) {
           </div>
           <button
             type="button"
-            className={`mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-full transition ${
+            className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full transition ${
               bookmarked ? 'bg-brand-soft text-brand' : 'bg-sand text-charcoal-muted hover:text-brand'
             }`}
             aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark course'}
@@ -129,22 +129,22 @@ function HubCard({ enrollment, emphasize, bookmarked, onToggleBookmark }) {
           </button>
         </div>
 
-        <div className="rounded-2xl bg-[#e8f1ea] p-3.5">
-          <div className="mb-2 flex items-center justify-between text-xs font-semibold">
+        <div className="rounded-xl bg-[#e8f1ea] p-3">
+          <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
             <span className="text-charcoal-muted">Syllabus completion</span>
             <span className="font-bold text-brand">{percent}%</span>
           </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-white/80">
+          <div className="h-2 overflow-hidden rounded-full bg-white/80">
             <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${percent}%` }} />
           </div>
-          <p className="mt-2 text-xs text-charcoal-muted">{lastActivity(percent)}</p>
+          <p className="mt-1.5 text-xs text-charcoal-muted">{lastActivity(percent)}</p>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-semibold text-charcoal-muted">{nextHint(percent)}</p>
           <Link
             to={href}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-bold ${
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold ${
               emphasize
                 ? 'bg-brand text-white shadow-soft hover:bg-brand-hover'
                 : 'bg-brand-soft text-brand hover:bg-brand hover:text-white'
@@ -251,18 +251,18 @@ function LearningBody({ data }) {
   };
 
   return (
-    <div className="space-y-5">
-      <header className="space-y-4">
+    <div className="space-y-4">
+      <header className="space-y-3">
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
           Academic session {year}-{year + 1}
         </p>
 
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-charcoal sm:text-[2.35rem]">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h1 className="font-display text-[1.75rem] font-bold tracking-tight text-charcoal sm:text-[2.35rem]">
             My Learning Hub
           </h1>
           {streak ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-xs font-bold text-brand [&_svg]:h-3.5 [&_svg]:w-3.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 text-xs font-bold text-brand [&_svg]:h-3.5 [&_svg]:w-3.5">
               <FlameIcon />
               {streak} day streak
             </span>
@@ -270,15 +270,15 @@ function LearningBody({ data }) {
         </div>
 
         {(active.length || completed.length) ? (
-          <div className="flex items-center gap-3 rounded-[1.35rem] bg-white p-4 shadow-soft ring-1 ring-hairline sm:gap-4">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+          <div className="flex items-center gap-2.5 rounded-2xl bg-white p-3 shadow-soft ring-1 ring-hairline sm:gap-3 sm:p-3.5">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
               <TargetIcon />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-charcoal sm:text-[15px]">
+              <p className="text-sm font-bold text-charcoal">
                 Weekly target: {hoursDone} of {hoursTarget} hrs
               </p>
-              <p className="mt-1 text-sm text-charcoal-muted">
+              <p className="mt-0.5 text-sm text-charcoal-muted">
                 {ringValue}% completed · Keep the momentum!
               </p>
             </div>
@@ -302,7 +302,7 @@ function LearningBody({ data }) {
         />
       </div>
 
-      <div role="group" aria-label="Filter courses" className="-mx-4 flex gap-1 overflow-x-auto border-b border-hairline px-4 sm:mx-0 sm:px-0">
+      <div role="group" aria-label="Filter courses" className="-mx-3 flex gap-1 overflow-x-auto border-b border-hairline px-3 sm:-mx-0 sm:px-0">
         {TABS.map((item) => {
           const selected = item.key === tab.key;
           return (

@@ -34,35 +34,35 @@ function ResumeCard({ enrollment }) {
     : `Start ${enrollment.courseTitle}`;
 
   return (
-    <article className="overflow-hidden rounded-[1.5rem] bg-white shadow-lift ring-1 ring-hairline">
-      <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[2.05/1]">
+    <article className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
+      <div className="relative aspect-[5/4] overflow-hidden sm:aspect-[2.05/1]">
         <CourseCover
           category={enrollment.categoryName}
           title={enrollment.courseTitle}
           className="!aspect-auto absolute inset-0 h-full w-full"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/35 to-transparent" />
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-charcoal shadow-soft [&_svg]:h-3.5 [&_svg]:w-3.5">
+        <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-charcoal shadow-soft [&_svg]:h-3.5 [&_svg]:w-3.5">
           <ClockIcon />
           {mins} mins left
         </span>
-        <div className="absolute inset-x-0 bottom-0 space-y-1 p-4 text-white sm:p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-wheat">
+        <div className="absolute inset-x-0 bottom-0 space-y-0.5 p-3 text-white sm:p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-wheat">
             {moduleLabel(percent)} · {(enrollment.categoryName || 'Optimization').toUpperCase()}
           </p>
-          <p className="font-display text-xl font-bold leading-snug sm:text-2xl">
+          <p className="font-display text-lg font-bold leading-snug sm:text-xl">
             {percent > 0 ? 'Resume lesson' : 'Start learning'}
           </p>
           <p className="line-clamp-1 text-sm text-white/85">{enrollment.courseTitle}</p>
         </div>
       </div>
-      <div className="space-y-4 p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="space-y-3 p-3.5 sm:p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="font-display text-lg font-bold leading-snug text-charcoal">
+            <h3 className="font-display text-base font-bold leading-snug text-charcoal sm:text-lg">
               {enrollment.courseTitle}
             </h3>
-            <p className="mt-1 text-sm text-charcoal-muted">
+            <p className="mt-0.5 text-sm text-charcoal-muted">
               {enrollment.instructorName || 'Instructor TBA'}
             </p>
           </div>
@@ -73,7 +73,7 @@ function ResumeCard({ enrollment }) {
         </div>
         <Link
           to={href}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-4 py-3.5 text-sm font-bold text-white shadow-soft hover:bg-brand-hover"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white shadow-soft hover:bg-brand-hover"
         >
           <PlayIcon />
           <span className="truncate">{action}</span>
@@ -94,7 +94,7 @@ function CuratedCard({ course }) {
   const track = course.category || 'Course';
 
   return (
-    <article className="overflow-hidden rounded-[1.35rem] bg-white shadow-soft ring-1 ring-hairline">
+    <article className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
       <div className="relative aspect-[16/10] bg-sand">
         {course.imageUrl ? (
           <CourseImage course={course} className="!aspect-auto h-full w-full" />
@@ -102,16 +102,16 @@ function CuratedCard({ course }) {
           <CourseCover category={course.category} title={course.title} className="!aspect-auto h-full w-full" />
         )}
         {enrolled ? (
-          <span className="absolute right-3 top-3 rounded-full bg-brand px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-soft">
+          <span className="absolute right-2.5 top-2.5 rounded-full bg-brand px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-soft">
             Enrolled
           </span>
         ) : (
-          <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-brand shadow-soft">
+          <span className="absolute right-2.5 top-2.5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-brand shadow-soft">
             Prerequisite met
           </span>
         )}
       </div>
-      <div className="space-y-3 p-4">
+      <div className="space-y-2.5 p-3.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand">
             {track}
@@ -121,10 +121,10 @@ function CuratedCard({ course }) {
           ) : null}
         </div>
         <div>
-          <h3 className="font-display text-[1.05rem] font-bold leading-snug text-charcoal">
+          <h3 className="font-display text-base font-bold leading-snug text-charcoal">
             <Link to={to} className="hover:text-brand">{course.title}</Link>
           </h3>
-          <p className="mt-1 text-sm text-charcoal-muted">
+          <p className="mt-0.5 text-sm text-charcoal-muted">
             {course.instructorName || 'Instructor TBA'}
           </p>
         </div>
@@ -149,7 +149,7 @@ function CuratedCard({ course }) {
         ) : (
           <Link
             to={to}
-            className="inline-flex w-full items-center justify-center rounded-2xl bg-brand-soft px-4 py-3 text-sm font-bold text-brand hover:bg-brand hover:text-white"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-brand-soft px-4 py-2.5 text-sm font-bold text-brand hover:bg-brand hover:text-white"
           >
             + Enroll now
           </Link>
@@ -205,21 +205,21 @@ function HomeBody({ data }) {
   const left = featured ? lessonsLeft(featured.percent) : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="font-display text-[1.85rem] font-bold leading-tight tracking-tight text-charcoal sm:text-4xl">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="font-display text-[1.75rem] font-bold leading-tight tracking-tight text-charcoal sm:text-4xl">
             Welcome back, {firstName}!
           </h1>
-          <span className="rounded-full bg-brand-soft px-3 py-1 text-[11px] font-bold text-brand ring-1 ring-brand/10">
+          <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-bold text-brand ring-1 ring-brand/10">
             Undergraduate · Student
           </span>
         </div>
 
         {featured ? (
-          <div className="flex items-start gap-2.5 rounded-2xl bg-brand-soft px-4 py-3.5 text-sm text-brand ring-1 ring-brand/10 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
+          <div className="flex items-start gap-2 rounded-2xl bg-brand-soft px-3 py-3 text-sm text-brand ring-1 ring-brand/10 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4">
             <LeafIcon />
-            <div>
+            <div className="min-w-0">
               <p className="font-bold">Weekly Goal in Sight</p>
               <p className="mt-0.5 leading-snug text-brand/85">
                 {left
@@ -234,15 +234,15 @@ function HomeBody({ data }) {
       </header>
 
       {featured ? (
-        <section aria-labelledby="in-progress-heading" className="space-y-3">
-          <div className="flex items-end justify-between gap-3">
-            <div>
+        <section aria-labelledby="in-progress-heading" className="space-y-2.5">
+          <div className="flex items-end justify-between gap-2">
+            <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">In progress</p>
-              <h2 id="in-progress-heading" className="font-display text-xl font-bold text-charcoal">
+              <h2 id="in-progress-heading" className="font-display text-lg font-bold text-charcoal sm:text-xl">
                 {active.length} active course{active.length === 1 ? '' : 's'}
               </h2>
             </div>
-            <Link to="/learn/my-learning" className="text-sm font-bold text-brand hover:underline">
+            <Link to="/learn/my-learning" className="shrink-0 text-sm font-bold text-brand hover:underline">
               View all
             </Link>
           </div>
@@ -256,8 +256,8 @@ function HomeBody({ data }) {
         />
       )}
 
-      <section aria-labelledby="categories-heading" className="space-y-3">
-        <div className="flex items-end justify-between gap-3">
+      <section aria-labelledby="categories-heading" className="space-y-2.5">
+        <div className="flex items-end justify-between gap-2">
           <h2 id="categories-heading" className="text-[11px] font-bold uppercase tracking-[0.16em] text-charcoal-muted">
             Categories
           </h2>
@@ -265,13 +265,13 @@ function HomeBody({ data }) {
             View hierarchy
           </Link>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-0 sm:px-0">
           {(categories.length > 1 ? categories : ['All']).map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => setCategory(item)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition ${
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
                 category === item
                   ? 'bg-brand text-white shadow-soft'
                   : 'bg-white text-charcoal ring-1 ring-hairline hover:bg-mint-soft'
@@ -283,13 +283,13 @@ function HomeBody({ data }) {
         </div>
       </section>
 
-      <section aria-labelledby="curated-heading" className="space-y-4">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <h2 id="curated-heading" className="font-display text-xl font-bold text-charcoal sm:text-2xl">
+      <section aria-labelledby="curated-heading" className="space-y-3">
+        <div className="flex items-end justify-between gap-2">
+          <div className="min-w-0">
+            <h2 id="curated-heading" className="font-display text-lg font-bold text-charcoal sm:text-xl">
               Curated For Your Degree
             </h2>
-            <p className="mt-1 text-sm text-charcoal-muted">
+            <p className="mt-0.5 text-sm text-charcoal-muted">
               Recommended based on completed prerequisites
             </p>
           </div>
@@ -301,7 +301,7 @@ function HomeBody({ data }) {
         {loading ? (
           <CardGridSkeleton count={3} />
         ) : curated.length ? (
-          <ul className="space-y-4">
+          <ul className="space-y-3">
             {curated.map((course) => (
               <li key={course.key || course.id || course.slug}>
                 <CuratedCard course={course} />
@@ -317,16 +317,16 @@ function HomeBody({ data }) {
       </section>
 
       {deadlines.length ? (
-        <section aria-labelledby="deadlines-heading" className="space-y-3">
-          <div className="flex items-end justify-between gap-3">
-            <h2 id="deadlines-heading" className="font-display text-xl font-bold text-charcoal">
+        <section aria-labelledby="deadlines-heading" className="space-y-2.5">
+          <div className="flex items-end justify-between gap-2">
+            <h2 id="deadlines-heading" className="font-display text-lg font-bold text-charcoal sm:text-xl">
               Upcoming Deadlines
             </h2>
             <p className="text-xs font-bold uppercase tracking-wide text-charcoal-muted">
               {deadlines.length} pending
             </p>
           </div>
-          <ul className="space-y-3">
+          <ul className="space-y-2.5">
             {deadlines.map((row, index) => (
               <li key={row.id}>
                 <DeadlineRow
