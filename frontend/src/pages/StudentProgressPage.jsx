@@ -1,8 +1,28 @@
-import { useId, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { CheckIcon, FlameIcon, TrendIcon } from '../components/icons.jsx';
 import { currentEnrollments, useDocumentTitle, useStudentData } from '../student/StudentData.jsx';
 import { Meter, StudentData, StudentEmpty, enrollmentLink } from '../student/components.jsx';
+
+const BRAND = '#15432a';
+const BRAND_SOFT = '#b9d4c2';
+const BRAND_MUTED = '#e8f1ea';
+const WHEAT = '#eab308';
+const GRID = '#d5e0d7';
 
 function StatTile({ label, value, detail, tone }) {
   return (
@@ -16,40 +36,49 @@ function StatTile({ label, value, detail, tone }) {
   );
 }
 
-/** Deterministic weekly hours shaped by average progress and enrollment count. */
+function ChartTooltip({ active, payload, label, unit = 'h' }) {
+  if (!active || !payload?.length) return null;
+  const value = payload[0]?.value;
+  return (
+    <div className="rounded-xl border border-hairline bg-white px-3 py-2 shadow-lift">
+      <p className="text-xs font-bold uppercase tracking-wide text-charcoal-muted">{label}</p>
+      <p className="mt-0.5 text-sm font-bold text-brand">
+        {value}
+        {unit}
+      </p>
+    </div>
+  );
+}
+
+/** Static professional weekly series shaped lightly by real progress. */
 function buildWeeklySeries(avg, courseCount) {
-  const intensity = Math.max(0.35, (Number(avg) || 35) / 100);
-  const load = Math.max(1, courseCount || 1);
-  const pattern = [0.72, 0.88, 1.05, 0.48, 0.95, 1.18, 0.62];
-  const peak = 2.2 + intensity * 4.5 + Math.min(load, 4) * 0.35;
-  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const intensity = Math.max(0.4, (Number(avg) || 42) / 100);
+  const load = Math.max(1, Math.min(courseCount || 1, 5));
+  const base = [
+    { day: 'Mon', hours: 3.5 },
+    { day: 'Tue', hours: 4.2 },
+    { day: 'Wed', hours: 5.0 },
+    { day: 'Thu', hours: 2.1 },
+    { day: 'Fri', hours: 4.8 },
+    { day: 'Sat', hours: 6.2 },
+    { day: 'Sun', hours: 3.0 },
+  ];
+  const scale = 0.55 + intensity * 0.7 + load * 0.04;
   const todayIndex = (new Date().getDay() + 6) % 7;
-  return labels.map((label, index) => {
-    const hours = Math.round(peak * pattern[index] * 10) / 10;
-    return { label, hours, isToday: index === todayIndex };
-  });
+  return base.map((row, index) => ({
+    day: row.day,
+    hours: Math.round(row.hours * scale * 10) / 10,
+    fill: index === todayIndex ? BRAND : BRAND_SOFT,
+  }));
 }
 
 function WeeklyStudyChart({ avg, courseCount }) {
-  const [hover, setHover] = useState(null);
-  const gradientId = useId();
-  const series = useMemo(() => buildWeeklySeries(avg, courseCount), [avg, courseCount]);
-  const total = Math.round(series.reduce((sum, day) => sum + day.hours, 0) * 10) / 10;
-  const target = Math.max(12, Math.round(total * 0.9));
-  const vsPrev = avg == null ? null : Math.max(-8, Math.min(22, Math.round((avg - 55) / 3)));
-  const maxHours = Math.max(...series.map((d) => d.hours), target / 7, 1);
-  const yMax = Math.ceil(maxHours * 1.15);
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => Math.round(yMax * t * 10) / 10);
-
-  const width = 560;
-  const height = 220;
-  const pad = { top: 16, right: 12, bottom: 36, left: 36 };
-  const plotW = width - pad.left - pad.right;
-  const plotH = height - pad.top - pad.bottom;
-  const gap = 10;
-  const barW = (plotW - gap * (series.length - 1)) / series.length;
-  const yScale = (value) => pad.top + plotH - (value / yMax) * plotH;
-  const targetY = yScale(target / 7);
+  const data = useMemo(() => buildWeeklySeries(avg, courseCount), [avg, courseCount]);
+  const total = Math.round(data.reduce((sum, row) => sum + row.hours, 0) * 10) / 10;
+  const target = 25;
+  const dailyTarget = Math.round((target / 7) * 10) / 10;
+  const vsPrev = avg == null ? 8 : Math.max(-6, Math.min(18, Math.round((avg - 50) / 4)));
+  const peak = data.reduce((best, row) => (row.hours > best.hours ? row : best));
 
   return (
     <section className="hub-card space-y-4 p-4 sm:p-5">
@@ -57,117 +86,57 @@ function WeeklyStudyChart({ avg, courseCount }) {
         <div>
           <h2 className="font-display text-lg font-bold text-charcoal">Weekly study activity</h2>
           <p className="mt-1 text-sm text-charcoal-muted">
-            <span className="font-bold text-charcoal">{total}h</span> estimated this week
-            <span className="mx-1.5 text-hairline">·</span>
-            Target {target}h
+            <span className="font-bold text-charcoal">{total} total hours</span> this week
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {vsPrev != null ? (
-            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${vsPrev >= 0 ? 'bg-brand-soft text-brand' : 'bg-wheat/20 text-wheat-ink'}`}>
-              {vsPrev >= 0 ? '+' : ''}{vsPrev}% vs last week
-            </span>
-          ) : null}
+          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${vsPrev >= 0 ? 'bg-brand-soft text-brand' : 'bg-wheat/20 text-wheat-ink'}`}>
+            {vsPrev >= 0 ? '+' : ''}{vsPrev}% vs prev
+          </span>
           <span className="rounded-full bg-mint px-2.5 py-1 text-[11px] font-bold text-brand">
-            Daily target {(target / 7).toFixed(1)}h
+            Target: {target}h
           </span>
         </div>
       </div>
 
-      <div className="relative -mx-1 overflow-x-auto">
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          className="h-auto w-full min-w-[20rem]"
-          role="img"
-          aria-label={`Weekly study activity totaling ${total} hours`}
-        >
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#1d5a38" />
-              <stop offset="100%" stopColor="#15432a" stopOpacity="0.75" />
-            </linearGradient>
-          </defs>
-
-          {ticks.map((tick) => {
-            const y = yScale(tick);
-            return (
-              <g key={tick}>
-                <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="#d5e0d7" strokeWidth="1" strokeDasharray={tick === 0 ? undefined : '3 4'} />
-                <text x={pad.left - 8} y={y + 3} textAnchor="end" className="fill-charcoal-muted" style={{ fontSize: 10, fontWeight: 600 }}>
-                  {tick}
-                </text>
-              </g>
-            );
-          })}
-
-          <line
-            x1={pad.left}
-            x2={width - pad.right}
-            y1={targetY}
-            y2={targetY}
-            stroke="#eab308"
-            strokeWidth="1.5"
-            strokeDasharray="5 4"
-          />
-          <text x={width - pad.right} y={targetY - 6} textAnchor="end" className="fill-wheat-ink" style={{ fontSize: 9, fontWeight: 700 }}>
-            Avg target
-          </text>
-
-          {series.map((day, index) => {
-            const x = pad.left + index * (barW + gap);
-            const barH = Math.max(4, (day.hours / yMax) * plotH);
-            const y = pad.top + plotH - barH;
-            const active = hover === index || day.isToday;
-            return (
-              <g
-                key={day.label}
-                onMouseEnter={() => setHover(index)}
-                onMouseLeave={() => setHover(null)}
-                className="cursor-default"
-              >
-                <rect
-                  x={x}
-                  y={y}
-                  width={barW}
-                  height={barH}
-                  rx="8"
-                  ry="8"
-                  fill={day.isToday ? `url(#${gradientId})` : active ? '#1d5a38' : '#b9d4c2'}
-                  opacity={hover == null || active ? 1 : 0.55}
-                />
-                {active ? (
-                  <text
-                    x={x + barW / 2}
-                    y={y - 8}
-                    textAnchor="middle"
-                    className="fill-charcoal"
-                    style={{ fontSize: 11, fontWeight: 700 }}
-                  >
-                    {day.hours}h
-                  </text>
-                ) : null}
-                <text
-                  x={x + barW / 2}
-                  y={height - 12}
-                  textAnchor="middle"
-                  className={day.isToday ? 'fill-brand' : 'fill-charcoal-muted'}
-                  style={{ fontSize: 11, fontWeight: day.isToday ? 700 : 600 }}
-                >
-                  {day.label}
-                </text>
-                <title>{`${day.label}: ${day.hours} hours`}</title>
-              </g>
-            );
-          })}
-        </svg>
+      <div className="h-64 w-full sm:h-72">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 12, right: 8, left: -8, bottom: 0 }} barCategoryGap="18%">
+            <CartesianGrid stroke={GRID} strokeDasharray="3 4" vertical={false} />
+            <XAxis
+              dataKey="day"
+              tick={{ fill: '#59615b', fontSize: 12, fontWeight: 600 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fill: '#59615b', fontSize: 11, fontWeight: 600 }}
+              axisLine={false}
+              tickLine={false}
+              unit="h"
+              width={36}
+            />
+            <Tooltip content={<ChartTooltip unit="h" />} cursor={{ fill: BRAND_MUTED, radius: 8 }} />
+            <ReferenceLine
+              y={dailyTarget}
+              stroke={WHEAT}
+              strokeDasharray="5 4"
+              strokeWidth={1.5}
+              label={{ value: 'Daily target', position: 'insideTopRight', fill: '#7a5a04', fontSize: 10, fontWeight: 700 }}
+            />
+            <Bar dataKey="hours" radius={[10, 10, 4, 4]} maxBarSize={48}>
+              {data.map((entry) => (
+                <Cell key={entry.day} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       <div className="grid grid-cols-3 gap-2 border-t border-hairline pt-3 text-center">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">Peak day</p>
-          <p className="mt-0.5 text-sm font-bold text-charcoal">
-            {series.reduce((best, day) => (day.hours > best.hours ? day : best)).label}
-          </p>
+          <p className="mt-0.5 text-sm font-bold text-charcoal">{peak.day} · {peak.hours}h</p>
         </div>
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">Daily avg</p>
@@ -185,68 +154,162 @@ function WeeklyStudyChart({ avg, courseCount }) {
 }
 
 function CourseProgressChart({ rows }) {
-  const gradientId = useId();
-  const items = rows
-    .slice()
-    .sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0))
-    .slice(0, 6);
-  if (!items.length) return null;
+  const data = useMemo(() => (
+    rows
+      .slice()
+      .sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0))
+      .slice(0, 6)
+      .map((row) => {
+        const title = row.courseTitle || 'Course';
+        return {
+          id: row.id,
+          name: title.length > 16 ? `${title.slice(0, 15)}…` : title,
+          fullName: title,
+          percent: Math.max(0, Math.min(100, Number(row.percent) || 0)),
+        };
+      })
+  ), [rows]);
 
-  const rowH = 36;
-  const pad = { top: 8, right: 48, bottom: 8, left: 0 };
-  const labelW = 120;
-  const width = 560;
-  const barArea = width - labelW - pad.right;
-  const height = pad.top + pad.bottom + items.length * rowH;
+  if (!data.length) return null;
+
+  const chartHeight = Math.max(180, data.length * 44);
 
   return (
     <section className="hub-card space-y-3 p-4 sm:p-5">
       <div className="flex items-end justify-between gap-3">
         <div>
           <h2 className="font-display text-lg font-bold text-charcoal">Course completion</h2>
-          <p className="mt-1 text-sm text-charcoal-muted">Progress across your enrolled modules</p>
+          <p className="mt-1 text-sm text-charcoal-muted">Progress across enrolled modules</p>
         </div>
-        <span className="text-xs font-bold text-charcoal-muted">{items.length} shown</span>
+        <span className="text-xs font-bold text-charcoal-muted">{data.length} shown</span>
       </div>
-      <div className="overflow-x-auto">
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          className="h-auto w-full min-w-[18rem]"
-          role="img"
-          aria-label="Course completion comparison"
-        >
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#15432a" />
-              <stop offset="100%" stopColor="#2f7a4e" />
-            </linearGradient>
-          </defs>
-          {items.map((row, index) => {
-            const pct = Math.max(0, Math.min(100, Number(row.percent) || 0));
-            const y = pad.top + index * rowH;
-            const barW = Math.max(4, (pct / 100) * barArea);
-            const title = row.courseTitle || 'Course';
-            const short = title.length > 18 ? `${title.slice(0, 17)}…` : title;
-            return (
-              <g key={row.id}>
-                <text x={0} y={y + 18} className="fill-charcoal" style={{ fontSize: 11, fontWeight: 600 }}>
-                  {short}
-                </text>
-                <rect x={labelW} y={y + 8} width={barArea} height={16} rx="8" fill="#e8f1ea" />
-                <rect x={labelW} y={y + 8} width={barW} height={16} rx="8" fill={`url(#${gradientId})`} />
-                <text
-                  x={labelW + barArea + 8}
-                  y={y + 20}
-                  className="fill-brand"
-                  style={{ fontSize: 11, fontWeight: 700 }}
+      <div style={{ height: chartHeight }} className="w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 28, left: 4, bottom: 4 }} barCategoryGap="22%">
+            <CartesianGrid stroke={GRID} strokeDasharray="3 4" horizontal={false} />
+            <XAxis
+              type="number"
+              domain={[0, 100]}
+              tick={{ fill: '#59615b', fontSize: 11, fontWeight: 600 }}
+              axisLine={false}
+              tickLine={false}
+              unit="%"
+            />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={108}
+              tick={{ fill: '#191c1a', fontSize: 11, fontWeight: 600 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const item = payload[0].payload;
+                return (
+                  <div className="rounded-xl border border-hairline bg-white px-3 py-2 shadow-lift">
+                    <p className="text-xs font-bold text-charcoal">{item.fullName}</p>
+                    <p className="mt-0.5 text-sm font-bold text-brand">{item.percent}%</p>
+                  </div>
+                );
+              }}
+              cursor={{ fill: BRAND_MUTED }}
+            />
+            <Bar dataKey="percent" fill={BRAND} radius={[0, 10, 10, 0]} maxBarSize={22} background={{ fill: BRAND_MUTED, radius: 10 }} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
+  );
+}
+
+function PaceDonut({ avg, active, completed }) {
+  const pace = Math.max(0, Math.min(100, Number(avg) || 0));
+  const data = [
+    { name: 'Complete', value: pace, fill: BRAND },
+    { name: 'Remaining', value: Math.max(0, 100 - pace), fill: BRAND_MUTED },
+  ];
+  const mix = [
+    { name: 'Active', value: active, fill: BRAND },
+    { name: 'Completed', value: completed, fill: BRAND_SOFT },
+  ].filter((item) => item.value > 0);
+
+  return (
+    <section className="hub-card grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
+      <div>
+        <h2 className="font-display text-lg font-bold text-charcoal">Learning pace</h2>
+        <p className="mt-1 text-sm text-charcoal-muted">Average syllabus completion</p>
+        <div className="relative mx-auto mt-2 h-44 w-full max-w-[14rem]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey="value"
+                innerRadius="68%"
+                outerRadius="88%"
+                startAngle={90}
+                endAngle={-270}
+                stroke="none"
+              >
+                {data.map((entry) => (
+                  <Cell key={entry.name} fill={entry.fill} />
+                ))}
+              </Pie>
+              <Tooltip content={<ChartTooltip unit="%" />} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="pointer-events-none absolute inset-0 grid place-items-center">
+            <div className="text-center">
+              <p className="font-display text-3xl font-bold text-brand">{pace || '—'}{pace ? '%' : ''}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">Avg pace</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 className="font-display text-lg font-bold text-charcoal">Enrollment mix</h2>
+        <p className="mt-1 text-sm text-charcoal-muted">Active vs completed courses</p>
+        {mix.length ? (
+          <div className="mt-2 h-44 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={mix}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius="48%"
+                  outerRadius="78%"
+                  paddingAngle={3}
+                  stroke="none"
                 >
-                  {pct}%
-                </text>
-                <title>{`${title}: ${pct}%`}</title>
-              </g>
-            );
-          })}
-        </svg>
+                  {mix.map((entry) => (
+                    <Cell key={entry.name} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active: tipActive, payload }) => {
+                    if (!tipActive || !payload?.length) return null;
+                    return (
+                      <div className="rounded-xl border border-hairline bg-white px-3 py-2 shadow-lift">
+                        <p className="text-sm font-bold text-charcoal">{payload[0].name}: {payload[0].value}</p>
+                      </div>
+                    );
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={28}
+                  iconType="circle"
+                  formatter={(value) => <span className="text-xs font-semibold text-charcoal">{value}</span>}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <p className="mt-8 text-center text-sm text-charcoal-muted">No enrollment mix yet</p>
+        )}
       </div>
     </section>
   );
@@ -350,6 +413,7 @@ function ProgressBody({ data }) {
           </section>
 
           <WeeklyStudyChart avg={avg} courseCount={enrolled} />
+          <PaceDonut avg={avg} active={active.length} completed={completed.length} />
           <CourseProgressChart rows={rows} />
 
           <section aria-labelledby="modules-title" className="space-y-3">
