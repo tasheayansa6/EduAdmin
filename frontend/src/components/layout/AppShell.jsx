@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { roleLabel } from '../../lib/format.js';
 import { Avatar } from '../ui.jsx';
 import {
   BookIcon,
   ChartIcon,
+  ChevronDownIcon,
   ClipboardIcon,
   CloseIcon,
   GridIcon,
@@ -40,7 +41,7 @@ const TITLES = {
 
 function SidebarNav({ user, onNavigate }) {
   return (
-    <nav className="flex-1 space-y-0.5 px-3" aria-label="Dashboard">
+    <nav className="flex-1 space-y-0.5 px-3 pb-4" aria-label="Dashboard">
       <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Workspace</p>
       {NAV.filter((item) => !item.role || item.role === user.role).map((item) => {
         const Icon = item.icon;
@@ -63,26 +64,84 @@ function SidebarNav({ user, onNavigate }) {
   );
 }
 
-function AccountCard({ user, onNavigate, onLogout }) {
+function ProfileMenu({ user, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const wrapper = useRef(null);
+  const button = useRef(null);
+  const location = useLocation();
+
+  useEffect(() => setOpen(false), [location.pathname]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    function onPointer(event) {
+      if (!wrapper.current?.contains(event.target)) setOpen(false);
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        button.current?.focus();
+      }
+    }
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
   return (
-    <div className="border-t border-line p-3">
-      <NavLink
-        to="/profile"
-        onClick={onNavigate}
-        className={({ isActive }) =>
-          `flex items-center gap-3 rounded-lg px-3 py-2.5 ${isActive ? 'bg-accent/10' : 'hover:bg-slate-50'}`
-        }
+    <div ref={wrapper} className="relative shrink-0">
+      <button
+        ref={button}
+        type="button"
+        className="flex items-center gap-1.5 rounded-full p-0.5 pr-1.5 text-ink-muted hover:bg-slate-50"
+        aria-expanded={open}
+        aria-controls="admin-profile-menu"
+        onClick={() => setOpen((value) => !value)}
       >
         <Avatar name={user.name} size="sm" />
-        <span className="min-w-0 text-left">
-          <span className="block truncate text-sm font-semibold text-ink">{user.name}</span>
-          <span className="block truncate text-xs text-ink-muted">{roleLabel(user.role)}</span>
+        <span className="hidden min-w-0 text-left sm:block">
+          <span className="block max-w-[9rem] truncate text-sm font-semibold text-ink">{user.name}</span>
+          <span className="block max-w-[9rem] truncate text-xs text-ink-muted">{roleLabel(user.role)}</span>
         </span>
-      </NavLink>
-      <button type="button" className="nav-link mt-1 w-full text-slate-600 hover:bg-slate-50" onClick={onLogout}>
-        <LogoutIcon />
-        Log out
+        <span className="sr-only sm:hidden">Account menu for {user.name}</span>
+        <span className={`transition-transform [&_svg]:h-4 [&_svg]:w-4 ${open ? 'rotate-180' : ''}`}>
+          <ChevronDownIcon />
+        </span>
       </button>
+      {open ? (
+        <div
+          id="admin-profile-menu"
+          className="absolute right-0 top-full z-40 mt-2 w-72 overflow-hidden rounded-xl border border-line bg-white shadow-card"
+        >
+          <div className="flex items-center gap-3 border-b border-line p-4">
+            <Avatar name={user.name} />
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-ink">{user.name}</p>
+              <p className="truncate text-sm text-ink-muted">{user.email}</p>
+            </div>
+          </div>
+          <ul className="p-2 text-sm">
+            <li>
+              <Link to="/profile" className="block rounded-lg px-3 py-2 font-semibold text-ink hover:bg-slate-50">
+                Edit profile
+              </Link>
+            </li>
+          </ul>
+          <div className="border-t border-line p-2">
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-slate-50 [&_svg]:h-4 [&_svg]:w-4"
+              onClick={onLogout}
+            >
+              <LogoutIcon />
+              Log out
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -169,12 +228,6 @@ export function AppShell() {
           </div>
 
           <SidebarNav user={user} onNavigate={() => setOpen(false)} />
-
-          <AccountCard
-            user={user}
-            onNavigate={() => setOpen(false)}
-            onLogout={onLogout}
-          />
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -194,15 +247,18 @@ export function AppShell() {
                 <h1 className="truncate text-lg font-semibold tracking-tight text-ink">{title}</h1>
                 <p className="hidden text-xs text-ink-muted sm:block">{today}</p>
               </div>
-              <form onSubmit={onSearch} className="ml-auto hidden min-w-0 max-w-sm flex-1 md:block" role="search">
-                <label className="sr-only" htmlFor="shell-search">Search students</label>
-                <input
-                  id="shell-search"
-                  name="q"
-                  className="field bg-slate-50"
-                  placeholder="Search students"
-                />
-              </form>
+              <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
+                <form onSubmit={onSearch} className="hidden min-w-0 max-w-sm flex-1 md:block" role="search">
+                  <label className="sr-only" htmlFor="shell-search">Search students</label>
+                  <input
+                    id="shell-search"
+                    name="q"
+                    className="field bg-slate-50"
+                    placeholder="Search students"
+                  />
+                </form>
+                <ProfileMenu user={user} onLogout={onLogout} />
+              </div>
             </div>
             <form onSubmit={onSearch} className="px-4 pb-3 md:hidden" role="search">
               <label className="sr-only" htmlFor="shell-search-mobile">Search students</label>
