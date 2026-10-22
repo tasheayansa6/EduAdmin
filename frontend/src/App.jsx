@@ -18,6 +18,7 @@ import { StudentCourseDetailPage } from './pages/StudentCourseDetailPage.jsx';
 import { StudentCoursePlayerPage } from './pages/StudentCoursePlayerPage.jsx';
 import { StudentCoursesPage } from './pages/StudentCoursesPage.jsx';
 import { StudentFavoritesPage } from './pages/StudentFavoritesPage.jsx';
+import { StudentAcademyPage } from './pages/StudentAcademyPage.jsx';
 import { StudentHomePage } from './pages/StudentHomePage.jsx';
 import { StudentLearningPage } from './pages/StudentLearningPage.jsx';
 import { StudentLocalCoursePage } from './pages/StudentLocalCoursePage.jsx';
@@ -59,6 +60,7 @@ export function App() {
       <Route element={<RequireStudent />}>
         <Route element={<StudentShell />}>
           <Route path="learn" element={<StudentHomePage />} />
+          <Route path="learn/academy" element={<StudentAcademyPage />} />
           <Route path="learn/courses" element={<StudentCoursesPage />} />
           <Route path="learn/courses/:slug" element={<StudentCourseDetailPage />} />
           <Route path="learn/courses/:slug/learn" element={<StudentCoursePlayerPage />} />

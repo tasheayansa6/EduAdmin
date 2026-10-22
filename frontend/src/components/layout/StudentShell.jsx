@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import {
+  AILG_ACADEMY_PATH,
   EXPLORE_GOALS,
-  coursesPath,
-  withCatalogCategories,
+  buildLiveExplore,
+  itemHref,
 } from '../../student/exploreMenu.js';
 import { StudentDataProvider, useStore } from '../../student/StudentData.jsx';
 import { NotificationBell, NotificationsProvider } from '../../student/notifications.jsx';
@@ -34,6 +35,7 @@ const SECTIONS = [
 const PAGE_LABELS = {
   '/learn': 'HOME',
   '/learn/courses': 'COURSES',
+  '/learn/academy': 'AILG ACADEMY',
   '/learn/my-learning': 'MY LEARNING',
   '/learn/progress': 'MY PROGRESS',
   '/learn/profile': 'ACCOUNT',
@@ -90,32 +92,41 @@ function CountLink({ to, label, count, children }) {
   );
 }
 
-function itemHref(item) {
-  if (item.category) return coursesPath({ category: item.category });
-  if (item.query) return coursesPath({ q: item.query });
-  return '/learn/courses';
-}
-
 function ExploreMenu() {
   const { catalog } = useStore();
   const location = useLocation();
   const wrapper = useRef(null);
   const [open, setOpen] = useState(false);
-  const [activeId, setActiveId] = useState(EXPLORE_GOALS[0]?.id || null);
 
-  const catalogNames = useMemo(
-    () => [...new Set((catalog.data ?? []).map((course) => course.category).filter(Boolean))],
-    [catalog.data],
-  );
-  const categories = useMemo(() => withCatalogCategories(catalogNames), [catalogNames]);
+  const liveCategories = useMemo(() => buildLiveExplore(catalog.data ?? []), [catalog.data]);
   const primary = useMemo(
     () => [
+      {
+        id: 'ailg-academy',
+        label: 'AILG Academy',
+        to: AILG_ACADEMY_PATH,
+        children: [
+          { label: 'Open inside EduAdmin', to: AILG_ACADEMY_PATH },
+          { label: 'Browse all store courses', to: '/learn/courses' },
+          ...liveCategories.slice(0, 8).map((item) => ({
+            label: item.label,
+            category: item.category,
+          })),
+        ],
+      },
       ...EXPLORE_GOALS.map((item) => ({ ...item, section: 'goal' })),
-      ...categories.map((item) => ({ ...item, section: 'category' })),
+      ...liveCategories.map((item) => ({ ...item, section: 'category' })),
     ],
-    [categories],
+    [liveCategories],
   );
+  const [activeId, setActiveId] = useState(primary[0]?.id || null);
   const active = primary.find((item) => item.id === activeId) || primary[0];
+
+  useEffect(() => {
+    if (!primary.some((item) => item.id === activeId) && primary[0]) {
+      setActiveId(primary[0].id);
+    }
+  }, [primary, activeId]);
 
   useEffect(() => setOpen(false), [location.pathname, location.search]);
 
@@ -168,6 +179,31 @@ function ExploreMenu() {
           >
             <div className="w-[17.5rem] overflow-y-auto border-r border-hairline py-2">
               <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
+                Connected store
+              </p>
+              {primary.filter((item) => item.id === 'ailg-academy').map((item) => {
+                const selected = item.id === active?.id;
+                return (
+                  <Link
+                    key={item.id}
+                    to={itemHref(item)}
+                    role="menuitem"
+                    className={`flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold ${
+                      selected ? 'bg-sand text-charcoal' : 'text-charcoal hover:bg-sand/70'
+                    }`}
+                    onMouseEnter={() => setActiveId(item.id)}
+                    onFocus={() => setActiveId(item.id)}
+                    onClick={() => setOpen(false)}
+                  >
+                    <span>{item.label}</span>
+                    <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
+                  </Link>
+                );
+              })}
+
+              <div className="my-2 border-t border-hairline" />
+
+              <p className="px-4 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
                 Explore by goal
               </p>
               {EXPLORE_GOALS.map((item) => {
@@ -193,27 +229,39 @@ function ExploreMenu() {
               <div className="my-2 border-t border-hairline" />
 
               <p className="px-4 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
-                Categories
+                {liveCategories.length ? 'AILG categories' : 'Categories'}
               </p>
-              {categories.map((item) => {
-                const selected = item.id === active?.id;
-                return (
-                  <Link
-                    key={item.id}
-                    to={itemHref(item)}
-                    role="menuitem"
-                    className={`flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold ${
-                      selected ? 'bg-sand text-charcoal' : 'text-charcoal hover:bg-sand/70'
-                    }`}
-                    onMouseEnter={() => setActiveId(item.id)}
-                    onFocus={() => setActiveId(item.id)}
-                    onClick={() => setOpen(false)}
-                  >
-                    <span>{item.label}</span>
-                    <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
-                  </Link>
-                );
-              })}
+              {liveCategories.length ? (
+                liveCategories.map((item) => {
+                  const selected = item.id === active?.id;
+                  return (
+                    <Link
+                      key={item.id}
+                      to={itemHref(item)}
+                      role="menuitem"
+                      className={`flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold ${
+                        selected ? 'bg-sand text-charcoal' : 'text-charcoal hover:bg-sand/70'
+                      }`}
+                      onMouseEnter={() => setActiveId(item.id)}
+                      onFocus={() => setActiveId(item.id)}
+                      onClick={() => setOpen(false)}
+                    >
+                      <span>{item.label}</span>
+                      <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
+                    </Link>
+                  );
+                })
+              ) : (
+                <Link
+                  to={AILG_ACADEMY_PATH}
+                  role="menuitem"
+                  className="block px-4 py-2.5 text-sm font-semibold text-brand hover:bg-sand/70"
+                  onMouseEnter={() => setActiveId('ailg-academy')}
+                  onClick={() => setOpen(false)}
+                >
+                  Open AILG Academy inside EduAdmin
+                </Link>
+              )}
             </div>
 
             {active?.children?.length ? (
@@ -229,8 +277,8 @@ function ExploreMenu() {
                     className="flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold text-charcoal hover:bg-sand/70"
                     onClick={() => setOpen(false)}
                   >
-                    <span>{child.label}</span>
-                    <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
+                    <span className="line-clamp-2">{child.label}</span>
+                    <span className="shrink-0 text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><ChevronRightIcon /></span>
                   </Link>
                 ))}
                 <div className="mt-2 border-t border-hairline px-4 py-3">
@@ -365,22 +413,19 @@ function MobileDrawer({ open, onClose, user, onLogout }) {
           ))}
           <div className="my-2 border-t border-hairline" />
           <p className="px-3 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
+            Connected store
+          </p>
+          <Link
+            to={AILG_ACADEMY_PATH}
+            onClick={onClose}
+            className="block rounded-xl px-3 py-2.5 text-[15px] font-semibold text-charcoal hover:bg-sand"
+          >
+            AILG Academy (inside EduAdmin)
+          </Link>
+          <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
             Explore by goal
           </p>
           {EXPLORE_GOALS.map((item) => (
-            <Link
-              key={item.id}
-              to={itemHref(item)}
-              onClick={onClose}
-              className="block rounded-xl px-3 py-2.5 text-[15px] font-semibold text-charcoal hover:bg-sand"
-            >
-              {item.label}
-            </Link>
-          ))}
-          <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">
-            Categories
-          </p>
-          {withCatalogCategories().slice(0, 10).map((item) => (
             <Link
               key={item.id}
               to={itemHref(item)}
@@ -499,7 +544,7 @@ export function StudentShell() {
   const [drawer, setDrawer] = useState(false);
   const closeDrawer = useCallback(() => setDrawer(false), []);
   const path = location.pathname.replace(/\/+$/, '') || '/';
-  const learningHub = path === '/learn/my-learning';
+  const fullBleed = path === '/learn/my-learning' || path === '/learn/academy';
 
   useEffect(() => {
     setDrawer(false);
@@ -524,7 +569,7 @@ export function StudentShell() {
             id="main"
             tabIndex={-1}
             className={
-              learningHub
+              fullBleed
                 ? 'w-full flex-1 pb-28 focus:outline-none md:pb-8'
                 : 'mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8'
             }
