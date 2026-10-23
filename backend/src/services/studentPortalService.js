@@ -107,6 +107,19 @@ export async function getStudentHome(userId) {
     ? Math.round(withProgress.reduce((sum, row) => sum + row.percent, 0) / withProgress.length)
     : null;
 
+  const categoryCounts = new Map();
+  for (const row of active) {
+    if (!row.categoryName) continue;
+    categoryCounts.set(row.categoryName, (categoryCounts.get(row.categoryName) || 0) + 1);
+  }
+  const focusCategory = [...categoryCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0]
+    ?? null;
+
+  const [categoryRows] = await pool.query(
+    'SELECT id, name, description FROM categories ORDER BY name ASC',
+  );
+
   return {
     profile: profile
       ? {
@@ -121,7 +134,13 @@ export async function getStudentHome(userId) {
       enrollments: active.length,
       completed: enrollments.filter((row) => row.status === 'completed').length,
       averageProgress,
+      focusCategory,
     },
+    categories: categoryRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description ?? null,
+    })),
     enrollments,
     catalog: catalogRows.map(mapCourse),
   };

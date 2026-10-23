@@ -65,7 +65,7 @@ function FeatureResume({ enrollment }) {
               </span>
               <span className="text-charcoal-muted">•</span>
               <span className="text-sm font-semibold text-charcoal-muted">
-                {enrollment.categoryName || 'Computer Science Core'}
+                {enrollment.categoryName || 'Course'}
               </span>
               <span className="text-charcoal-muted">•</span>
               <span className="text-sm font-semibold text-charcoal-muted">
@@ -86,7 +86,10 @@ function FeatureResume({ enrollment }) {
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4 [&_svg]:text-brand">
               <UserIcon />
               <span className="font-semibold text-charcoal">{enrollment.instructorName || 'Instructor TBA'}</span>
-              <span className="text-charcoal-muted">· Senior Faculty · Department of Systems Architecture</span>
+              <span className="text-charcoal-muted">
+                · Faculty
+                {enrollment.categoryName ? ` · ${enrollment.categoryName}` : ''}
+              </span>
             </p>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-sm">
@@ -116,7 +119,7 @@ function FeatureResume({ enrollment }) {
               to={href}
               className="inline-flex h-11 items-center justify-center rounded-lg border border-brand/25 bg-white px-4 text-sm font-bold text-brand hover:bg-brand-soft"
             >
-              Open Interactive Notebook
+              Open workshop notes
             </Link>
           </div>
         </div>
@@ -127,9 +130,9 @@ function FeatureResume({ enrollment }) {
             title={enrollment.courseTitle}
             className="!aspect-auto absolute inset-0 h-full w-full"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-charcoal/15 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-brand/70 via-brand/20 to-mint-soft/15" />
           <span className="absolute left-4 top-4 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-charcoal shadow-soft">
-            Lecture &amp; Lab Simulation
+            Studio &amp; workshop
           </span>
           <button
             type="button"
@@ -140,9 +143,9 @@ function FeatureResume({ enrollment }) {
           </button>
           <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/95 p-3.5 shadow-soft backdrop-blur-sm sm:left-auto sm:right-4 sm:w-64">
             <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">
-              PostgreSQL Cluster Node
+              Media studio desk
             </p>
-            <p className="mt-0.5 text-xs text-charcoal-muted">Live playground active · Session #{enrollment.courseId || 841}</p>
+            <p className="mt-0.5 text-xs text-charcoal-muted">Workshop open · Session #{enrollment.courseId || 841}</p>
             <p className="mt-1 text-sm font-bold text-brand">Ready</p>
           </div>
         </div>
@@ -214,7 +217,7 @@ function CuratedCard({ course }) {
               </div>
             </div>
           ) : (
-            <span className="text-sm font-bold text-charcoal">{ects} ECTS</span>
+            <span className="text-sm font-bold text-charcoal">{ects} credits</span>
           )}
           <Link
             to={to}
@@ -256,9 +259,16 @@ function HomeBody({ data }) {
   const featured = active[0];
   const { courses, loading } = useAllCourses();
   const available = courses.filter((course) => !course.enrollment);
-  const categories = ['All', ...[...new Set(courses.map((course) => course.category).filter(Boolean))].sort()];
+  const apiCategories = Array.isArray(data.categories) ? data.categories.map((row) => row.name).filter(Boolean) : [];
+  const courseCategories = [...new Set(courses.map((course) => course.category).filter(Boolean))].sort();
+  const categories = ['All', ...(courseCategories.length ? courseCategories : apiCategories.length ? apiCategories : ['Communications', 'Media', 'Writing'])];
   const curatedBase = available.length ? available : courses;
   const needle = find.trim().toLowerCase();
+  const focusCategory = data.summary?.focusCategory
+    || featured?.categoryName
+    || current.find((row) => row.categoryName)?.categoryName
+    || null;
+  const focusLabel = focusCategory || null;
 
   let curated = curatedBase
     .filter((course) => category === 'All' || course.category === category)
@@ -276,36 +286,35 @@ function HomeBody({ data }) {
   const ects = Math.round(completed.length * 6 + active.length * 2.5 + 40) || 112;
   const unitsDone = featured ? Math.min(4, Math.max(1, Math.ceil((featured.percent || 20) / 25))) : 3;
   const pathwayPct = Math.min(100, Math.round(((completed.length + active.length * 0.4) / Math.max(8, completed.length + active.length + 3)) * 100)) || 74;
-  const creditsDone = Math.min(150, Math.round((pathwayPct / 100) * 150));
   const deadlines = active.filter((row) => (row.percent ?? 0) < 85).slice(0, 3);
   const left = featured ? lessonsLeft(featured.percent) : null;
   const dueSoon = Math.min(2, deadlines.length);
 
   const pathwaySteps = [
-    ...completed.slice(0, 2).map((row, i) => ({
+    ...completed.slice(0, 2).map((row) => ({
       title: row.courseTitle,
       done: true,
-      meta: `Completed · Grade: ${i === 0 ? 'A' : 'A-'}`,
+      meta: 'Completed',
     })),
     ...active.slice(0, 1).map((row) => ({
       title: row.courseTitle,
       done: false,
       current: true,
-      meta: `Current Semester · ${row.percent ?? 0}% progress`,
+      meta: `In progress · ${row.percent ?? 0}%`,
     })),
     ...curatedBase.slice(0, 1).map((course) => ({
       title: course.title,
       done: false,
-      meta: 'Prerequisites pending',
+      meta: 'Up next',
     })),
   ].slice(0, 4);
 
-  const fallbackSteps = [
-    { title: 'Discrete Math & Computability', done: true, meta: 'Completed · Grade: A' },
-    { title: 'Computer Organization & Arch.', done: true, meta: 'Completed · Grade: A-' },
-    { title: 'Advanced Database Systems', done: false, current: true, meta: 'Current Semester · 68% progress' },
-    { title: 'Senior Capstone & Thesis', done: false, meta: 'Prerequisites pending' },
-  ];
+  const fallbackSteps = curatedBase.slice(0, 4).map((course, index) => ({
+    title: course.title,
+    done: index === 0 && completed.length > 0,
+    current: index === (completed.length ? 1 : 0) && active.length > 0,
+    meta: index < completed.length ? 'Completed' : index === completed.length && active.length ? 'In progress' : 'Up next',
+  }));
 
   return (
     <div className="space-y-8">
@@ -318,18 +327,14 @@ function HomeBody({ data }) {
               </h1>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" aria-hidden="true" />
-                Term Active
+                Learning
               </span>
             </div>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xl font-medium text-charcoal-muted md:text-2xl">
-              <span>Undergraduate</span>
-              <span className="text-hairline">•</span>
-              <span>Year 3</span>
-              <span className="text-hairline">•</span>
-              <span className="font-semibold text-charcoal">Computer Science (B.Sc.)</span>
-              <span className="text-hairline">•</span>
-              <span>GPA 3.84 / 4.0</span>
-            </p>
+            {focusLabel ? (
+              <p className="mt-1.5 text-xl font-medium text-charcoal-muted md:text-2xl">
+                {focusLabel}
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-2.5 rounded-xl bg-white px-4 py-3 shadow-soft ring-1 ring-hairline">
@@ -347,7 +352,7 @@ function HomeBody({ data }) {
               </span>
               <div>
                 <p className="font-display text-xl font-bold leading-none text-charcoal">{ects}</p>
-                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-charcoal-muted">ECTS Earned</p>
+                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-charcoal-muted">Credits earned</p>
               </div>
             </div>
           </div>
@@ -399,12 +404,14 @@ function HomeBody({ data }) {
       <section aria-labelledby="curated-heading" className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">Academic Catalog</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">Course catalog</p>
             <h2 id="curated-heading" className="mt-1 font-display text-4xl font-extrabold tracking-tight text-charcoal md:text-5xl">
-              Curated For Your Degree
+              Curated for your path
             </h2>
             <p className="mt-1 text-xl text-charcoal-muted">
-              Recommended based on completed prerequisites and academic track.
+              Recommended from published courses
+              {focusCategory ? ` in ${focusCategory}` : ''}
+              .
             </p>
           </div>
           <div className="inline-flex rounded-xl bg-sand p-1 shadow-inner">
@@ -445,7 +452,7 @@ function HomeBody({ data }) {
             />
           </div>
           <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {(categories.length > 1 ? categories : ['All', 'Computer Science', 'Data Engineering']).map((item) => (
+            {categories.map((item) => (
               <button
                 key={item}
                 type="button"
@@ -498,8 +505,9 @@ function HomeBody({ data }) {
                 </ul>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-3 text-sm text-charcoal-muted">
                   <p>
-                    Showing {curated.length} of {totalEligible} degree-eligible courses
+                    Showing {curated.length} of {totalEligible} courses
                     {pathway === 'prereq' ? ' · prerequisite pathway' : ''}
+                    {focusCategory ? ` · ${focusCategory}` : ''}
                   </p>
                   <Link to="/learn/courses" className="font-bold text-brand hover:underline">
                     View all courses
@@ -528,9 +536,9 @@ function HomeBody({ data }) {
                 <ul className="mt-3 divide-y divide-hairline">
                   {deadlines.map((row, index) => {
                     const tones = [
-                      { tag: 'Lab', when: 'Due Tomorrow, 11:59 PM', action: 'Submit Code →' },
-                      { tag: 'Review', when: 'Due Friday, 5:00 PM', action: 'Open Rubric →' },
-                      { tag: 'Proposal', when: 'Next Tuesday, 2:00 PM', action: 'Draft Notes →' },
+                      { tag: 'Studio', when: 'Due Tomorrow, 11:59 PM', action: 'Submit draft →' },
+                      { tag: 'Review', when: 'Due Friday, 5:00 PM', action: 'Open brief →' },
+                      { tag: 'Pitch', when: 'Next Tuesday, 2:00 PM', action: 'Draft notes →' },
                     ];
                     const tone = tones[index] || tones[2];
                     return (
@@ -555,26 +563,29 @@ function HomeBody({ data }) {
                   to="/learn/progress"
                   className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-sand py-2.5 text-xs font-bold text-charcoal hover:bg-brand-soft hover:text-brand"
                 >
-                  View Academic Calendar
+                  View learning calendar
                 </Link>
               </section>
             ) : null}
 
             <section className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-lg font-extrabold text-charcoal">Degree Pathway</h3>
-                <span className="text-xs font-semibold text-brand">Year 3 Semester 1</span>
+                <h3 className="text-lg font-extrabold text-charcoal">
+                  {focusCategory ? `${focusCategory} path` : 'Learning path'}
+                </h3>
+                <span className="text-xs font-semibold text-brand">This term</span>
               </div>
               <div className="mt-3 flex items-center gap-3 rounded-xl bg-sand/70 p-3">
                 <PaceRing value={pathwayPct} size="md" label="Done" />
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-charcoal">Curriculum Completion</p>
+                  <p className="text-sm font-bold text-charcoal">Path progress</p>
                   <p className="mt-0.5 text-xs text-charcoal-muted">
-                    {creditsDone} of 150 Core Credits Fulfilled · On track for Spring {new Date().getFullYear() + 1}
+                    {active.length + completed.length} course{(active.length + completed.length) === 1 ? '' : 's'} in progress or done
+                    {data.summary?.averageProgress != null ? ` · ${data.summary.averageProgress}% avg` : ''}
                   </p>
                 </div>
               </div>
-              <p className="mt-4 text-[11px] font-bold uppercase tracking-wide text-charcoal-muted">Track Milestones</p>
+              <p className="mt-4 text-[11px] font-bold uppercase tracking-wide text-charcoal-muted">Milestones</p>
               <ul className="mt-2 space-y-3">
                 {(pathwaySteps.length ? pathwaySteps : fallbackSteps).map((step) => (
                   <li key={step.title} className="flex items-start gap-2.5 text-sm">
@@ -597,7 +608,7 @@ function HomeBody({ data }) {
                 to="/learn/progress"
                 className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-brand hover:underline [&_svg]:h-3.5 [&_svg]:w-3.5"
               >
-                Explore Full Degree Audit Map
+                View full learning path
                 <ArrowRightIcon />
               </Link>
             </section>
@@ -605,12 +616,12 @@ function HomeBody({ data }) {
             <section className="rounded-2xl bg-gradient-to-br from-brand to-brand-hover p-4 text-white shadow-soft">
               <div className="flex items-center justify-between gap-2">
                 <span className="rounded bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
-                  Academic Support
+                  Faculty support
                 </span>
               </div>
-              <h3 className="mt-2 font-display text-xl font-extrabold">CS Faculty Office Hours</h3>
+              <h3 className="mt-2 font-display text-xl font-extrabold">Faculty office hours</h3>
               <p className="mt-1 text-sm text-white/90">
-                {featured?.instructorName || 'Your instructor'} is hosting an open question desk today from 3:30 PM to 5:00 PM.
+                {featured?.instructorName || 'Your instructor'} is hosting an open desk today from 3:30 PM to 5:00 PM.
               </p>
               <Link
                 to="/learn/progress"

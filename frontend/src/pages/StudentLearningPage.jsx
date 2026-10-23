@@ -64,16 +64,16 @@ function lastActiveLabel(percent) {
 
 function moduleLine(percent) {
   if (percent >= 100) return 'Course wrap-up';
-  if (percent >= 55) return 'Module 4: Concurrency & Locks';
-  if (percent >= 25) return 'Hook Lifecycles';
-  return 'Bayes Theorem Lab';
+  if (percent >= 55) return 'Module 4: Audience & messaging';
+  if (percent >= 25) return 'Interview & story craft';
+  return 'Speech lab workshop';
 }
 
 function nextLessonLabel(percent) {
   if (percent >= 100) return 'Review complete course';
-  if (percent >= 55) return 'Lesson 4.3 — Distributed Indexing';
-  if (percent >= 25) return 'Component Trees & Context';
-  return 'Discrete Distributions';
+  if (percent >= 55) return 'Lesson 4.3 — Campaign storytelling';
+  if (percent >= 25) return 'Pitch decks & briefs';
+  return 'Voice & delivery practice';
 }
 
 function DownloadIcon() {
@@ -131,7 +131,7 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
                 </span>
                 <span aria-hidden="true">•</span>
                 <span className="font-bold text-charcoal">
-                  {credits} Academic Credits
+                  {credits} credits
                 </span>
               </p>
             </div>
@@ -200,9 +200,9 @@ function OfflinePack({ enrollment, index }) {
   const href = enrollmentLink(enrollment);
   const code = courseCode(enrollment);
   const packs = [
-    { title: `${code} Midterm Reading Pack`, detail: 'Includes 4 PDFs & SQL Lab Datasets', size: '42.8 MB', synced: 'Synced Oct 18' },
-    { title: `${code} Architecture Cheatsheet`, detail: 'React 19 & Tailwind Component Patterns', size: '12.4 MB', synced: 'Synced Oct 14' },
-    { title: `${code} Lab Dataset Bundle`, detail: 'CSV samples & notebook starter', size: '8.2 MB', synced: 'Synced Oct 12' },
+    { title: `${code} Midterm reading pack`, detail: 'Includes 4 PDFs & media kit assets', size: '42.8 MB', synced: 'Synced Oct 18' },
+    { title: `${code} Style & voice guide`, detail: 'Tone, APA, and brand writing patterns', size: '12.4 MB', synced: 'Synced Oct 14' },
+    { title: `${code} Studio resource bundle`, detail: 'Templates, scripts & slide starters', size: '8.2 MB', synced: 'Synced Oct 12' },
   ];
   const pack = packs[index % packs.length];
 
@@ -260,11 +260,15 @@ function LearningBody({ data }) {
   const tab = TABS.find((item) => item.key === tabKey) ?? TABS[0];
   const filter = params.get('find') || '';
   const needle = filter.trim().toLowerCase();
-  const year = new Date().getFullYear();
   const hoursTarget = 6;
   const hoursDone = Math.round(((Number(avg) || 75) / 100) * hoursTarget * 10) / 10;
-    const ringValue = (avg ?? Math.round((hoursDone / hoursTarget) * 100)) || 75;
+  const ringValue = (avg ?? Math.round((hoursDone / hoursTarget) * 100)) || 75;
   const streak = rows.length ? Math.max(active.length * 2 || 1, completed.length ? 2 : 1, 5) : 0;
+  const focusCategory = data.summary?.focusCategory
+    || active.find((row) => row.categoryName)?.categoryName
+    || rows.find((row) => row.categoryName)?.categoryName
+    || null;
+  const focusLabel = focusCategory || null;
 
   const tracks = useMemo(() => {
     const set = new Set(rows.map((row) => row.categoryName).filter(Boolean));
@@ -330,7 +334,7 @@ function LearningBody({ data }) {
 
   const milestones = active.slice(0, 2).map((row, index) => ({
     id: row.id,
-    title: index === 0 ? 'Relational Schema Normalization Lab' : 'State Machine & Redux Quiz',
+    title: index === 0 ? 'Press release draft workshop' : 'Audience messaging quiz',
     course: row.courseTitle,
     code: courseCode(row),
     dayLabel: index === 0 ? 'Due Tomorrow' : 'Friday',
@@ -344,11 +348,6 @@ function LearningBody({ data }) {
     <div className="space-y-7 md:space-y-8">
       <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-2.5">
-          <nav aria-label="Breadcrumb" className="text-base font-bold text-charcoal-muted">
-            Academic Session {year}–{year + 1}
-            <span className="mx-1.5 text-hairline">/</span>
-            <span className="text-brand">My Learning Hub</span>
-          </nav>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-display text-5xl font-extrabold tracking-tight text-charcoal md:text-6xl lg:text-[4rem] lg:leading-[1.05]">
               My Learning Hub
@@ -360,9 +359,9 @@ function LearningBody({ data }) {
               </span>
             ) : null}
           </div>
-          <p className="text-xl font-medium text-charcoal-muted md:text-2xl">
-            Spring {year + 1} • Year 3 Undergraduate • Department of Computer Science
-          </p>
+          {focusLabel ? (
+            <p className="text-xl font-medium text-charcoal-muted md:text-2xl">{focusLabel}</p>
+          ) : null}
         </div>
 
         {(active.length || completed.length) ? (
@@ -581,9 +580,9 @@ function LearningBody({ data }) {
                 <ShieldIcon />
               </span>
               <div>
-                <h3 className="text-xl font-extrabold text-brand">Academic Integrity Standards</h3>
+                <h3 className="text-xl font-extrabold text-brand">Academic integrity</h3>
                 <p className="mt-1.5 text-lg leading-relaxed text-charcoal-muted">
-                  All assignment submissions, code repositories, and assessments are subject to automated verification against the EduAdmin Honor Code standard.
+                  All drafts, presentations, and assessments are subject to verification against the EduAdmin Honor Code standard.
                 </p>
                 <Link to="/learn/progress" className="mt-3 inline-flex items-center gap-1 text-lg font-bold text-brand hover:underline [&_svg]:h-4 [&_svg]:w-4">
                   Review Institutional Policy Guide

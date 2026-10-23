@@ -52,6 +52,20 @@ async function migrate() {
     }
     await connection.query(await readFile(new URL('./store.sql', import.meta.url), 'utf8'));
     console.log('Store tables are ready.');
+
+    const communicationsCategories = [
+      ['Communications', 'Speaking, media, and audience messaging'],
+      ['Media', 'Journalism, production, and digital storytelling'],
+      ['Writing', 'Writing craft, editing, and narrative'],
+    ];
+    for (const [name, description] of communicationsCategories) {
+      await connection.query(
+        `INSERT INTO categories (name, description) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE description = VALUES(description)`,
+        [name, description],
+      );
+    }
+    console.log('Communications categories are ready.');
   } finally {
     await connection.end();
   }

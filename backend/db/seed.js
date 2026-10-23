@@ -5,10 +5,10 @@ import { env } from '../src/config/env.js';
 
 /** Empty categories only — no fake students or demo courses. */
 const categories = [
-  ['Data', 'Working with data and evidence'],
+  ['Communications', 'Speaking, media, and audience messaging'],
+  ['Media', 'Journalism, production, and digital storytelling'],
+  ['Writing', 'Writing craft, editing, and narrative'],
   ['Education', 'Teaching, assessment, and learning design'],
-  ['Humanities', 'Writing and critical reading'],
-  ['Technology', 'Practical software and programming'],
   ['Research', 'Methods for study and inquiry'],
 ];
 

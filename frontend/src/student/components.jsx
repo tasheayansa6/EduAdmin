@@ -78,7 +78,7 @@ export function CourseCover({ category, title, className = '' }) {
         className="absolute inset-0 h-full w-full object-cover"
         onError={() => setBroken(true)}
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/25 via-transparent to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand/45 via-brand/10 to-mint-soft/20" />
     </div>
   );
 }

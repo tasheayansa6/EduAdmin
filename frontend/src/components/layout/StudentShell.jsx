@@ -315,7 +315,13 @@ export function StudentShell() {
   return (
     <StudentDataProvider>
       <NotificationsProvider>
-        <div className="student-theme flex min-h-screen flex-col bg-canvas text-charcoal">
+        <div className="student-theme relative isolate flex min-h-screen flex-col overflow-x-hidden bg-canvas text-charcoal">
+          <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+            <div className="absolute -left-24 -top-28 h-[28rem] w-[28rem] rounded-full bg-brand/[0.12] blur-3xl" />
+            <div className="absolute -right-20 top-24 h-[22rem] w-[22rem] rounded-full bg-mint/80 blur-3xl" />
+            <div className="absolute bottom-0 left-1/3 h-[18rem] w-[18rem] rounded-full bg-brand-soft/90 blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-b from-mint-soft/70 via-transparent to-sand/40" />
+          </div>
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:font-semibold">
             Skip to content
           </a>
@@ -326,10 +332,10 @@ export function StudentShell() {
             tabIndex={-1}
             className={
               fullBleed
-                ? 'w-full flex-1 pb-28 focus:outline-none md:pb-8'
+                ? 'relative w-full flex-1 pb-28 focus:outline-none md:pb-8'
                 : exploreHome || learningHub
-                  ? 'mx-auto w-full max-w-lg flex-1 px-4 py-5 pb-28 text-base focus:outline-none sm:max-w-2xl sm:px-5 md:max-w-6xl md:px-6 md:py-7 md:pb-8 lg:max-w-7xl'
-                  : 'mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8'
+                  ? 'relative mx-auto w-full max-w-lg flex-1 px-4 py-5 pb-28 text-base focus:outline-none sm:max-w-2xl sm:px-5 md:max-w-6xl md:px-6 md:py-7 md:pb-8 lg:max-w-7xl'
+                  : 'relative mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 focus:outline-none sm:px-6 md:max-w-5xl md:pb-8'
             }
           >
             <Outlet />

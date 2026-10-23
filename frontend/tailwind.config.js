@@ -30,12 +30,12 @@ export default {
           DEFAULT: '#191c1a',
           muted: '#59615b',
         },
-        canvas: '#f2fcf2',
-        sand: '#ecf6ed',
+        canvas: '#eef8ef',
+        sand: '#e4f2e6',
         hairline: '#becabd',
         mint: {
-          DEFAULT: '#dbe5dc',
-          soft: '#e6f1e7',
+          DEFAULT: '#d4e8d7',
+          soft: '#e6f4e8',
         },
       },
       fontFamily: {
