@@ -8,22 +8,33 @@ import {
   Legend,
   Pie,
   PieChart,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import { CheckIcon, FlameIcon, TrendIcon } from '../components/icons.jsx';
-import { CHART, ChartTip, buildWeeklyHours } from '../student/charts.jsx';
+import { CheckIcon, TrendIcon } from '../components/icons.jsx';
+import { CHART, ChartTip } from '../student/charts.jsx';
 import { currentEnrollments, useDocumentTitle, useStudentData } from '../student/StudentData.jsx';
 import { Meter, StudentData, StudentEmpty, enrollmentLink } from '../student/components.jsx';
 
 const BRAND = CHART.brand;
 const BRAND_SOFT = CHART.soft;
 const BRAND_MUTED = CHART.muted;
-const WHEAT = CHART.wheat;
 const GRID = '#d5e0d7';
+
+function formatRelative(iso) {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  const hours = Math.round((Date.now() - then) / 3600000);
+  if (hours < 1) return 'Active just now';
+  if (hours < 24) return `Last active ${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days === 1) return 'Last active yesterday';
+  if (days < 14) return `Last active ${days} days ago`;
+  return `Last active ${new Date(iso).toLocaleDateString()}`;
+}
 
 function StatTile({ label, value, detail, tone }) {
   return (
@@ -37,29 +48,36 @@ function StatTile({ label, value, detail, tone }) {
   );
 }
 
-function WeeklyStudyChart({ avg, courseCount }) {
-  const data = useMemo(() => buildWeeklyHours(avg, courseCount), [avg, courseCount]);
-  const total = Math.round(data.reduce((sum, row) => sum + row.hours, 0) * 10) / 10;
-  const target = 25;
-  const dailyTarget = Math.round((target / 7) * 10) / 10;
-  const vsPrev = avg == null ? 8 : Math.max(-6, Math.min(18, Math.round((avg - 50) / 4)));
-  const peak = data.reduce((best, row) => (row.hours > best.hours ? row : best));
+function WeeklyActivityChart({ weekly }) {
+  const data = useMemo(() => {
+    const days = weekly?.days || [];
+    return days.map((row) => ({
+      day: row.day,
+      lessons: Number(row.lessons) || 0,
+      fill: row.date === new Date().toISOString().slice(0, 10) ? BRAND : BRAND_SOFT,
+    }));
+  }, [weekly]);
+
+  const thisWeek = weekly?.thisWeek ?? data.reduce((sum, row) => sum + row.lessons, 0);
+  const prevWeek = weekly?.prevWeek ?? 0;
+  const vsPrev = prevWeek === 0
+    ? (thisWeek > 0 ? 100 : 0)
+    : Math.round(((thisWeek - prevWeek) / prevWeek) * 100);
+  const peak = data.reduce((best, row) => (row.lessons > best.lessons ? row : best), { day: '—', lessons: 0 });
 
   return (
     <section className="hub-card space-y-4 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-display text-lg font-bold text-charcoal">Weekly study activity</h2>
+          <h2 className="font-display text-lg font-bold text-charcoal">Weekly lesson activity</h2>
           <p className="mt-1 text-sm text-charcoal-muted">
-            <span className="font-bold text-charcoal">{total} total hours</span> this week
+            <span className="font-bold text-charcoal">{thisWeek} lesson{thisWeek === 1 ? '' : 's'}</span>
+            {' '}completed in the last 7 days
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${vsPrev >= 0 ? 'bg-brand-soft text-brand' : 'bg-wheat/20 text-wheat-ink'}`}>
-            {vsPrev >= 0 ? '+' : ''}{vsPrev}% vs prev
-          </span>
-          <span className="rounded-full bg-mint px-2.5 py-1 text-[11px] font-bold text-brand">
-            Target: {target}h
+            {vsPrev >= 0 ? '+' : ''}{vsPrev}% vs prior week
           </span>
         </div>
       </div>
@@ -75,21 +93,14 @@ function WeeklyStudyChart({ avg, courseCount }) {
               tickLine={false}
             />
             <YAxis
+              allowDecimals={false}
               tick={{ fill: '#59615b', fontSize: 11, fontWeight: 600 }}
               axisLine={false}
               tickLine={false}
-              unit="h"
               width={36}
             />
-            <Tooltip content={<ChartTip unit="h" />} cursor={{ fill: BRAND_MUTED, radius: 8 }} />
-            <ReferenceLine
-              y={dailyTarget}
-              stroke={WHEAT}
-              strokeDasharray="5 4"
-              strokeWidth={1.5}
-              label={{ value: 'Daily target', position: 'insideTopRight', fill: '#7a5a04', fontSize: 10, fontWeight: 700 }}
-            />
-            <Bar dataKey="hours" radius={[10, 10, 4, 4]} maxBarSize={48}>
+            <Tooltip content={<ChartTip />} cursor={{ fill: BRAND_MUTED, radius: 8 }} />
+            <Bar dataKey="lessons" radius={[10, 10, 4, 4]} maxBarSize={48}>
               {data.map((entry) => (
                 <Cell key={entry.day} fill={entry.fill} />
               ))}
@@ -101,17 +112,17 @@ function WeeklyStudyChart({ avg, courseCount }) {
       <div className="grid grid-cols-3 gap-2 border-t border-hairline pt-3 text-center">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">Peak day</p>
-          <p className="mt-0.5 text-sm font-bold text-charcoal">{peak.day} · {peak.hours}h</p>
+          <p className="mt-0.5 text-sm font-bold text-charcoal">
+            {peak.lessons ? `${peak.day} · ${peak.lessons}` : '—'}
+          </p>
         </div>
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">Daily avg</p>
-          <p className="mt-0.5 text-sm font-bold text-charcoal">{(total / 7).toFixed(1)}h</p>
+          <p className="mt-0.5 text-sm font-bold text-charcoal">{(thisWeek / 7).toFixed(1)}</p>
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">Vs target</p>
-          <p className={`mt-0.5 text-sm font-bold ${total >= target ? 'text-brand' : 'text-wheat-ink'}`}>
-            {total >= target ? 'On pace' : `${(target - total).toFixed(1)}h short`}
-          </p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">Prior week</p>
+          <p className="mt-0.5 text-sm font-bold text-charcoal">{prevWeek}</p>
         </div>
       </div>
     </section>
@@ -144,7 +155,7 @@ function CourseProgressChart({ rows }) {
       <div className="flex items-end justify-between gap-3">
         <div>
           <h2 className="font-display text-lg font-bold text-charcoal">Course completion</h2>
-          <p className="mt-1 text-sm text-charcoal-muted">Progress across enrolled modules</p>
+          <p className="mt-1 text-sm text-charcoal-muted">Progress from your lesson completions</p>
         </div>
         <span className="text-xs font-bold text-charcoal-muted">{data.length} shown</span>
       </div>
@@ -203,8 +214,8 @@ function PaceDonut({ avg, active, completed }) {
   return (
     <section className="hub-card grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
       <div>
-        <h2 className="font-display text-lg font-bold text-charcoal">Learning pace</h2>
-        <p className="mt-1 text-sm text-charcoal-muted">Average syllabus completion</p>
+        <h2 className="font-display text-lg font-bold text-charcoal">Average progress</h2>
+        <p className="mt-1 text-sm text-charcoal-muted">Across your enrolled programs</p>
         <div className="relative mx-auto mt-2 h-44 w-full max-w-[14rem]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -227,7 +238,7 @@ function PaceDonut({ avg, active, completed }) {
           <div className="pointer-events-none absolute inset-0 grid place-items-center">
             <div className="text-center">
               <p className="font-display text-3xl font-bold text-brand">{pace || '—'}{pace ? '%' : ''}</p>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">Avg pace</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">Avg</p>
             </div>
           </div>
         </div>
@@ -235,7 +246,7 @@ function PaceDonut({ avg, active, completed }) {
 
       <div>
         <h2 className="font-display text-lg font-bold text-charcoal">Enrollment mix</h2>
-        <p className="mt-1 text-sm text-charcoal-muted">Active vs completed courses</p>
+        <p className="mt-1 text-sm text-charcoal-muted">Active vs completed programs</p>
         {mix.length ? (
           <div className="mt-2 h-44 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -282,6 +293,10 @@ function PaceDonut({ avg, active, completed }) {
 
 function ModuleRow({ enrollment }) {
   const percent = enrollment.percent ?? 0;
+  const lessonsDone = enrollment.lessonsCompleted ?? 0;
+  const lessonsTotal = enrollment.lessonsTotal;
+  const activity = formatRelative(enrollment.lastActivityAt);
+
   return (
     <li className="hub-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -292,7 +307,7 @@ function ModuleRow({ enrollment }) {
             </Link>
           </h3>
           <p className="mt-0.5 text-sm text-charcoal-muted">
-            {[enrollment.categoryName, enrollment.instructorName].filter(Boolean).join(' · ') || 'Course'}
+            {[enrollment.categoryName, enrollment.instructorName].filter(Boolean).join(' · ') || 'Program'}
           </p>
         </div>
         <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-bold text-brand">{percent}%</span>
@@ -302,7 +317,14 @@ function ModuleRow({ enrollment }) {
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="text-charcoal-muted">
-          {percent >= 100 ? 'All lessons complete' : percent > 0 ? 'Keep going — open the next lesson' : 'Not started yet'}
+          {lessonsTotal
+            ? `${lessonsDone} of ${lessonsTotal} lessons`
+            : percent >= 100
+              ? 'All lessons complete'
+              : percent > 0
+                ? 'In progress'
+                : 'Not started yet'}
+          {activity ? ` · ${activity}` : ''}
         </span>
         <Link to={enrollmentLink(enrollment)} className="font-semibold text-brand hover:underline">
           Open player
@@ -317,23 +339,22 @@ function ProgressBody({ data }) {
   const active = rows.filter((row) => row.status === 'active').sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0));
   const completed = rows.filter((row) => row.status === 'completed');
   const avg = data.summary?.averageProgress;
+  const weekly = data.summary?.weeklyActivity;
   const enrolled = rows.length;
-  const pace = avg == null ? null : avg >= 70 ? 'On track' : avg >= 40 ? 'Building momentum' : 'Needs attention';
-  const year = new Date().getFullYear();
+  const pace = avg == null ? null : avg >= 70 ? 'Strong pace' : avg >= 40 ? 'Building momentum' : 'Just getting started';
 
   return (
     <div className="space-y-7">
       <header className="hub-card flex flex-wrap items-center justify-between gap-3 p-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
-            Term {year}
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">Your progress</p>
+          <p className="mt-1 text-sm font-semibold text-charcoal-muted">
+            Based on real lesson completions in your account
           </p>
-          <p className="mt-1 text-sm font-semibold text-charcoal-muted">Academic status</p>
         </div>
-        {active.length ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-sm font-bold text-brand [&_svg]:h-4 [&_svg]:w-4">
-            <FlameIcon />
-            {active.length}-course streak
+        {weekly?.thisWeek ? (
+          <span className="rounded-full bg-brand-soft px-3 py-1.5 text-sm font-bold text-brand">
+            {weekly.thisWeek} lesson{weekly.thisWeek === 1 ? '' : 's'} this week
           </span>
         ) : null}
       </header>
@@ -341,30 +362,25 @@ function ProgressBody({ data }) {
       {!enrolled ? (
         <StudentEmpty
           title="No progress yet"
-          message="Enroll in a course to track lesson completion and average progress here."
+          message="Enroll in a program and complete lessons to see real progress here."
           action={<Link to="/learn/courses" className="btn-brand">Explore courses</Link>}
         />
       ) : (
         <>
           <section aria-labelledby="metrics-title" className="space-y-3">
-            <div className="flex items-end justify-between gap-3">
-              <h2 id="metrics-title" className="text-[11px] font-bold uppercase tracking-[0.16em] text-charcoal-muted">
-                Key metrics
-              </h2>
-              {avg != null && avg >= 70 ? (
-                <span className="text-xs font-bold text-brand">Top of your cohort</span>
-              ) : null}
-            </div>
+            <h2 id="metrics-title" className="text-[11px] font-bold uppercase tracking-[0.16em] text-charcoal-muted">
+              Key metrics
+            </h2>
             <div className="grid grid-cols-3 gap-2.5">
               <StatTile label="Enrolled" value={enrolled} detail={`${active.length} active`} />
               <StatTile
                 label="Completed"
                 value={completed.length}
-                detail={completed.length ? 'Milestones' : 'Keep going'}
+                detail={completed.length ? 'Programs finished' : 'Keep going'}
                 tone="text-brand"
               />
               <StatTile
-                label="Pace"
+                label="Avg progress"
                 value={avg == null ? '—' : `${avg}%`}
                 detail={(
                   <span className="inline-flex items-center gap-1 [&_svg]:h-3.5 [&_svg]:w-3.5">
@@ -377,13 +393,13 @@ function ProgressBody({ data }) {
             </div>
           </section>
 
-          <WeeklyStudyChart avg={avg} courseCount={enrolled} />
+          <WeeklyActivityChart weekly={weekly} />
           <PaceDonut avg={avg} active={active.length} completed={completed.length} />
           <CourseProgressChart rows={rows} />
 
           <section aria-labelledby="modules-title" className="space-y-3">
             <div className="flex items-end justify-between gap-3">
-              <h2 id="modules-title" className="font-display text-xl font-bold text-charcoal">Active modules</h2>
+              <h2 id="modules-title" className="font-display text-xl font-bold text-charcoal">Active programs</h2>
               <p className="text-xs font-semibold uppercase tracking-wide text-charcoal-muted">{active.length} enrolled</p>
             </div>
             {active.length ? (
@@ -394,7 +410,7 @@ function ProgressBody({ data }) {
               </ul>
             ) : (
               <p className="rounded-2xl border border-dashed border-hairline bg-white px-4 py-8 text-center text-sm text-charcoal-muted">
-                No active courses. Your completed ones are listed below.
+                No active programs. Completed ones are listed below.
               </p>
             )}
           </section>
@@ -402,10 +418,10 @@ function ProgressBody({ data }) {
           <section aria-labelledby="milestones-title" className="space-y-3">
             <div className="flex items-end justify-between gap-3">
               <h2 id="milestones-title" className="font-display text-xl font-bold text-charcoal">
-                Milestones & credentials
+                Completed
               </h2>
               <p className="text-xs font-semibold uppercase tracking-wide text-charcoal-muted">
-                {completed.length} verified
+                {completed.length} finished
               </p>
             </div>
             {completed.length ? (
@@ -417,7 +433,7 @@ function ProgressBody({ data }) {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-charcoal">{row.courseTitle}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-brand">Completed</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-brand">100% complete</p>
                     </div>
                     <Link to={enrollmentLink(row)} className="text-sm font-semibold text-brand hover:underline">
                       Review
@@ -426,19 +442,16 @@ function ProgressBody({ data }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-charcoal-muted">Complete every lesson in a course to earn a milestone here.</p>
+              <p className="text-sm text-charcoal-muted">Complete every lesson in a program to see it here.</p>
             )}
           </section>
 
-          <section className="hub-card space-y-3 p-4 sm:p-5">
-            <p className="text-sm text-charcoal-muted">
-              Institutional records: your completed courses are stored for credit and transfer review.
-            </p>
+          <section className="hub-card p-4 sm:p-5">
             <Link
               to="/learn/my-learning?tab=completed"
               className="inline-flex w-full items-center justify-center rounded-2xl bg-brand-soft px-4 py-3 text-sm font-bold text-brand hover:bg-brand hover:text-white"
             >
-              View completed courses
+              View completed in My learning
             </Link>
           </section>
         </>

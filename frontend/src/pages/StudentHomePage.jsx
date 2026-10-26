@@ -5,7 +5,6 @@ import {
   ArrowRightIcon,
   CheckIcon,
   FlameIcon,
-  HeartIcon,
   LeafIcon,
   PlayIcon,
   SearchIcon,
@@ -22,36 +21,12 @@ import {
   enrollmentLink,
 } from '../student/components.jsx';
 
-function lessonsLeft(percent) {
-  if (percent == null) return null;
-  return Math.max(1, Math.ceil((100 - percent) / 12));
-}
-
-function moduleOf(percent) {
-  const current = Math.max(1, Math.min(6, Math.ceil((percent || 10) / 17)));
-  return { current, total: 6 };
-}
-
-function lessonNumber(percent) {
-  return Math.max(1, Math.min(24, Math.ceil((percent || 8) / 5)));
-}
-
-function lessonLabel(percent) {
-  if (percent <= 0) return 'Start learning';
-  return `Resume Lesson ${lessonNumber(percent)}`;
-}
-
 function FeatureResume({ enrollment }) {
   const percent = enrollment.percent ?? 0;
   const href = enrollmentLink(enrollment);
-  const resume = lessonLabel(percent);
-  const lesson = lessonNumber(percent);
-  const module = moduleOf(percent);
-  const mins = enrollment.totalMinutes
-    ? Math.max(15, Math.round((Number(enrollment.totalMinutes) || 60) * (1 - percent / 100) / 4))
-    : 35;
-  const topic = enrollment.currentLessonTitle
-    || (percent > 0 ? `Lesson ${lesson} deep-dive` : 'Course orientation');
+  const lessonsDone = enrollment.lessonsCompleted ?? 0;
+  const lessonsTotal = enrollment.lessonsTotal;
+  const resume = percent <= 0 ? 'Start learning' : 'Continue learning';
 
   return (
     <article id="active-hero" className="relative overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
@@ -65,12 +40,16 @@ function FeatureResume({ enrollment }) {
               </span>
               <span className="text-charcoal-muted">•</span>
               <span className="text-sm font-semibold text-charcoal-muted">
-                {enrollment.categoryName || 'Course'}
+                {enrollment.categoryName || 'Program'}
               </span>
-              <span className="text-charcoal-muted">•</span>
-              <span className="text-sm font-semibold text-charcoal-muted">
-                Module {module.current} of {module.total}
-              </span>
+              {lessonsTotal ? (
+                <>
+                  <span className="text-charcoal-muted">•</span>
+                  <span className="text-sm font-semibold text-charcoal-muted">
+                    {lessonsDone} of {lessonsTotal} lessons
+                  </span>
+                </>
+              ) : null}
             </div>
 
             <h2 className="font-display text-3xl font-extrabold leading-snug tracking-tight text-charcoal md:text-4xl lg:text-5xl">
@@ -78,32 +57,29 @@ function FeatureResume({ enrollment }) {
             </h2>
 
             <p className="text-sm leading-relaxed text-charcoal-muted md:text-base">
-              <span className="font-semibold text-charcoal">{resume}: {topic}.</span>
+              <span className="font-semibold text-charcoal">{resume}.</span>
               {' '}
-              Continue building mastery with guided practice and applied exercises.
+              Your program stays unlocked—pick up anytime.
             </p>
 
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4 [&_svg]:text-brand">
               <UserIcon />
               <span className="font-semibold text-charcoal">{enrollment.instructorName || 'Instructor TBA'}</span>
-              <span className="text-charcoal-muted">
-                · Faculty
-                {enrollment.categoryName ? ` · ${enrollment.categoryName}` : ''}
-              </span>
+              {enrollment.categoryName ? (
+                <span className="text-charcoal-muted">· {enrollment.categoryName}</span>
+              ) : null}
             </p>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-sm">
-              <div className="min-w-[12rem] flex-1">
-                <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
-                  <span className="text-charcoal-muted">Overall Course Progress: {percent}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-brand-soft">
-                  <div className="h-full rounded-full bg-brand" style={{ width: `${percent}%` }} />
-                </div>
+            <div className="pt-1 text-sm">
+              <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
+                <span className="text-charcoal-muted">Progress: {percent}%</span>
+                {lessonsTotal ? (
+                  <span className="text-charcoal-muted">{lessonsDone}/{lessonsTotal} lessons</span>
+                ) : null}
               </div>
-              <p className="shrink-0 text-sm font-semibold text-charcoal-muted">
-                {mins} mins left in this module
-              </p>
+              <div className="h-2 overflow-hidden rounded-full bg-brand-soft">
+                <div className="h-full rounded-full bg-brand" style={{ width: `${percent}%` }} />
+              </div>
             </div>
           </div>
 
@@ -116,10 +92,10 @@ function FeatureResume({ enrollment }) {
               {resume}
             </Link>
             <Link
-              to={href}
+              to="/learn/my-learning"
               className="inline-flex h-11 items-center justify-center rounded-lg border border-brand/25 bg-white px-4 text-sm font-bold text-brand hover:bg-brand-soft"
             >
-              Open workshop notes
+              My library
             </Link>
           </div>
         </div>
@@ -131,22 +107,16 @@ function FeatureResume({ enrollment }) {
             className="!aspect-auto absolute inset-0 h-full w-full"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand/70 via-brand/20 to-mint-soft/15" />
-          <span className="absolute left-4 top-4 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-charcoal shadow-soft">
-            Studio &amp; workshop
-          </span>
-          <button
-            type="button"
-            className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-charcoal-muted shadow-soft hover:text-brand"
-            aria-label="Bookmark course"
-          >
-            <HeartIcon />
-          </button>
           <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/95 p-3.5 shadow-soft backdrop-blur-sm sm:left-auto sm:right-4 sm:w-64">
             <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">
-              Media studio desk
+              Your program
             </p>
-            <p className="mt-0.5 text-xs text-charcoal-muted">Workshop open · Session #{enrollment.courseId || 841}</p>
-            <p className="mt-1 text-sm font-bold text-brand">Ready</p>
+            <p className="mt-0.5 text-xs text-charcoal-muted">
+              {lessonsTotal
+                ? `${lessonsDone} of ${lessonsTotal} lessons complete`
+                : `${percent}% complete`}
+            </p>
+            <p className="mt-1 text-sm font-bold text-brand">{percent > 0 ? 'Resume anytime' : 'Ready to start'}</p>
           </div>
         </div>
       </div>
@@ -164,11 +134,9 @@ function CuratedCard({ course }) {
     || (course.sections || []).reduce((sum, section) => sum + (section.lessons?.length || 0), 0)
     || null;
   const track = course.category || 'Course';
-  const about = String(course.description || course.subtitle || '').trim()
-    || `Build practical skills in ${course.title} with guided lessons and projects.`;
-  const rating = course.ratingAvg != null ? Number(course.ratingAvg).toFixed(1) : '4.8';
-  const ratingCount = course.ratingCount != null ? Number(course.ratingCount).toLocaleString() : '1,200';
-  const ects = course.credits != null ? Number(course.credits) : 4.0;
+  const about = String(course.description || course.subtitle || '').trim();
+  const price = Number(course.price ?? 0);
+  const isFree = course.isFree || price <= 0;
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
@@ -182,11 +150,11 @@ function CuratedCard({ course }) {
           enrolled ? 'bg-brand-soft text-brand' : 'bg-white/95 text-brand'
         }`}
         >
-          {enrolled ? 'Enrolled' : 'Prerequisite Met'}
+          {enrolled ? 'Enrolled' : course.isComingSoon ? 'Coming Soon' : 'Available'}
         </span>
         {modules ? (
           <span className="absolute bottom-3 left-3 rounded-full bg-charcoal/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
-            {modules} Modules
+            {modules} Lessons
           </span>
         ) : null}
       </div>
@@ -194,15 +162,16 @@ function CuratedCard({ course }) {
       <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">{track}</span>
-          <span className="text-sm font-semibold text-charcoal">
-            ★ {rating}
-            <span className="ml-1 font-normal text-charcoal-muted">({ratingCount})</span>
-          </span>
+          {!enrolled && !course.isComingSoon ? (
+            <span className="text-sm font-bold text-charcoal">
+              {isFree ? 'Free' : `${price.toLocaleString()} ${course.currency || 'ETB'}`}
+            </span>
+          ) : null}
         </div>
         <h3 className="font-display text-2xl font-extrabold leading-snug text-charcoal md:text-3xl">
           <Link to={to} className="hover:text-brand">{course.title}</Link>
         </h3>
-        <p className="line-clamp-2 text-sm leading-relaxed text-charcoal-muted">{about}</p>
+        {about ? <p className="line-clamp-2 text-sm leading-relaxed text-charcoal-muted">{about}</p> : null}
         <p className="mt-1 flex items-center gap-2 text-sm text-charcoal-muted [&_svg]:h-3.5 [&_svg]:w-3.5">
           <UserIcon />
           {course.instructorName || 'Instructor TBA'}
@@ -217,7 +186,9 @@ function CuratedCard({ course }) {
               </div>
             </div>
           ) : (
-            <span className="text-sm font-bold text-charcoal">{ects} credits</span>
+            <span className="text-sm text-charcoal-muted">
+              {course.level || (isFree ? 'Open enrollment' : 'One-time purchase')}
+            </span>
           )}
           <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:w-auto sm:min-w-[16rem]">
             <Link
@@ -276,17 +247,23 @@ function HomeBody({ data }) {
   } else if (sort === 'rating') {
     curated = [...curated].sort((a, b) => (b.ratingAvg ?? 0) - (a.ratingAvg ?? 0));
   }
-  const totalEligible = Math.max(curated.length, curatedBase.length, 28);
+  const totalEligible = curatedBase.length;
   curated = curated.slice(0, 4);
 
-  const streak = current.length ? Math.max(3, active.length * 3 + completed.length) : 14;
-  const ects = Math.round(completed.length * 6 + active.length * 2.5 + 40) || 112;
-  const unitsDone = featured ? Math.min(4, Math.max(1, Math.ceil((featured.percent || 20) / 25))) : 3;
-  const pathwayPct = Math.min(100, Math.round(((completed.length + active.length * 0.4) / Math.max(8, completed.length + active.length + 3)) * 100)) || 74;
+  const weekly = data.summary?.weeklyActivity;
+  const lessonsThisWeek = weekly?.thisWeek ?? 0;
+  const avgProgress = data.summary?.averageProgress;
+  const pathwayPct = avgProgress != null
+    ? avgProgress
+    : (completed.length || active.length
+      ? Math.round((completed.length / Math.max(1, completed.length + active.length)) * 100)
+      : 0);
   const continueLearning = active
     .filter((row) => (row.percent ?? 0) < 100)
     .slice(0, 3);
-  const left = featured ? lessonsLeft(featured.percent) : null;
+  const featuredLeft = featured?.lessonsTotal != null
+    ? Math.max(0, featured.lessonsTotal - (featured.lessonsCompleted ?? 0))
+    : null;
 
   const pathwaySteps = [
     ...completed.slice(0, 2).map((row) => ({
@@ -340,8 +317,8 @@ function HomeBody({ data }) {
                 <FlameIcon />
               </span>
               <div>
-                <p className="font-display text-xl font-bold leading-none text-charcoal">{streak}</p>
-                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-charcoal-muted">Day Streak</p>
+                <p className="font-display text-xl font-bold leading-none text-charcoal">{lessonsThisWeek}</p>
+                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-charcoal-muted">Lessons this week</p>
               </div>
             </div>
             <div className="flex items-center gap-2.5 rounded-xl bg-white px-4 py-3 shadow-soft ring-1 ring-hairline">
@@ -349,44 +326,57 @@ function HomeBody({ data }) {
                 ★
               </span>
               <div>
-                <p className="font-display text-xl font-bold leading-none text-charcoal">{ects}</p>
-                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-charcoal-muted">Credits earned</p>
+                <p className="font-display text-xl font-bold leading-none text-charcoal">
+                  {avgProgress == null ? '—' : `${avgProgress}%`}
+                </p>
+                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-charcoal-muted">Avg progress</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 rounded-xl bg-mint-soft/90 p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-start gap-3">
-            <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-brand shadow-soft [&_svg]:h-5 [&_svg]:w-5">
-              <LeafIcon />
-            </span>
-            <p className="text-sm leading-relaxed text-charcoal-muted md:text-[15px]">
-              <span className="font-bold text-charcoal">Weekly Goal in Sight: </span>
-              {featured && left
-                ? (
+        {(featured || lessonsThisWeek > 0) ? (
+          <div className="flex flex-col gap-3 rounded-xl bg-mint-soft/90 p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-brand shadow-soft [&_svg]:h-5 [&_svg]:w-5">
+                <LeafIcon />
+              </span>
+              <p className="text-sm leading-relaxed text-charcoal-muted md:text-[15px]">
+                {featured && featuredLeft != null && featuredLeft > 0 ? (
                   <>
-                    You&apos;re {left} lesson{left === 1 ? '' : 's'} away from completing the{' '}
-                    <span className="font-bold text-charcoal">&ldquo;{featured.courseTitle}&rdquo;</span>
-                    {' '}milestone.
+                    <span className="font-bold text-charcoal">Keep going: </span>
+                    {featuredLeft} lesson{featuredLeft === 1 ? '' : 's'} left in{' '}
+                    <span className="font-bold text-charcoal">&ldquo;{featured.courseTitle}&rdquo;</span>.
+                    Programs stay unlocked—resume anytime.
                   </>
-                )
-                : 'Keep a steady pace to hit your weekly study target.'}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-4 sm:pl-4">
-            <div className="w-28">
-              <p className="mb-1 text-xs font-semibold text-charcoal-muted">{unitsDone} / 4 units</p>
-              <div className="h-2 overflow-hidden rounded-full bg-white/80">
-                <div className="h-full rounded-full bg-brand" style={{ width: `${(unitsDone / 4) * 100}%` }} />
-              </div>
+                ) : featured ? (
+                  <>
+                    <span className="font-bold text-charcoal">Keep going: </span>
+                    Continue{' '}
+                    <span className="font-bold text-charcoal">&ldquo;{featured.courseTitle}&rdquo;</span>
+                    {' '}anytime—your access stays unlocked.
+                  </>
+                ) : lessonsThisWeek > 0 ? (
+                  <>
+                    <span className="font-bold text-charcoal">Nice work: </span>
+                    You completed {lessonsThisWeek} lesson{lessonsThisWeek === 1 ? '' : 's'} this week.
+                  </>
+                ) : (
+                  <>
+                    <span className="font-bold text-charcoal">Your library is ready. </span>
+                    Open a program and pick up where you left off.
+                  </>
+                )}
+              </p>
             </div>
-            <a href="#active-hero" className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-bold text-brand hover:underline [&_svg]:h-3.5 [&_svg]:w-3.5">
-              Keep Momentum
-              <ArrowRightIcon />
-            </a>
+            {featured ? (
+              <a href="#active-hero" className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-bold text-brand hover:underline [&_svg]:h-3.5 [&_svg]:w-3.5">
+                Resume
+                <ArrowRightIcon />
+              </a>
+            ) : null}
           </div>
-        </div>
+        ) : null}
       </header>
 
       {featured ? (
@@ -574,15 +564,15 @@ function HomeBody({ data }) {
                 <h3 className="text-lg font-extrabold text-charcoal">
                   {focusCategory ? `${focusCategory} path` : 'Learning path'}
                 </h3>
-                <span className="text-xs font-semibold text-brand">This term</span>
+                <span className="text-xs font-semibold text-brand">Your enrollments</span>
               </div>
               <div className="mt-3 flex items-center gap-3 rounded-xl bg-sand/70 p-3">
                 <PaceRing value={pathwayPct} size="md" label="Done" />
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-charcoal">Path progress</p>
                   <p className="mt-0.5 text-xs text-charcoal-muted">
-                    {active.length + completed.length} course{(active.length + completed.length) === 1 ? '' : 's'} in progress or done
-                    {data.summary?.averageProgress != null ? ` · ${data.summary.averageProgress}% avg` : ''}
+                    {active.length + completed.length} program{(active.length + completed.length) === 1 ? '' : 's'} enrolled
+                    {avgProgress != null ? ` · ${avgProgress}% avg` : ''}
                   </p>
                 </div>
               </div>
@@ -615,20 +605,18 @@ function HomeBody({ data }) {
             </section>
 
             <section className="rounded-2xl bg-gradient-to-br from-brand to-brand-hover p-4 text-white shadow-soft">
-              <div className="flex items-center justify-between gap-2">
-                <span className="rounded bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
-                  Faculty support
-                </span>
-              </div>
-              <h3 className="mt-2 font-display text-xl font-extrabold">Faculty office hours</h3>
+              <span className="rounded bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
+                Progress
+              </span>
+              <h3 className="mt-2 font-display text-xl font-extrabold">See your real activity</h3>
               <p className="mt-1 text-sm text-white/90">
-                {featured?.instructorName || 'Your instructor'} is hosting an open desk today from 3:30 PM to 5:00 PM.
+                Charts and completion rates come from lessons you finish—no demo numbers.
               </p>
               <Link
                 to="/learn/progress"
                 className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-white text-sm font-bold text-brand hover:bg-mint-soft"
               >
-                Reserve 15-Min Slot
+                Open progress
               </Link>
             </section>
           </aside>

@@ -28,20 +28,6 @@ export function ChartTip({ active, payload, label, unit = '' }) {
   );
 }
 
-export function buildWeeklyHours(avg, courseCount) {
-  const intensity = Math.max(0.4, (Number(avg) || 42) / 100);
-  const load = Math.max(1, Math.min(courseCount || 1, 5));
-  const base = [3.5, 4.2, 5.0, 2.1, 4.8, 6.2, 3.0];
-  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const scale = 0.55 + intensity * 0.7 + load * 0.04;
-  const todayIndex = (new Date().getDay() + 6) % 7;
-  return labels.map((day, index) => ({
-    day,
-    hours: Math.round(base[index] * scale * 10) / 10,
-    fill: index === todayIndex ? CHART.brand : CHART.soft,
-  }));
-}
-
 /** Circular progress ring used on Learning / Explore. */
 export function PaceRing({ value, size = 'md', label = 'Done' }) {
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
@@ -81,22 +67,30 @@ export function PaceRing({ value, size = 'md', label = 'Done' }) {
   );
 }
 
-/** Compact weekly bars for Learning / Explore headers. */
-export function MiniWeekChart({ avg, courseCount, height = 96 }) {
-  const data = useMemo(() => buildWeeklyHours(avg, courseCount), [avg, courseCount]);
-  const total = Math.round(data.reduce((sum, row) => sum + row.hours, 0) * 10) / 10;
+/** Compact weekly bars from real lesson_progress counts. */
+export function MiniWeekChart({ weekly, height = 96 }) {
+  const data = useMemo(() => {
+    const days = weekly?.days || [];
+    const today = new Date().toISOString().slice(0, 10);
+    return days.map((row) => ({
+      day: row.day,
+      lessons: Number(row.lessons) || 0,
+      fill: row.date === today ? CHART.brand : CHART.soft,
+    }));
+  }, [weekly]);
+  const total = weekly?.thisWeek ?? data.reduce((sum, row) => sum + row.lessons, 0);
 
   return (
     <div>
       <div className="mb-1 flex items-end justify-between gap-2">
-        <p className="text-xs font-bold text-charcoal">{total}h this week</p>
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-charcoal-muted">Study hours</p>
+        <p className="text-xs font-bold text-charcoal">{total} lesson{total === 1 ? '' : 's'} this week</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-charcoal-muted">Activity</p>
       </div>
       <div style={{ height }} className="w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }} barCategoryGap="22%">
-            <Tooltip content={<ChartTip unit="h" />} cursor={{ fill: CHART.muted }} />
-            <Bar dataKey="hours" radius={[6, 6, 2, 2]} maxBarSize={28}>
+            <Tooltip content={<ChartTip />} cursor={{ fill: CHART.muted }} />
+            <Bar dataKey="lessons" radius={[6, 6, 2, 2]} maxBarSize={28}>
               {data.map((entry) => (
                 <Cell key={entry.day} fill={entry.fill} />
               ))}

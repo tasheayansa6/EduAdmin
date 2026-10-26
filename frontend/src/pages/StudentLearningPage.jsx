@@ -3,13 +3,11 @@ import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowRightIcon,
   ChevronDownIcon,
-  FlameIcon,
   HeartIcon,
   SearchIcon,
-  ShieldIcon,
   UserIcon,
 } from '../components/icons.jsx';
-import { PaceRing } from '../student/charts.jsx';
+import { MiniWeekChart, PaceRing } from '../student/charts.jsx';
 import { currentEnrollments, useDocumentTitle, useStore, useStudentData } from '../student/StudentData.jsx';
 import {
   CourseCover,
@@ -25,75 +23,39 @@ const TABS = [
   { key: 'all', label: 'All Enrollments', test: () => true },
 ];
 
-function courseCode(enrollment) {
-  const raw = String(enrollment.categoryName || enrollment.courseTitle || 'CRS')
-    .replace(/[^A-Za-z0-9\s]/g, ' ')
-    .trim()
-    .split(/\s+/);
-  const letters = raw.map((w) => w[0]).join('').slice(0, 3).toUpperCase() || 'CRS';
-  const id = String(enrollment.courseId || enrollment.id || 402).slice(-3).padStart(3, '0');
-  return `${letters}-${id}`;
-}
-
-function deptLabel(enrollment) {
-  if (!enrollment.categoryName) return 'ENROLLED COURSE';
-  return `Dept. of ${enrollment.categoryName}`;
-}
-
 function statusBadge(percent, completed) {
   if (completed || percent >= 100) return { label: 'Completed', tone: 'bg-brand-soft text-brand' };
-  if (percent >= 55) return { label: 'In Progress', tone: 'bg-brand-soft text-brand' };
-  if (percent >= 25) return { label: 'Quiz Due in 2d', tone: 'bg-wheat/25 text-wheat-ink' };
-  if (percent > 0) return { label: 'Lab Ready', tone: 'bg-sand text-charcoal-muted' };
-  return { label: 'Ready', tone: 'bg-sand text-charcoal-muted' };
+  if (percent > 0) return { label: 'In Progress', tone: 'bg-brand-soft text-brand' };
+  return { label: 'Not started', tone: 'bg-sand text-charcoal-muted' };
 }
 
-function lessonsDone(percent) {
-  const total = 18;
-  const done = Math.round((Math.max(0, Math.min(100, percent)) / 100) * total);
-  return { done, total };
+function formatRelative(iso) {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  const hours = Math.round((Date.now() - then) / 3600000);
+  if (hours < 1) return 'Active just now';
+  if (hours < 24) return `Last active ${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days === 1) return 'Last active yesterday';
+  if (days < 14) return `Last active ${days} days ago`;
+  return `Last active ${new Date(iso).toLocaleDateString()}`;
 }
 
-function lastActiveLabel(percent) {
-  if (percent >= 100) return 'Course complete';
-  if (percent >= 60) return 'Last active yesterday';
-  if (percent >= 35) return 'Last active 3 days ago';
-  if (percent > 0) return 'Last active last week';
-  return 'Not started yet';
-}
-
-function moduleLine(percent) {
-  if (percent >= 100) return 'Course wrap-up';
-  if (percent >= 55) return 'Module 4: Audience & messaging';
-  if (percent >= 25) return 'Interview & story craft';
-  return 'Speech lab workshop';
-}
-
-function nextLessonLabel(percent) {
-  if (percent >= 100) return 'Review complete course';
-  if (percent >= 55) return 'Lesson 4.3 — Campaign storytelling';
-  if (percent >= 25) return 'Pitch decks & briefs';
-  return 'Voice & delivery practice';
-}
-
-function DownloadIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <path d="M12 3v12" />
-      <path d="m7 11 5 5 5-5" />
-      <path d="M5 19h14" />
-    </svg>
-  );
+function continueLearningSidebar(active) {
+  return active
+    .filter((row) => (row.percent ?? 0) < 100)
+    .slice(0, 3);
 }
 
 function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
   const percent = enrollment.percent ?? 0;
   const href = enrollmentLink(enrollment);
-  const code = courseCode(enrollment);
   const completed = enrollment.status === 'completed' || percent >= 100;
   const badge = statusBadge(percent, completed);
-  const lessons = lessonsDone(percent);
-  const credits = enrollment.credits != null ? Number(enrollment.credits).toFixed(1) : '4.0';
+  const lessonsDone = enrollment.lessonsCompleted ?? 0;
+  const lessonsTotal = enrollment.lessonsTotal;
+  const activity = formatRelative(enrollment.lastActivityAt);
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
@@ -104,16 +66,13 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
             title={enrollment.courseTitle}
             className="!aspect-auto absolute inset-0 h-full w-full"
           />
-          <span className="absolute left-3 top-3 rounded-md bg-charcoal/80 px-2.5 py-1 text-sm font-bold uppercase tracking-wide text-white backdrop-blur-sm">
-            {code}
-          </span>
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex flex-1 flex-col gap-3.5 p-5 sm:p-6">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-bold uppercase tracking-[0.12em] text-brand">
-                {deptLabel(enrollment)}
+                {enrollment.categoryName || 'Program'}
               </p>
               <span className={`shrink-0 rounded-full px-3 py-1 text-sm font-bold uppercase tracking-wide ${badge.tone}`}>
                 {badge.label}
@@ -124,26 +83,24 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
               <h2 className="font-display text-3xl font-extrabold leading-snug tracking-tight text-charcoal md:text-4xl">
                 <Link to={href} className="hover:text-brand">{enrollment.courseTitle}</Link>
               </h2>
-              <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xl text-charcoal-muted">
+              <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-lg text-charcoal-muted">
                 <span className="inline-flex items-center gap-1.5 [&_svg]:h-5 [&_svg]:w-5">
                   <UserIcon />
                   {enrollment.instructorName || 'Instructor TBA'}
-                </span>
-                <span aria-hidden="true">•</span>
-                <span className="font-bold text-charcoal">
-                  {credits} credits
                 </span>
               </p>
             </div>
 
             <div>
               <div className="mb-2 flex items-baseline justify-between gap-3 text-lg font-bold">
-                <span className="text-charcoal">Syllabus Completion</span>
+                <span className="text-charcoal">Progress</span>
                 <span className="font-extrabold text-brand">
-                  {percent}%{' '}
-                  <span className="font-semibold text-charcoal-muted">
-                    ({lessons.done}/{lessons.total} lessons)
-                  </span>
+                  {percent}%
+                  {lessonsTotal ? (
+                    <span className="font-semibold text-charcoal-muted">
+                      {' '}({lessonsDone}/{lessonsTotal} lessons)
+                    </span>
+                  ) : null}
                 </span>
               </div>
               <div className="h-2.5 overflow-hidden rounded-full bg-brand-soft">
@@ -153,21 +110,12 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
           </div>
 
           <div className="flex flex-col gap-3 border-t border-hairline bg-sand/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div className="min-w-0 text-lg leading-relaxed text-charcoal-muted">
+            <div className="min-w-0 text-base leading-relaxed text-charcoal-muted">
               <p>
-                {lastActiveLabel(percent)}
-                {!completed ? (
-                  <>
-                    {' • '}
-                    <span className="font-semibold text-charcoal">{moduleLine(percent)}</span>
-                  </>
-                ) : null}
+                {completed
+                  ? 'Program complete — review anytime'
+                  : activity || (percent > 0 ? 'In progress' : 'Ready when you are')}
               </p>
-              {!completed ? (
-                <p className="mt-1 text-lg font-bold text-charcoal">
-                  Next: {nextLessonLabel(percent)}
-                </p>
-              ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button
@@ -185,7 +133,7 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
                 to={href}
                 className="inline-flex h-12 items-center gap-2 rounded-xl bg-brand px-5 text-xl font-bold text-white shadow-soft hover:bg-brand-hover"
               >
-                Continue Learning
+                {completed ? 'Review' : percent > 0 ? 'Continue' : 'Start'}
                 <span className="[&_svg]:h-4 [&_svg]:w-4"><ArrowRightIcon /></span>
               </Link>
             </div>
@@ -193,56 +141,6 @@ function HubCard({ enrollment, bookmarked, onToggleBookmark }) {
         </div>
       </div>
     </article>
-  );
-}
-
-function OfflinePack({ enrollment, index }) {
-  const href = enrollmentLink(enrollment);
-  const code = courseCode(enrollment);
-  const packs = [
-    { title: `${code} Midterm reading pack`, detail: 'Includes 4 PDFs & media kit assets', size: '42.8 MB', synced: 'Synced Oct 18' },
-    { title: `${code} Style & voice guide`, detail: 'Tone, APA, and brand writing patterns', size: '12.4 MB', synced: 'Synced Oct 14' },
-    { title: `${code} Studio resource bundle`, detail: 'Templates, scripts & slide starters', size: '8.2 MB', synced: 'Synced Oct 12' },
-  ];
-  const pack = packs[index % packs.length];
-
-  return (
-    <div className="flex items-start gap-3 rounded-xl bg-sand/70 p-3.5">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-white text-brand shadow-soft">
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <path d="M14 2v6h6" />
-        </svg>
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-base font-extrabold text-charcoal md:text-lg">{pack.title}</p>
-        <p className="mt-0.5 line-clamp-2 text-base text-charcoal-muted">{pack.detail}</p>
-        <p className="mt-1 text-xs font-semibold text-charcoal-muted">{pack.size} • {pack.synced}</p>
-      </div>
-      <Link
-        to={href}
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-brand ring-1 ring-hairline hover:bg-brand hover:text-white"
-        aria-label={`Download ${pack.title}`}
-      >
-        <DownloadIcon />
-      </Link>
-    </div>
-  );
-}
-
-function MilestoneRow({ title, course, code, dayLabel, timeLabel, urgent }) {
-  return (
-    <div className="border-b border-hairline py-3.5 last:border-b-0 last:pb-0 first:pt-0">
-      <div className="flex items-start justify-between gap-2">
-        <span className={`text-xs font-bold uppercase tracking-wide ${urgent ? 'text-wheat-ink' : 'text-charcoal-muted'}`}>
-          {dayLabel} {timeLabel}
-        </span>
-      </div>
-      <h4 className="mt-1.5 text-lg font-extrabold leading-snug text-charcoal">{title}</h4>
-      <p className="mt-1 text-base text-charcoal-muted">
-        {code} • {course}
-      </p>
-    </div>
   );
 }
 
@@ -260,10 +158,8 @@ function LearningBody({ data }) {
   const tab = TABS.find((item) => item.key === tabKey) ?? TABS[0];
   const filter = params.get('find') || '';
   const needle = filter.trim().toLowerCase();
-  const hoursTarget = 6;
-  const hoursDone = Math.round(((Number(avg) || 75) / 100) * hoursTarget * 10) / 10;
-  const ringValue = (avg ?? Math.round((hoursDone / hoursTarget) * 100)) || 75;
-  const streak = rows.length ? Math.max(active.length * 2 || 1, completed.length ? 2 : 1, 5) : 0;
+  const weekly = data.summary?.weeklyActivity;
+  const ringValue = avg ?? 0;
   const focusCategory = data.summary?.focusCategory
     || active.find((row) => row.categoryName)?.categoryName
     || rows.find((row) => row.categoryName)?.categoryName
@@ -332,30 +228,17 @@ function LearningBody({ data }) {
     all: rows.length,
   };
 
-  const milestones = active.slice(0, 2).map((row, index) => ({
-    id: row.id,
-    title: index === 0 ? 'Press release draft workshop' : 'Audience messaging quiz',
-    course: row.courseTitle,
-    code: courseCode(row),
-    dayLabel: index === 0 ? 'Due Tomorrow' : 'Friday',
-    timeLabel: index === 0 ? '11:59 PM' : '5:00 PM',
-    urgent: index === 0,
-  }));
-
-  const offlineCount = Math.min(3, active.length || 2);
-
   return (
     <div className="space-y-7 md:space-y-8">
       <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-2.5">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-display text-5xl font-extrabold tracking-tight text-charcoal md:text-6xl lg:text-[4rem] lg:leading-[1.05]">
-              My Learning Hub
+              My Learning
             </h1>
-            {streak ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3.5 py-1.5 text-lg font-bold uppercase tracking-wide text-brand [&_svg]:h-5 [&_svg]:w-5">
-                <FlameIcon />
-                {streak}-Day Streak
+            {weekly?.thisWeek ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3.5 py-1.5 text-sm font-bold uppercase tracking-wide text-brand">
+                {weekly.thisWeek} lesson{weekly.thisWeek === 1 ? '' : 's'} this week
               </span>
             ) : null}
           </div>
@@ -366,18 +249,20 @@ function LearningBody({ data }) {
 
         {(active.length || completed.length) ? (
           <div className="flex w-full max-w-md items-center gap-4 rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline lg:w-[24rem]">
-            <PaceRing value={ringValue} size="md" label="Done" />
+            <PaceRing value={ringValue} size="md" label="Avg" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold uppercase tracking-[0.14em] text-charcoal-muted">Weekly Target</p>
+              <p className="text-sm font-bold uppercase tracking-[0.14em] text-charcoal-muted">Your progress</p>
               <p className="mt-1 font-display text-3xl font-extrabold leading-snug text-charcoal">
-                {hoursDone} of {hoursTarget} hrs
+                {avg == null ? '—' : `${avg}%`}
               </p>
-              <p className="mt-0.5 text-base text-charcoal-muted">Keep the momentum!</p>
+              <p className="mt-0.5 text-base text-charcoal-muted">
+                {active.length} active · {completed.length} completed
+              </p>
               <Link
                 to="/learn/progress"
                 className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-lg bg-brand px-4 text-base font-bold text-white hover:bg-brand-hover"
               >
-                Schedule
+                View progress
               </Link>
             </div>
           </div>
@@ -419,7 +304,7 @@ function LearningBody({ data }) {
               id="my-learning-find"
               type="search"
               className="s-field rounded-full border-transparent bg-white py-3 pl-11 pr-14 text-lg shadow-soft"
-              placeholder="Search courses, topics, or faculty..."
+              placeholder="Search your programs..."
               value={filter}
               onChange={(event) => update('find', event.target.value)}
             />
@@ -538,59 +423,39 @@ function LearningBody({ data }) {
         </div>
 
         <aside className="space-y-5">
-          {active.length ? (
+          {(active.length || completed.length) ? (
             <section className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-hairline">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="font-display text-2xl font-extrabold text-charcoal">Offline Course Materials</h3>
-                <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-brand">
-                  {offlineCount} Available
-                </span>
+              <h3 className="font-display text-2xl font-extrabold text-charcoal">This week</h3>
+              <p className="mt-1 text-sm text-charcoal-muted">Lessons you completed (real activity)</p>
+              <div className="mt-4">
+                <MiniWeekChart weekly={weekly} height={110} />
               </div>
-              <ul className="mt-4 space-y-2.5">
-                {active.slice(0, offlineCount).map((row, index) => (
-                  <li key={`pack-${row.id}`}>
-                    <OfflinePack enrollment={row} index={index} />
+              <Link
+                to="/learn/progress"
+                className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline [&_svg]:h-3.5 [&_svg]:w-3.5"
+              >
+                Full progress
+                <ArrowRightIcon />
+              </Link>
+            </section>
+          ) : null}
+
+          {continueLearningSidebar(active).length ? (
+            <section className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-hairline">
+              <h3 className="font-display text-2xl font-extrabold text-charcoal">Continue</h3>
+              <ul className="mt-3 divide-y divide-hairline">
+                {continueLearningSidebar(active).map((row) => (
+                  <li key={row.id} className="py-3 first:pt-0 last:pb-0">
+                    <p className="truncate text-sm font-semibold text-charcoal">{row.courseTitle}</p>
+                    <p className="mt-0.5 text-xs text-charcoal-muted">{row.percent ?? 0}% complete</p>
+                    <Link to={enrollmentLink(row)} className="mt-1 inline-flex text-xs font-bold text-brand hover:underline">
+                      {(row.percent ?? 0) > 0 ? 'Resume →' : 'Start →'}
+                    </Link>
                   </li>
                 ))}
               </ul>
             </section>
           ) : null}
-
-          {milestones.length ? (
-            <section className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-hairline">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="font-display text-2xl font-extrabold text-charcoal">Upcoming Milestones</h3>
-                <Link to="/learn/progress" className="text-xs font-bold uppercase tracking-wide text-brand hover:underline">
-                  View All
-                </Link>
-              </div>
-              <ul className="mt-2">
-                {milestones.map((item) => (
-                  <li key={item.id}>
-                    <MilestoneRow {...item} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
-          <section className="rounded-2xl bg-brand-soft/80 p-5 ring-1 ring-brand/10">
-            <div className="flex items-start gap-3.5">
-              <span className="mt-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-brand shadow-soft [&_svg]:h-5 [&_svg]:w-5">
-                <ShieldIcon />
-              </span>
-              <div>
-                <h3 className="text-xl font-extrabold text-brand">Academic integrity</h3>
-                <p className="mt-1.5 text-lg leading-relaxed text-charcoal-muted">
-                  All drafts, presentations, and assessments are subject to verification against the EduAdmin Honor Code standard.
-                </p>
-                <Link to="/learn/progress" className="mt-3 inline-flex items-center gap-1 text-lg font-bold text-brand hover:underline [&_svg]:h-4 [&_svg]:w-4">
-                  Review Institutional Policy Guide
-                  <ArrowRightIcon />
-                </Link>
-              </div>
-            </div>
-          </section>
         </aside>
       </div>
     </div>

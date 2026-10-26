@@ -1,6 +1,73 @@
 import { pool } from '../db/pool.js';
 
+function parseJsonList(value) {
+  if (value == null || value === '') return [];
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function countOutlineLessons(outline) {
+  return parseJsonList(outline).reduce(
+    (sum, section) => sum + (Array.isArray(section?.lessons) ? section.lessons.length : 0),
+    0,
+  );
+}
+
+/** Last 7 calendar days (Mon–Sun labels) of lesson completions for charts. */
+async function weeklyLessonActivity(userId) {
+  const [rows] = await pool.query(
+    `SELECT DATE(completed_at) AS day, COUNT(*) AS lessons
+     FROM lesson_progress
+     WHERE user_id = ? AND completed_at >= (UTC_DATE() - INTERVAL 6 DAY)
+     GROUP BY DATE(completed_at)
+     ORDER BY day ASC`,
+    [userId],
+  );
+  const byDay = new Map(
+    rows.map((row) => {
+      const key = row.day instanceof Date
+        ? row.day.toISOString().slice(0, 10)
+        : String(row.day).slice(0, 10);
+      return [key, Number(row.lessons) || 0];
+    }),
+  );
+
+  const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = [];
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const date = new Date();
+    date.setUTCHours(0, 0, 0, 0);
+    date.setUTCDate(date.getUTCDate() - offset);
+    const key = date.toISOString().slice(0, 10);
+    days.push({
+      date: key,
+      day: labels[date.getUTCDay()],
+      lessons: byDay.get(key) || 0,
+    });
+  }
+
+  const [prevRows] = await pool.query(
+    `SELECT COUNT(*) AS lessons
+     FROM lesson_progress
+     WHERE user_id = ?
+       AND completed_at >= (UTC_DATE() - INTERVAL 13 DAY)
+       AND completed_at < (UTC_DATE() - INTERVAL 6 DAY)`,
+    [userId],
+  );
+  const thisWeek = days.reduce((sum, row) => sum + row.lessons, 0);
+  const prevWeek = Number(prevRows[0]?.lessons) || 0;
+
+  return { days, thisWeek, prevWeek };
+}
+
 function mapEnrollment(row) {
+  const lessonsCompleted = Number(row.lessons_completed) || 0;
+  const lessonsTotal = countOutlineLessons(row.outline);
   return {
     id: row.id,
     courseId: row.course_id,
@@ -9,24 +76,20 @@ function mapEnrollment(row) {
     courseTitle: row.course_title,
     courseSlug: row.source_slug ?? null,
     courseDescription: row.course_description,
+    courseImageUrl: row.image_url ?? null,
+    instructorName: row.instructor_name ?? null,
     categoryName: row.category_name,
     percent: row.percent == null ? null : Number(row.percent),
     progressStatus: row.progress_status ?? null,
+    lessonsCompleted,
+    lessonsTotal: lessonsTotal || null,
+    lastActivityAt: row.last_activity_at ?? null,
   };
 }
 
 function mapCourse(row) {
   const price = Number(row.price ?? 0);
-  const parseList = (value) => {
-    if (value == null || value === '') return [];
-    if (Array.isArray(value)) return value;
-    try {
-      const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  };
+  const parseList = parseJsonList;
   const parseOutline = (value) => {
     const sections = parseList(value);
     return sections.map((section) => ({
@@ -99,6 +162,7 @@ export async function getPublicExplore() {
       completed: 0,
       averageProgress: null,
       focusCategory: null,
+      weeklyActivity: { days: [], thisWeek: 0, prevWeek: 0 },
     },
     categories: categoryRows.map((row) => ({
       id: row.id,
@@ -119,7 +183,11 @@ export async function getStudentHome(userId) {
 
   const [enrollmentRows] = await pool.query(
     `SELECT e.id, e.course_id, e.status, e.enrolled_at, c.title AS course_title, c.source_slug, c.description AS course_description,
-            cat.name AS category_name, p.percent, p.status AS progress_status
+            c.image_url, c.instructor_name, c.outline, cat.name AS category_name, p.percent, p.status AS progress_status,
+            (SELECT COUNT(*) FROM lesson_progress lp
+              WHERE lp.user_id = e.user_id AND lp.course_id = e.course_id) AS lessons_completed,
+            (SELECT MAX(lp.completed_at) FROM lesson_progress lp
+              WHERE lp.user_id = e.user_id AND lp.course_id = e.course_id) AS last_activity_at
      FROM enrollments e
      JOIN courses c ON c.id = e.course_id
      JOIN categories cat ON cat.id = c.category_id
@@ -166,6 +234,8 @@ export async function getStudentHome(userId) {
     'SELECT id, name, description FROM categories ORDER BY name ASC',
   );
 
+  const weeklyActivity = await weeklyLessonActivity(userId);
+
   return {
     profile: profile
       ? {
@@ -181,6 +251,7 @@ export async function getStudentHome(userId) {
       completed: enrollments.filter((row) => row.status === 'completed').length,
       averageProgress,
       focusCategory,
+      weeklyActivity,
     },
     categories: categoryRows.map((row) => ({
       id: row.id,
