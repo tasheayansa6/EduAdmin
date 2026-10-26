@@ -229,9 +229,32 @@ export async function updateCourse(actorId, id, body) {
   return getCourse(id);
 }
 
-/** Soft-remove: unpublish instead of hard-deleting course history. */
+/** Permanently delete a course. Related enrollments, progress, cart, and favorites cascade. */
 export async function deleteCourse(actorId, id) {
-  return updateCourse(actorId, id, { status: 'draft' });
+  const current = await getCourse(id);
+  if (!current) throw new AppError(404, 'Course not found.');
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.query('DELETE FROM courses WHERE id = ?', [id]);
+    if (!result.affectedRows) throw new AppError(404, 'Course not found.');
+    await logActivity(connection, {
+      actorId,
+      action: 'course.deleted',
+      entityType: 'course',
+      entityId: id,
+      details: `Deleted ${current.title}`,
+    });
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+
+  return { id, deleted: true };
 }
 
 export { parseJson };

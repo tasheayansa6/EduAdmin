@@ -398,7 +398,7 @@ function CourseDialog({ course, categories, onClose, onSaved }) {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [pending, setPending] = useState(false);
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState(''); // '' | 'unpublish' | 'delete'
 
   function update(event) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
@@ -453,13 +453,26 @@ function CourseDialog({ course, categories, onClose, onSaved }) {
     }
   }
 
+  async function unpublish() {
+    setPending(true);
+    try {
+      await api(`/api/v1/courses/${course.id}`, { method: 'PATCH', body: { status: 'draft' } });
+      onSaved('Course unpublished and moved to draft.');
+    } catch (error) {
+      setConfirming('');
+      toast.error(error.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function remove() {
     setPending(true);
     try {
       await api(`/api/v1/courses/${course.id}`, { method: 'DELETE' });
-      onSaved('Course unpublished and moved to draft.');
+      onSaved('Course deleted permanently.');
     } catch (error) {
-      setConfirming(false);
+      setConfirming('');
       toast.error(error.message);
     } finally {
       setPending(false);
@@ -467,6 +480,7 @@ function CourseDialog({ course, categories, onClose, onSaved }) {
   }
 
   return (
+    <>
     <Modal title={course.id ? 'Edit course' : 'New course'} onClose={onClose} wide>
       <form onSubmit={onSubmit} className="space-y-6" noValidate>
         {formError ? <p role="alert" className="text-sm font-semibold text-red-800">{formError}</p> : null}
@@ -553,30 +567,70 @@ function CourseDialog({ course, categories, onClose, onSaved }) {
           />
         </section>
 
-        {confirming ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
-            <p className="text-sm text-ink">
-              Unpublish “{course.title}”? The course stays as a draft. Existing enrollments and progress are kept.
-            </p>
-            <div className="mt-3 flex justify-end gap-2">
-              <button type="button" className="btn-secondary" onClick={() => setConfirming(false)}>Keep published</button>
-              <button type="button" className="btn-danger" disabled={pending} onClick={remove}>
-                {pending ? 'Unpublishing…' : 'Unpublish course'}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-between gap-2 border-t border-line pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+          <div className="flex flex-wrap gap-2">
             {course.id && course.status === 'published' ? (
-              <button type="button" className="btn-danger" onClick={() => setConfirming(true)}>Unpublish</button>
+              <button type="button" className="btn-secondary" onClick={() => setConfirming('unpublish')}>
+                Unpublish
+              </button>
+            ) : null}
+            {course.id ? (
+              <button type="button" className="btn-danger" onClick={() => setConfirming('delete')}>
+                Delete course
+              </button>
             ) : <span />}
-            <div className="flex gap-2">
-              <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-              <button type="submit" className="btn-primary" disabled={pending}>{pending ? 'Saving…' : 'Save course'}</button>
-            </div>
           </div>
-        )}
+          <div className="flex gap-2">
+            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={pending}>{pending ? 'Saving…' : 'Save course'}</button>
+          </div>
+        </div>
       </form>
     </Modal>
+
+    {confirming === 'unpublish' ? (
+      <Modal title="Unpublish course" onClose={() => setConfirming('')}>
+        <p className="text-sm leading-relaxed text-ink">
+          Unpublish “{course.title}”? It moves to draft and students can no longer find it in the catalog.
+          Existing enrollments and progress are kept.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" className="btn-secondary" disabled={pending} onClick={() => setConfirming('')}>
+            Keep published
+          </button>
+          <button type="button" className="btn-primary" disabled={pending} onClick={unpublish}>
+            {pending ? 'Unpublishing…' : 'Unpublish'}
+          </button>
+        </div>
+      </Modal>
+    ) : null}
+
+    {confirming === 'delete' ? (
+      <Modal title="Delete course" onClose={() => { if (!pending) setConfirming(''); }}>
+        <p className="text-sm leading-relaxed text-ink">
+          Permanently delete “{course.title}”? This cannot be undone.
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+          Enrollments, lesson progress, cart items, and favorites for this course will also be removed.
+          {course.enrollmentCount ? (
+            <>
+              {' '}
+              <span className="font-semibold text-red-800">
+                {course.enrollmentCount} active enrollment{course.enrollmentCount === 1 ? '' : 's'} will be deleted.
+              </span>
+            </>
+          ) : null}
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" className="btn-secondary" disabled={pending} onClick={() => setConfirming('')}>
+            Cancel
+          </button>
+          <button type="button" className="btn-danger" disabled={pending} onClick={remove}>
+            {pending ? 'Deleting…' : 'Delete permanently'}
+          </button>
+        </div>
+      </Modal>
+    ) : null}
+    </>
   );
 }
