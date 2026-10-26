@@ -7,14 +7,16 @@ import { VideoPlayer } from './VideoPlayer.jsx';
 export function LessonBody({ lesson }) {
   if (lesson.videoUrl) {
     return (
-      <div className="aspect-video w-full bg-black">
-        <VideoPlayer url={lesson.videoUrl} title={lesson.title} />
+      <div className="relative min-h-0 flex-1 bg-black">
+        <div className="absolute inset-0">
+          <VideoPlayer url={lesson.videoUrl} title={lesson.title} />
+        </div>
       </div>
     );
   }
   if (lesson.pdfUrl) {
     return (
-      <div className="flex h-full min-h-[22rem] flex-col bg-white lg:min-h-[28rem]">
+      <div className="flex min-h-0 flex-1 flex-col bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-4 py-3">
           <div>
             <p className="eyebrow">PDF</p>
@@ -24,12 +26,12 @@ export function LessonBody({ lesson }) {
             Open PDF
           </a>
         </div>
-        <iframe title={lesson.title} src={lesson.pdfUrl} className="min-h-[20rem] w-full flex-1 bg-sand lg:min-h-[24rem]" />
+        <iframe title={lesson.title} src={lesson.pdfUrl} className="min-h-0 w-full flex-1 bg-sand" />
       </div>
     );
   }
   return (
-    <div className="h-full min-h-[22rem] overflow-y-auto bg-white px-6 py-8 sm:px-8 lg:min-h-[28rem]">
+    <div className="min-h-0 flex-1 overflow-y-auto bg-white px-6 py-8 sm:px-8">
       <p className="eyebrow">Reading</p>
       <h2 className="mt-1 text-2xl font-bold text-charcoal">{lesson.title}</h2>
       {lesson.content ? (
@@ -159,27 +161,27 @@ export function CoursePlayerChrome({
   overview = null,
 }) {
   return (
-    <div className="-mx-4 -mt-8 flex min-h-[calc(100vh-4rem)] flex-col sm:-mx-6 lg:-mx-8 lg:-mt-10">
-      <div className="flex flex-col gap-3 bg-brand px-4 py-3 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+    <div className="flex h-[calc(100vh-4rem)] min-h-0 flex-col bg-charcoal">
+      <div className="flex shrink-0 flex-col gap-2 bg-[#1c1d1f] px-4 py-2.5 text-white sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="min-w-0">
-          <Link to={backTo} className="text-xs font-semibold text-white/75 hover:text-white hover:underline">← Course page</Link>
-          <h1 className="truncate text-lg font-bold sm:text-xl">{title}</h1>
+          <Link to={backTo} className="text-xs font-semibold text-white/70 hover:text-white hover:underline">← Course page</Link>
+          <h1 className="truncate text-sm font-bold sm:text-base">{title}</h1>
         </div>
-        <div className="w-full shrink-0 sm:w-64">
-          <p className="mb-1.5 flex justify-between text-xs font-semibold text-white/85">
+        <div className="w-full shrink-0 sm:max-w-xs sm:w-72">
+          <p className="mb-1 flex justify-between text-[11px] font-semibold text-white/80">
             <span>{progress.completedLessons} of {progress.totalLessons} lessons done</span>
             <span>{progress.percent}%</span>
           </p>
-          <div className="[&_[role=progressbar]]:bg-white/20 [&_[role=progressbar]>div]:bg-wheat">
+          <div className="[&_[role=progressbar]]:bg-white/15 [&_[role=progressbar]>div]:bg-brand">
             <Meter value={progress.percent} label="Course progress" />
           </div>
         </div>
       </div>
 
-      <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_26rem]">
-        <div className="flex min-w-0 flex-col bg-charcoal">
+      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:grid-rows-1 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+        <div className="flex min-h-0 min-w-0 flex-col bg-black">
           <LessonBody lesson={current} />
-          <div className="border-t border-white/10 bg-charcoal px-4 py-3 text-white sm:px-6">
+          <div className="shrink-0 border-t border-white/10 bg-[#1c1d1f] px-4 py-3 text-white sm:px-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="min-w-0 truncate text-sm">
                 <span className="text-white/65">Lesson {position + 1} of {total}:</span>{' '}
@@ -196,11 +198,11 @@ export function CoursePlayerChrome({
                 )}
               </div>
             </div>
-            {overview ? <div className="mt-4 hidden border-t border-white/10 pt-4 text-sm text-white/80 lg:block">{overview}</div> : null}
+            {overview ? <div className="mt-3 hidden border-t border-white/10 pt-3 text-sm text-white/75 lg:block">{overview}</div> : null}
           </div>
         </div>
 
-        <aside className="flex max-h-[70vh] flex-col border-t border-hairline bg-white lg:max-h-none lg:border-l lg:border-t-0" aria-label="Course content">
+        <aside className="flex min-h-[40vh] flex-col border-t border-hairline bg-white lg:min-h-0 lg:border-l lg:border-t-0" aria-label="Course content">
           <CourseContentPanel
             sections={sections}
             currentId={current.id}
