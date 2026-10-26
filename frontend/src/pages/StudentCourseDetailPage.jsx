@@ -24,6 +24,7 @@ import {
   ProgramOutcomes,
   ProgramOverviewMeta,
   ProgramProcess,
+  SidebarPreview,
 } from '../student/programDetail.jsx';
 
 function PreviewPanel({ course, lesson, playerRef }) {
@@ -83,105 +84,108 @@ function PurchaseCard({ course, program, buyIntent = false, onBuyIntentHandled }
   }, [buyIntent, enrollment]);
 
   return (
-    <div id="program-overview" className="overflow-hidden rounded-2xl border border-hairline bg-white p-6 shadow-soft lg:sticky lg:top-24 lg:p-8">
-      <h2 className="text-xl font-bold tracking-tight text-charcoal">Program overview</h2>
-      {enrollment ? (
-        <div className="mt-5 space-y-4">
-          <p className="flex items-center gap-2 text-lg font-bold text-brand [&_svg]:h-5 [&_svg]:w-5">
-            <CheckIcon />
-            {enrollment.status === 'completed' ? 'You completed this course' : 'You are enrolled'}
-          </p>
-          {enrollment.percent == null ? null : (
-            <div className="space-y-1.5">
-              <Meter value={enrollment.percent} label="Course progress" />
-              <p className="flex justify-between text-sm">
-                <span className="font-semibold">{enrollment.percent}% complete</span>
-                {enrollment.progressStatus ? <span className="text-charcoal-muted">{statusLabel(enrollment.progressStatus)}</span> : null}
-              </p>
-            </div>
-          )}
-          <p className="text-sm text-charcoal-muted">Enrolled on {formatDate(enrollment.enrolledAt)}</p>
-          <Link to={`/learn/courses/${course.slug}/learn`} className="btn-brand w-full py-3.5 text-base">
-            {enrollment.percent ? 'Continue learning' : 'Start learning'}
-          </Link>
-        </div>
-      ) : (
-        <>
-          <p className="mt-5 text-3xl font-extrabold text-brand">{formatPrice(course.price, course.currency)}</p>
-          <p className="mt-1 text-xs text-charcoal-muted">One-time payment</p>
-          <ProgramOverviewMeta
-            category={program.category}
-            moduleCount={program.modules.length}
-            materialCount={program.materials.length}
-          />
-          <div className="mt-6 space-y-3 border-t border-hairline pt-6">
-            {!getToken() ? (
-              <>
-                <Link
-                  to={`/login?next=${encodeURIComponent(`/learn/courses/${course.slug}`)}`}
-                  className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5"
-                >
-                  <CartIcon />
-                  Sign in to enroll
-                </Link>
-                <p className="text-center text-sm text-charcoal-muted">
-                  New here?{' '}
-                  <Link to="/register" className="font-bold text-brand hover:underline">Create a free account</Link>
+    <div id="program-overview" className="overflow-hidden rounded-2xl border border-hairline bg-white shadow-lift lg:sticky lg:top-24">
+      <SidebarPreview course={course} category={program.category} />
+      <div className="p-5 lg:p-6">
+        {enrollment ? (
+          <div className="space-y-4">
+            <p className="text-sm font-semibold text-brand">You purchased this course</p>
+            <p className="flex items-center gap-2 text-lg font-bold text-charcoal [&_svg]:h-5 [&_svg]:w-5">
+              <CheckIcon />
+              {enrollment.status === 'completed' ? 'You completed this course' : 'You are enrolled'}
+            </p>
+            {enrollment.percent == null ? null : (
+              <div className="space-y-1.5">
+                <Meter value={enrollment.percent} label="Course progress" />
+                <p className="flex justify-between text-sm">
+                  <span className="font-semibold">{enrollment.percent}% complete</span>
+                  {enrollment.progressStatus ? <span className="text-charcoal-muted">{statusLabel(enrollment.progressStatus)}</span> : null}
                 </p>
-              </>
-            ) : course.isFree ? (
-              <button
-                type="button"
-                className="btn-brand w-full py-4 text-base"
-                disabled={Boolean(pending)}
-                onClick={() => run('enroll', () => enrollFree(course.slug), `Enrolled in ${course.title}. It is now in My learning.`)}
-              >
-                {pending === 'enroll' ? 'Enrolling…' : 'Enroll for free'}
-              </button>
-            ) : (
-              <>
-                {course.inCart ? (
-                  <Link to="/learn/cart" className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5">
-                    <CartIcon /> Go to cart
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn-outline flex w-full items-center justify-center gap-2 py-3.5 text-base [&_svg]:h-5 [&_svg]:w-5"
-                    disabled={Boolean(pending)}
-                    onClick={() => run('cart', () => setInCart(course, true), 'Added to your cart. Open Cart to pay.')}
+              </div>
+            )}
+            <p className="text-sm text-charcoal-muted">Enrolled on {formatDate(enrollment.enrolledAt)}</p>
+            <Link to={`/learn/courses/${course.slug}/learn`} className="btn-brand w-full py-3.5 text-base">
+              {enrollment.percent ? 'Go to course' : 'Start learning'}
+            </Link>
+          </div>
+        ) : (
+          <>
+            <p className="text-3xl font-extrabold text-charcoal">{formatPrice(course.price, course.currency)}</p>
+            <p className="mt-1 text-xs text-charcoal-muted">One-time payment</p>
+            <div className="mt-5 space-y-3">
+              {!getToken() ? (
+                <>
+                  <Link
+                    to={`/login?next=${encodeURIComponent(`/learn/courses/${course.slug}`)}`}
+                    className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5"
                   >
                     <CartIcon />
-                    {pending === 'cart' ? 'Adding…' : 'Add to cart'}
-                  </button>
-                )}
+                    Sign in to enroll
+                  </Link>
+                  <p className="text-center text-sm text-charcoal-muted">
+                    New here?{' '}
+                    <Link to="/register" className="font-bold text-brand hover:underline">Create a free account</Link>
+                  </p>
+                </>
+              ) : course.isFree ? (
                 <button
                   type="button"
-                  className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5"
-                  disabled={Boolean(pending) || !cart.paymentsEnabled}
-                  onClick={() => run('pay', () => checkout([course]))}
+                  className="btn-brand w-full py-4 text-base"
+                  disabled={Boolean(pending)}
+                  onClick={() => run('enroll', () => enrollFree(course.slug), `Enrolled in ${course.title}. It is now in My learning.`)}
                 >
-                  <CartIcon />
-                  {pending === 'pay' ? 'Opening Chapa…' : 'Buy Now'}
+                  {pending === 'enroll' ? 'Enrolling…' : 'Enroll for free'}
                 </button>
-                <p className="text-center text-xs text-charcoal-muted">
-                  {cart.paymentsEnabled ? 'Secure payment via Chapa' : 'Online payment is not set up yet. You can still add the course to your cart.'}
-                </p>
-              </>
-            )}
-          </div>
-        </>
-      )}
-      <button
-        type="button"
-        className={`btn mt-4 w-full border px-4 py-2.5 [&_svg]:h-4 [&_svg]:w-4 ${course.favorite ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' : 'border-hairline bg-white text-charcoal hover:bg-sand'}`}
-        aria-pressed={Boolean(course.favorite)}
-        disabled={Boolean(pending)}
-        onClick={() => run('favorite', () => setFavorite(course, !course.favorite), course.favorite ? 'Removed from favorites.' : 'Saved to favorites.')}
-      >
-        <HeartIcon filled={Boolean(course.favorite)} />
-        {course.favorite ? 'Saved for later' : 'Save for later'}
-      </button>
+              ) : (
+                <>
+                  {course.inCart ? (
+                    <Link to="/learn/cart" className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5">
+                      <CartIcon /> Go to cart
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-outline flex w-full items-center justify-center gap-2 py-3.5 text-base [&_svg]:h-5 [&_svg]:w-5"
+                      disabled={Boolean(pending)}
+                      onClick={() => run('cart', () => setInCart(course, true), 'Added to your cart. Open Cart to pay.')}
+                    >
+                      <CartIcon />
+                      {pending === 'cart' ? 'Adding…' : 'Add to cart'}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5"
+                    disabled={Boolean(pending) || !cart.paymentsEnabled}
+                    onClick={() => run('pay', () => checkout([course]))}
+                  >
+                    <CartIcon />
+                    {pending === 'pay' ? 'Opening Chapa…' : 'Buy Now'}
+                  </button>
+                  <p className="text-center text-xs text-charcoal-muted">
+                    {cart.paymentsEnabled ? 'Secure payment via Chapa' : 'Online payment is not set up yet. You can still add the course to your cart.'}
+                  </p>
+                </>
+              )}
+            </div>
+            <ProgramOverviewMeta
+              category={program.category}
+              moduleCount={program.modules.length}
+              materialCount={program.materials.length}
+            />
+          </>
+        )}
+        <button
+          type="button"
+          className={`btn mt-4 w-full border px-4 py-2.5 [&_svg]:h-4 [&_svg]:w-4 ${course.favorite ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' : 'border-hairline bg-white text-charcoal hover:bg-sand'}`}
+          aria-pressed={Boolean(course.favorite)}
+          disabled={Boolean(pending)}
+          onClick={() => run('favorite', () => setFavorite(course, !course.favorite), course.favorite ? 'Removed from favorites.' : 'Saved to favorites.')}
+        >
+          <HeartIcon filled={Boolean(course.favorite)} />
+          {course.favorite ? 'Saved for later' : 'Save for later'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -287,33 +291,18 @@ function DetailBody({ detail }) {
       {({ program }) => (
         <div className="grid gap-8 lg:grid-cols-3 lg:items-start">
           <div className="space-y-6 lg:col-span-2">
+            <ProgramOutcomes items={course.outcomes} />
             {course.description ? (
-              <ProgramCard id="about-title" title="About this program">
+              <ProgramCard id="about-title" title="About this course">
                 <p className="whitespace-pre-line leading-relaxed text-charcoal">{course.description}</p>
               </ProgramCard>
             ) : null}
-
-            <ProgramOutcomes items={course.outcomes} />
             <ProgramModules modules={program.modules} />
             <ProgramMaterials materials={program.materials} />
             <Curriculum sections={course.sections ?? []} current={lesson} onPlay={onPlay} />
             <PreviewPanel course={course} lesson={lesson} playerRef={playerRef} />
             <ProgramAudience items={program.audience} />
             <ProgramProcess steps={program.process} />
-
-            {course.instructorName ? (
-              <ProgramCard id="instructor-title" title="Instructor">
-                <div className="flex items-center gap-4">
-                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-soft text-lg font-bold text-brand" aria-hidden="true">
-                    {course.instructorName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
-                  </span>
-                  <div>
-                    <p className="font-bold text-charcoal">{course.instructorName}</p>
-                    {course.category ? <p className="text-sm text-charcoal-muted">{course.category}</p> : null}
-                  </div>
-                </div>
-              </ProgramCard>
-            ) : null}
           </div>
 
           <aside className="lg:col-span-1" aria-label="Enroll in this course">

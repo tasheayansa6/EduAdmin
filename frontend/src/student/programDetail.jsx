@@ -94,55 +94,90 @@ function MaterialGlyph({ kind }) {
   );
 }
 
-function HeroMedia({ course, category }) {
+/** Udemy-style preview media for the sticky purchase card (not a full-width top hero). */
+export function SidebarPreview({ course, category, previewLabel = 'Preview this course' }) {
   const [broken, setBroken] = useState(false);
-  if (!course.imageUrl || broken) {
-    return <CourseCover category={category} title={course.title} className="!aspect-auto h-full min-h-[16rem]" />;
-  }
   return (
-    <img
-      src={course.imageUrl}
-      alt=""
-      className="h-full w-full object-cover"
-      onError={() => setBroken(true)}
-    />
+    <div className="relative aspect-video overflow-hidden bg-charcoal">
+      {!course.imageUrl || broken ? (
+        <CourseCover category={category} title={course.title} className="!aspect-auto h-full" />
+      ) : (
+        <img
+          src={course.imageUrl}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setBroken(true)}
+        />
+      )}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" aria-hidden="true" />
+      <div className="absolute inset-0 grid place-items-center">
+        <span className="inline-flex items-center gap-2 rounded-full bg-white/95 px-3.5 py-2 text-sm font-bold text-charcoal shadow-soft">
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-brand text-white" aria-hidden="true">▶</span>
+          {previewLabel}
+        </span>
+      </div>
+    </div>
   );
 }
 
-export function ProgramHero({ course, category, priceLabel, isActive, badge = null }) {
+/**
+ * Udemy-like lead: dark text band (no top banner image).
+ * Image lives in the sticky sidebar instead.
+ */
+export function ProgramLead({ course, category, isActive, badge = null }) {
+  const crumbs = [
+    { label: 'Courses', to: '/learn/courses' },
+    category ? { label: category, to: `/learn/courses?category=${encodeURIComponent(category)}` } : null,
+  ].filter(Boolean);
+
+  const meta = [
+    course.instructorName ? `Created by ${course.instructorName}` : null,
+    course.level ? course.level : null,
+    course.language || null,
+    isActive ? 'Active' : null,
+  ].filter(Boolean);
+
   return (
-    <div className="relative mt-2 overflow-hidden rounded-3xl bg-charcoal shadow-soft">
-      <div className="relative h-64 lg:h-96">
-        <HeroMedia course={course} category={category} />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" aria-hidden="true" />
-        {priceLabel ? (
-          <div className="absolute left-4 top-4 rounded-xl bg-[#43AA5C] px-4 py-2 text-lg font-bold text-white shadow-lg">
-            {priceLabel}
-          </div>
+    <section className="-mx-4 bg-charcoal px-4 py-8 text-white sm:-mx-6 sm:px-6 lg:mx-0 lg:rounded-2xl lg:px-8">
+      <CourseBackButton
+        className="!rounded-none !bg-transparent !px-0 !py-0 !font-bold !text-white/90 !shadow-none !ring-0 hover:!bg-transparent hover:!text-white"
+      />
+      <nav aria-label="Breadcrumb" className="mt-4 text-sm text-white/65">
+        <ol className="flex flex-wrap items-center gap-1.5">
+          {crumbs.map((crumb, index) => (
+            <li key={crumb.to} className="flex items-center gap-1.5">
+              {index > 0 ? <span aria-hidden="true">›</span> : null}
+              <Link to={crumb.to} className="font-semibold text-white/85 hover:text-white hover:underline">
+                {crumb.label}
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </nav>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {category ? (
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white">
+            {category}
+          </span>
         ) : null}
-        {isActive ? (
-          <div className="absolute right-4 top-4 rounded-full bg-[#43AA5C] px-3 py-1.5 text-sm font-medium text-white">
-            Active
-          </div>
+        {badge ? (
+          <span className="rounded-full bg-wheat px-3 py-1 text-xs font-bold uppercase tracking-widest text-charcoal">
+            {badge}
+          </span>
         ) : null}
-        <div className="absolute bottom-6 left-6 right-6">
-          <div className="flex flex-wrap items-center gap-2">
-            {category ? (
-              <span className="inline-block rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-brand backdrop-blur">
-                {category}
-              </span>
-            ) : null}
-            {badge ? (
-              <span className="inline-block rounded-full bg-brand/90 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-white backdrop-blur">
-                {badge}
-              </span>
-            ) : null}
-          </div>
-          <h1 className="mt-3 text-3xl font-bold text-white lg:text-4xl">{course.title}</h1>
-          {course.subtitle ? <p className="mt-2 max-w-3xl text-base text-white/85 lg:text-lg">{course.subtitle}</p> : null}
-        </div>
       </div>
-    </div>
+      <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight tracking-tight lg:text-4xl">{course.title}</h1>
+      {(course.subtitle && course.subtitle !== course.description) ? (
+        <p className="mt-3 max-w-3xl text-lg leading-relaxed text-white/85">{course.subtitle}</p>
+      ) : course.description ? (
+        <p className="mt-3 max-w-3xl text-base leading-relaxed text-white/80 line-clamp-3">{course.description}</p>
+      ) : null}
+      {meta.length ? (
+        <ul className="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/75">
+          {meta.map((item) => <li key={item}>{item}</li>)}
+        </ul>
+      ) : null}
+    </section>
   );
 }
 
@@ -280,15 +315,9 @@ export function ProgramDetailChrome({ course, category, children, related, relat
 
   return (
     <div className="space-y-6">
-      {/* Matches AilgAgro /program/:id — text back link only */}
-      <CourseBackButton
-        className="!rounded-none !bg-transparent !px-0 !py-0 !font-bold !text-brand !shadow-none !ring-0 hover:!bg-transparent hover:!text-brand-hover"
-      />
-
-      <ProgramHero
+      <ProgramLead
         course={course}
         category={category}
-        priceLabel={priceLabel}
         isActive={program.isActive}
         badge={course.badge || null}
       />

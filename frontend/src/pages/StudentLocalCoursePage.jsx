@@ -25,6 +25,7 @@ import {
   ProgramOutcomes,
   ProgramOverviewMeta,
   ProgramProcess,
+  SidebarPreview,
 } from '../student/programDetail.jsx';
 
 function ActionCard({ course, program }) {
@@ -63,8 +64,9 @@ function ActionCard({ course, program }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-hairline bg-white p-6 shadow-soft lg:sticky lg:top-24 lg:p-8">
-      <h2 className="text-xl font-bold tracking-tight text-charcoal">Program overview</h2>
+    <div className="overflow-hidden rounded-2xl border border-hairline bg-white shadow-lift lg:sticky lg:top-24">
+      <SidebarPreview course={course} category={program.category} />
+      <div className="p-5 lg:p-6">
       {enrolled ? (
         <div className="mt-5 space-y-4">
           <p className="flex items-center gap-2 text-lg font-bold text-brand [&_svg]:h-5 [&_svg]:w-5">
@@ -83,7 +85,7 @@ function ActionCard({ course, program }) {
             </div>
           )}
           <Link to={`/learn/my-courses/${course.id}/learn`} className="btn-brand w-full py-3.5 text-base">
-            {enrollment.status === 'completed' ? 'Review lessons' : enrollment.percent > 0 ? 'Continue learning' : 'Start learning'}
+            {enrollment.status === 'completed' ? 'Go to course' : enrollment.percent > 0 ? 'Go to course' : 'Start learning'}
           </Link>
           <Link to="/learn/my-learning" className="btn-outline w-full py-3 text-base">Go to My learning</Link>
         </div>
@@ -148,6 +150,7 @@ function ActionCard({ course, program }) {
         <HeartIcon filled={Boolean(course.favorite)} />
         {course.favorite ? 'Saved for later' : 'Save for later'}
       </button>
+      </div>
     </div>
   );
 }
@@ -226,6 +229,14 @@ function DetailBody({ data, courseId }) {
       {({ program }) => (
         <div className="grid gap-8 lg:grid-cols-3 lg:items-start">
           <div className="space-y-6 lg:col-span-2">
+            <ProgramOutcomes items={course.outcomes} />
+
+            {course.description ? (
+              <ProgramCard id="about-title" title="About this course">
+                <p className="whitespace-pre-line leading-relaxed text-charcoal">{course.description}</p>
+              </ProgramCard>
+            ) : null}
+
             {course.previewVideoUrl ? (
               <ProgramCard id="preview-title" title="Course preview">
                 <div className="overflow-hidden rounded-xl bg-charcoal">
@@ -234,32 +245,11 @@ function DetailBody({ data, courseId }) {
               </ProgramCard>
             ) : null}
 
-            {course.description ? (
-              <ProgramCard id="about-title" title="About this program">
-                <p className="whitespace-pre-line leading-relaxed text-charcoal">{course.description}</p>
-              </ProgramCard>
-            ) : null}
-
-            <ProgramOutcomes items={course.outcomes} />
             <ProgramModules modules={program.modules} />
             <ProgramMaterials materials={program.materials} />
             <Outline sections={course.sections} />
             <ProgramAudience items={program.audience} />
             <ProgramProcess steps={program.process} />
-
-            {course.instructorName ? (
-              <ProgramCard id="instructor-title" title="Instructor">
-                <div className="flex items-center gap-4">
-                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-soft text-lg font-bold text-brand" aria-hidden="true">
-                    {course.instructorName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
-                  </span>
-                  <div>
-                    <p className="font-bold text-charcoal">{course.instructorName}</p>
-                    {course.categoryName ? <p className="text-sm text-charcoal-muted">{course.categoryName}</p> : null}
-                  </div>
-                </div>
-              </ProgramCard>
-            ) : null}
 
             {course.enrollment && course.enrollment.status !== 'withdrawn' ? (
               <ProgramCard id="record-title" title="Your learning record">
