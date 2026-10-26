@@ -3,25 +3,6 @@ import { Link } from 'react-router-dom';
 import { CheckIcon, ClockIcon } from '../components/icons.jsx';
 import { CourseBackButton, CourseCover, formatPrice } from './components.jsx';
 
-/** Default “How it works” steps matching the AilgAgro program detail pattern. */
-export const DEFAULT_PROCESS = [
-  {
-    step: 1,
-    title: 'Enroll once',
-    description: 'Pay the one-time tuition and unlock the full program in your account—no hidden modules or surprise fees.',
-  },
-  {
-    step: 2,
-    title: 'Learn your way',
-    description: 'Watch the video lesson, read the on-page guides, and download the PDFs when you need them offline.',
-  },
-  {
-    step: 3,
-    title: 'Apply with your team',
-    description: 'Use the module outline to run short sessions with your board or fattening group; materials are written to be shared.',
-  },
-];
-
 /** Normalize catalog / local course shapes into Ailg-style program fields. */
 export function normalizeProgram(course) {
   const category = course.category || course.categoryName || null;
@@ -61,20 +42,11 @@ export function normalizeProgram(course) {
     ? course.audience
     : (course.requirements || []);
 
-  const process = Array.isArray(course.process) && course.process.length
-    ? course.process.map((item, index) => ({
-      step: item.step ?? index + 1,
-      title: item.title || `Step ${index + 1}`,
-      description: item.description || '',
-    }))
-    : [];
-
   return {
     category,
     modules,
     materials,
     audience,
-    process,
     isActive: !course.isComingSoon
       && course.status !== 'coming_soon'
       && course.is_active !== false
@@ -261,30 +233,6 @@ export function ProgramAudience({ items }) {
           </li>
         ))}
       </ul>
-    </ProgramCard>
-  );
-}
-
-export function ProgramProcess({ steps }) {
-  if (!steps?.length) return null;
-  return (
-    <ProgramCard id="process-title" title="How it works">
-      <ol className="mt-1">
-        {steps.map((step, index) => (
-          <li key={step.step ?? index} className="flex gap-4">
-            <div className="flex flex-col items-center">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand text-sm font-bold text-white">
-                {step.step ?? index + 1}
-              </span>
-              {index < steps.length - 1 ? <span className="my-1 w-px flex-1 bg-hairline" aria-hidden="true" /> : null}
-            </div>
-            <div className={index < steps.length - 1 ? 'pb-6' : ''}>
-              <h3 className="font-bold text-charcoal">{step.title}</h3>
-              {step.description ? <p className="mt-1 text-sm leading-relaxed text-charcoal-muted">{step.description}</p> : null}
-            </div>
-          </li>
-        ))}
-      </ol>
     </ProgramCard>
   );
 }
