@@ -56,7 +56,7 @@ npm run dev
 1. Host the API somewhere public first (not on Vercel).
 2. Edit [`frontend/vercel.json`](frontend/vercel.json): replace `YOUR-API-HOST` with your API hostname (no path), e.g. `https://api.example.com`.
 3. In Vercel: import the repo → Root Directory `frontend` → Build `npm run build` → Output `dist`.
-4. On the API set `CLIENT_ORIGIN` to your Vercel URL (e.g. `https://edu-admin.vercel.app`).
+4. On the API set `CLIENT_ORIGIN` to your primary Vercel URL, and optionally `CLIENT_ORIGINS` to a comma-separated list of aliases (e.g. `https://edu-admin-red-five.vercel.app,https://edu-admin.vercel.app`).
 
 ### Environment variables
 
@@ -68,7 +68,8 @@ Safe template: [`backend/.env.example`](backend/.env.example).
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | MySQL connection |
 | `JWT_SECRET` | Signing secret (min 16 characters) |
 | `JWT_EXPIRES_IN` | Token lifetime (default `8h`) |
-| `CLIENT_ORIGIN` | Allowed CORS origin (Vite URL) |
+| `CLIENT_ORIGIN` | Primary allowed CORS origin (Vite / Vercel URL) |
+| `CLIENT_ORIGINS` | Optional comma-separated extra SPA origins |
 
 Never commit `backend/.env`. Docker Compose uses local-only MySQL credentials defined in `docker-compose.yml` for development.
 
