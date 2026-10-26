@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { homePath } from '../auth/ProtectedRoutes.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { fieldErrors } from '../lib/format.js';
@@ -7,9 +7,23 @@ import { validateLogin } from '../lib/validate.js';
 import { Mark } from '../components/icons.jsx';
 import { Field, PasswordInput, TextInput } from '../components/ui.jsx';
 
+function safeNextPath(raw, role) {
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('://')) {
+    return homePath({ role });
+  }
+  if (role === 'student') {
+    return raw.startsWith('/learn') ? raw : '/learn';
+  }
+  if (raw.startsWith('/learn') || raw.startsWith('/login') || raw.startsWith('/register')) {
+    return '/';
+  }
+  return raw;
+}
+
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -32,7 +46,7 @@ export function LoginPage() {
     setPending(true);
     try {
       const account = await login(form.email.trim(), form.password);
-      navigate(homePath(account), { replace: true });
+      navigate(safeNextPath(params.get('next'), account.role), { replace: true });
     } catch (error) {
       const fields = fieldErrors(error);
       if (Object.keys(fields).length) setErrors(fields);

@@ -18,9 +18,13 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-export async function api(path, { method = 'GET', body } = {}) {
+export async function api(path, { method = 'GET', body, timeoutMs = 20000 } = {}) {
   const token = getToken();
   let response;
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = controller && timeoutMs
+    ? setTimeout(() => controller.abort(), timeoutMs)
+    : null;
 
   try {
     response = await fetch(path, {
@@ -31,11 +35,17 @@ export async function api(path, { method = 'GET', body } = {}) {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
+      signal: controller?.signal,
     });
-  } catch {
-    const error = new Error('Cannot reach the server. Check your connection and try again.');
-    error.status = 0;
-    throw error;
+  } catch (error) {
+    const timedOut = error?.name === 'AbortError';
+    const next = new Error(timedOut
+      ? 'The server is taking too long to respond. Try again in a moment.'
+      : 'Cannot reach the server. Check your connection and try again.');
+    next.status = 0;
+    throw next;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 
   if (response.status === 204) return null;

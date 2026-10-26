@@ -22,6 +22,8 @@ const parsed = z
     JWT_SECRET: z.string().min(16),
     JWT_EXPIRES_IN: z.string().default('8h'),
     CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
+    // Comma-separated extra frontends (e.g. Vercel production + alias URLs).
+    CLIENT_ORIGINS: z.string().optional().default(''),
     AILG_API_URL: z.string().url().default('http://localhost:4100'),
     AILG_PARTNER_KEY: z.string().optional(),
     CHAPA_SECRET_KEY: z.string().optional(),
@@ -29,6 +31,14 @@ const parsed = z
     API_PUBLIC_URL: z.preprocess((value) => (value === '' ? undefined : value), z.string().url().optional()),
   })
   .parse(process.env);
+
+const clientOrigins = [
+  parsed.CLIENT_ORIGIN,
+  ...String(parsed.CLIENT_ORIGINS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
+].filter((value, index, list) => list.indexOf(value) === index);
 
 export const env = {
   port: parsed.PORT,
@@ -49,7 +59,8 @@ export const env = {
   },
   jwtSecret: parsed.JWT_SECRET,
   jwtExpiresIn: parsed.JWT_EXPIRES_IN,
-  clientOrigin: parsed.CLIENT_ORIGIN,
+  clientOrigin: clientOrigins[0],
+  clientOrigins,
   ailgApiUrl: parsed.AILG_API_URL.replace(/\/+$/, ''),
   ailgPartnerKey: parsed.AILG_PARTNER_KEY?.trim() || null,
   chapa: {

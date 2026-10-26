@@ -2,9 +2,28 @@ import { useEffect, useState } from 'react';
 import { statusLabel } from '../lib/format.js';
 
 export function BootScreen() {
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="grid min-h-screen place-items-center" aria-busy="true">
-      <p className="text-sm font-semibold text-ink-muted">Loading EduAdmin…</p>
+    <div className="grid min-h-screen place-items-center px-4" aria-busy="true">
+      <div className="max-w-sm text-center">
+        <p className="text-sm font-semibold text-ink-muted">Loading EduAdmin…</p>
+        {slow ? (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm text-ink-muted">
+              This is taking longer than usual. The API may be waking up — wait a few seconds, then retry.
+            </p>
+            <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

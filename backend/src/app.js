@@ -7,8 +7,20 @@ import { registerRoutes } from './routes/index.js';
 
 export function createApp() {
   const app = express();
-  app.use(helmet());
-  app.use(cors({ origin: env.clientOrigin }));
+  app.use(helmet({
+    // API JSON is fetched by the Vercel SPA; allow same-site clients.
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }));
+  app.use(cors({
+    origin(origin, callback) {
+      if (!origin || env.clientOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(null, false);
+    },
+    credentials: true,
+  }));
   app.use(express.json({ limit: '1mb' }));
   registerRoutes(app);
   app.use('/api', notFound);

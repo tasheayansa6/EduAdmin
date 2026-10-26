@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { BootScreen, ErrorState } from '../components/ui.jsx';
 
@@ -6,26 +6,37 @@ export function homePath(user) {
   return user?.role === 'student' ? '/learn' : '/';
 }
 
+function loginRedirect(pathname, search = '') {
+  const next = `${pathname}${search || ''}`;
+  if (!next || next === '/' || next.startsWith('/login') || next.startsWith('/register')) {
+    return '/login';
+  }
+  return `/login?next=${encodeURIComponent(next)}`;
+}
+
 /** Blocks the admin shell until session restore finishes; sends guests to login. */
 export function RequireAuth() {
   const { user, ready } = useAuth();
+  const location = useLocation();
   if (!ready) return <BootScreen />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to={loginRedirect(location.pathname, location.search)} replace />;
   return <Outlet />;
 }
 
 export function RequireAdmin() {
   const { user, ready } = useAuth();
+  const location = useLocation();
   if (!ready) return <BootScreen />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to={loginRedirect(location.pathname, location.search)} replace />;
   if (user.role === 'student') return <Navigate to="/learn" replace />;
   return <Outlet />;
 }
 
 export function RequireStudent() {
   const { user, ready } = useAuth();
+  const location = useLocation();
   if (!ready) return <BootScreen />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to={loginRedirect(location.pathname, location.search)} replace />;
   if (user.role !== 'student') return <Navigate to="/" replace />;
   return <Outlet />;
 }
