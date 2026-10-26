@@ -29,9 +29,10 @@ import {
 
 function ActionCard({ course, program }) {
   const { enroll, refresh } = useStudentData();
-  const { cart, setInCart, setFavorite, checkout } = useStore();
+  const { cart, favorites, setInCart, setFavorite, checkout } = useStore();
   const toast = useToast();
   const [pending, setPending] = useState(null);
+  const [favoriteOptimistic, setFavoriteOptimistic] = useState(null);
   const enrollment = course.enrollment;
   const enrolled = enrollment && enrollment.status !== 'withdrawn';
   const price = Number(course.price) || 0;
@@ -39,12 +40,16 @@ function ActionCard({ course, program }) {
   const currency = course.currency || 'ETB';
   const inCart = Boolean(course.inCart)
     || cart.items.some((item) => Number(item.courseId ?? item.id) === Number(course.id));
+  const favorited = favoriteOptimistic ?? (
+    Boolean(course.favorite)
+    || favorites.some((item) => Number(item.courseId ?? item.id) === Number(course.id))
+  );
   const storeCourse = {
     local: true,
     id: course.id,
     courseId: course.id,
     title: course.title,
-    favorite: Boolean(course.favorite),
+    favorite: favorited,
     inCart,
     price,
     currency,
@@ -161,13 +166,32 @@ function ActionCard({ course, program }) {
       )}
       <button
         type="button"
-        className={`btn mt-4 w-full border px-4 py-2.5 [&_svg]:h-4 [&_svg]:w-4 ${course.favorite ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' : 'border-hairline bg-white text-charcoal hover:bg-sand'}`}
-        aria-pressed={Boolean(course.favorite)}
+        className={`btn mt-4 w-full border px-4 py-2.5 [&_svg]:h-4 [&_svg]:w-4 ${
+          favorited
+            ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+            : 'border-hairline bg-white text-charcoal hover:bg-sand'
+        }`}
+        aria-pressed={favorited}
         disabled={Boolean(pending)}
-        onClick={() => run('favorite', () => setFavorite(storeCourse, !course.favorite), course.favorite ? 'Removed from favorites.' : 'Saved for later.')}
+        onClick={async () => {
+          const next = !favorited;
+          setFavoriteOptimistic(next);
+          setPending('favorite');
+          try {
+            await setFavorite(storeCourse, next);
+            await refresh();
+            toast.success(next ? 'Saved for later.' : 'Removed from favorites.');
+          } catch (error) {
+            setFavoriteOptimistic(!next);
+            toast.error(error.message);
+          } finally {
+            setFavoriteOptimistic(null);
+            setPending(null);
+          }
+        }}
       >
-        <HeartIcon filled={Boolean(course.favorite)} />
-        {course.favorite ? 'Saved for later' : 'Save for later'}
+        <HeartIcon filled={favorited} />
+        {favorited ? 'Saved for later' : 'Save for later'}
       </button>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext.jsx';
 import { statusLabel } from '../lib/format.js';
@@ -163,16 +163,33 @@ export function CourseImage({ course, className = '' }) {
 }
 
 export function FavoriteButton({ course, className = '' }) {
-  const { setFavorite } = useStore();
+  const { favorites, setFavorite } = useStore();
   const toast = useToast();
   const [pending, setPending] = useState(false);
+  const fromList = favorites.some((item) => (
+    (course.slug && item.slug === course.slug)
+    || (Number(item.courseId ?? item.id) === Number(course.id ?? course.courseId))
+  ));
+  const saved = Boolean(course.favorite) || fromList;
+  const [optimistic, setOptimistic] = useState(null);
+  const active = optimistic ?? saved;
 
-  async function onClick() {
+  useEffect(() => {
+    setOptimistic(null);
+  }, [saved]);
+
+  async function onClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (pending) return;
+    const next = !active;
+    setOptimistic(next);
     setPending(true);
     try {
-      await setFavorite(course, !course.favorite);
-      toast.success(course.favorite ? 'Removed from favorites.' : 'Saved to favorites.');
+      await setFavorite(course, next);
+      toast.success(next ? 'Saved to favorites.' : 'Removed from favorites.');
     } catch (error) {
+      setOptimistic(saved);
       toast.error(error.message);
     } finally {
       setPending(false);
@@ -182,13 +199,13 @@ export function FavoriteButton({ course, className = '' }) {
   return (
     <button
       type="button"
-      className={`grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-soft transition-colors hover:bg-white disabled:opacity-60 ${course.favorite ? 'text-red-600' : 'text-charcoal'} ${className}`}
-      aria-pressed={Boolean(course.favorite)}
-      aria-label={course.favorite ? `Remove ${course.title} from favorites` : `Save ${course.title} to favorites`}
+      className={`grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-soft transition-colors hover:bg-white disabled:opacity-60 ${active ? 'text-red-600' : 'text-charcoal'} ${className}`}
+      aria-pressed={active}
+      aria-label={active ? `Remove ${course.title} from favorites` : `Save ${course.title} to favorites`}
       disabled={pending}
       onClick={onClick}
     >
-      <HeartIcon filled={Boolean(course.favorite)} />
+      <HeartIcon filled={active} />
     </button>
   );
 }

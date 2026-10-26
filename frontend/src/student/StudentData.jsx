@@ -103,7 +103,12 @@ function StoreProvider({ onEnrolled, children }) {
         ...current,
         data: current.data.map((course) => {
           if (ref.slug && course.slug === ref.slug) return { ...course, ...patch };
-          if (ref.courseId && course.courseId === ref.courseId) return { ...course, ...patch };
+          if (ref.courseId != null && (
+            Number(course.courseId) === Number(ref.courseId)
+            || Number(course.id) === Number(ref.courseId)
+          )) {
+            return { ...course, ...patch };
+          }
           return course;
         }),
       }
