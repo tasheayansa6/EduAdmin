@@ -4,68 +4,155 @@ import { CheckIcon, ChevronDownIcon, ClockIcon, PlayIcon } from '../components/i
 import { Meter, formatMinutes } from './components.jsx';
 import { VideoPlayer } from './VideoPlayer.jsx';
 
-function PdfLessonBody({ lesson }) {
+/** Turn plain lesson text into Udemy-style headings, bullets, and paragraphs. */
+function renderDocumentBlocks(text) {
+  const lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
+  const blocks = [];
+  let bullets = [];
+  let paragraph = [];
+
+  function flushParagraph() {
+    if (!paragraph.length) return;
+    blocks.push({ type: 'p', text: paragraph.join(' ').trim() });
+    paragraph = [];
+  }
+
+  function flushBullets() {
+    if (!bullets.length) return;
+    blocks.push({ type: 'ul', items: bullets });
+    bullets = [];
+  }
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      flushBullets();
+      continue;
+    }
+
+    const bulletMatch = trimmed.match(/^([•\-\*]|\d+\.)\s+(.*)$/);
+    if (bulletMatch) {
+      flushParagraph();
+      bullets.push(bulletMatch[2]);
+      continue;
+    }
+
+    flushBullets();
+
+    const isHeading = (
+      trimmed.length <= 80
+      && !/[.!?]$/.test(trimmed)
+      && (
+        /^#{1,3}\s+/.test(trimmed)
+        || (/^[A-Z0-9]/.test(trimmed) && trimmed === trimmed.replace(/\s+/g, ' '))
+      )
+      && !trimmed.includes('://')
+    );
+
+    if (isHeading && !paragraph.length) {
+      blocks.push({
+        type: 'h',
+        text: trimmed.replace(/^#{1,3}\s+/, ''),
+      });
+      continue;
+    }
+
+    paragraph.push(trimmed);
+  }
+  flushParagraph();
+  flushBullets();
+  return blocks;
+}
+
+function DocumentBlocks({ text }) {
+  const blocks = renderDocumentBlocks(text);
+  if (!blocks.length) return null;
+  return (
+    <div className="space-y-5">
+      {blocks.map((block, index) => {
+        if (block.type === 'h') {
+          return (
+            <h3
+              key={`h-${index}`}
+              className="pt-2 text-[1.35rem] font-bold leading-snug tracking-tight text-[#1c1d1f]"
+            >
+              {block.text}
+            </h3>
+          );
+        }
+        if (block.type === 'ul') {
+          return (
+            <ul key={`ul-${index}`} className="list-disc space-y-2 pl-6 text-[16px] leading-[1.7] text-[#2d2f31]">
+              {block.items.map((item, itemIndex) => (
+                <li key={itemIndex}>{item}</li>
+              ))}
+            </ul>
+          );
+        }
+        return (
+          <p key={`p-${index}`} className="text-[16px] leading-[1.75] text-[#2d2f31]">
+            {block.text}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Udemy-style white reading surface for articles and PDF lessons. */
+function DocumentLessonBody({ lesson }) {
   const text = String(lesson.content || '').trim();
+  const isPdf = Boolean(lesson.pdfUrl || lesson.type === 'pdf');
   const embedSrc = lesson.pdfUrl
-    ? `${lesson.pdfUrl}${lesson.pdfUrl.includes('#') ? '' : '#toolbar=1&navpanes=0'}`
+    ? `${lesson.pdfUrl}${lesson.pdfUrl.includes('#') ? '' : '#toolbar=0&navpanes=0&scrollbar=1'}`
     : null;
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#f7f9fa]">
-      <article className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-10">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Resource · PDF</p>
-        <h2 className="mt-2 font-display text-2xl font-extrabold leading-snug text-charcoal sm:text-3xl">
-          {lesson.title}
-        </h2>
+    <div className="flex min-h-0 flex-1 flex-col bg-white">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <article className="mx-auto w-full max-w-[52rem] px-6 py-10 sm:px-10 sm:py-12 lg:px-14">
+          <h1 className="text-[1.85rem] font-bold leading-[1.25] tracking-tight text-[#1c1d1f] sm:text-[2.15rem]">
+            {lesson.title}
+          </h1>
 
-        {text ? (
-          <div className="mt-6 rounded-2xl border border-hairline bg-white px-5 py-6 shadow-soft sm:px-8 sm:py-8">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">On this page</p>
-            <div className="mt-3 whitespace-pre-line text-[16px] leading-[1.75] text-charcoal">
-              {text}
+          {text ? (
+            <div className="mt-8">
+              <DocumentBlocks text={text} />
             </div>
-          </div>
-        ) : (
-          <p className="mt-4 text-sm text-charcoal-muted">
-            Read or download the PDF resource for this lesson below.
-          </p>
-        )}
+          ) : (
+            <p className="mt-8 text-[16px] leading-relaxed text-[#6a6f73]">
+              {isPdf
+                ? 'Open the PDF below to read this lesson resource.'
+                : 'This lesson has no material yet.'}
+            </p>
+          )}
 
-        {lesson.pdfUrl ? (
-          <div className="mt-6 overflow-hidden rounded-2xl border border-hairline bg-white shadow-soft">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-4 py-3">
-              <div>
-                <p className="text-sm font-bold text-charcoal">PDF document</p>
-                <p className="text-xs text-charcoal-muted">View on screen or open in a new tab</p>
+          {lesson.pdfUrl ? (
+            <div className="mt-10 border-t border-[#d1d7dc] pt-8">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-[#1c1d1f]">Attached PDF</p>
+                <div className="flex gap-2">
+                  <a href={lesson.pdfUrl} target="_blank" rel="noreferrer" className="btn-outline py-2 text-sm">
+                    Open
+                  </a>
+                  <a href={lesson.pdfUrl} download className="btn-brand py-2 text-sm">
+                    Download
+                  </a>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <a
-                  href={lesson.pdfUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-outline py-2 text-sm"
-                >
-                  Open PDF
-                </a>
-                <a
-                  href={lesson.pdfUrl}
-                  download
-                  className="btn-brand py-2 text-sm"
-                >
-                  Download
-                </a>
+              <div className="overflow-hidden rounded-lg border border-[#d1d7dc] bg-[#f7f9fa]">
+                <iframe
+                  title={`${lesson.title} PDF`}
+                  src={embedSrc}
+                  className="h-[min(65vh,34rem)] w-full border-0 bg-white"
+                />
               </div>
             </div>
-            <div className="bg-sand">
-              <iframe
-                title={`${lesson.title} PDF`}
-                src={embedSrc}
-                className="h-[min(70vh,36rem)] w-full border-0 bg-white"
-              />
-            </div>
-          </div>
-        ) : null}
-      </article>
+          ) : null}
+        </article>
+      </div>
     </div>
   );
 }
@@ -80,26 +167,12 @@ export function LessonBody({ lesson }) {
       </div>
     );
   }
-  if (lesson.pdfUrl || lesson.type === 'pdf') {
-    return <PdfLessonBody lesson={lesson} />;
+  if (lesson.pdfUrl || lesson.type === 'pdf' || lesson.type === 'article' || lesson.content) {
+    return <DocumentLessonBody lesson={lesson} />;
   }
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#f7f9fa]">
-      <article className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-10">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Reading</p>
-        <h2 className="mt-2 font-display text-2xl font-extrabold leading-snug text-charcoal sm:text-3xl">
-          {lesson.title}
-        </h2>
-        {lesson.content ? (
-          <div className="mt-6 rounded-2xl border border-hairline bg-white px-5 py-6 shadow-soft sm:px-8 sm:py-8">
-            <div className="whitespace-pre-line text-[16px] leading-[1.75] text-charcoal">
-              {lesson.content}
-            </div>
-          </div>
-        ) : (
-          <p className="mt-5 text-sm text-charcoal-muted">This lesson has no material yet.</p>
-        )}
-      </article>
+    <div className="flex min-h-0 flex-1 items-center justify-center bg-white px-6">
+      <p className="text-sm text-[#6a6f73]">This lesson has no material yet.</p>
     </div>
   );
 }
