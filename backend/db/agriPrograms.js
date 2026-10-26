@@ -85,14 +85,32 @@ export const AGRI_PROGRAMS = [
             type: 'pdf',
             pdfUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
             isPreview: false,
-            content: 'Downloadable workbook for module exercises and field worksheets (PDF).',
+            content:
+              'Use this workbook with your board or fattening group.\n\n'
+              + 'What is inside\n'
+              + '• Module checklists for breed selection, feed planning, and market-day prep\n'
+              + '• Blank worksheets for weight logs and ration cost notes\n'
+              + '• Short prompts you can print and fill during a 20-minute team session\n\n'
+              + 'How to use it\n'
+              + '1. Read the on-page summary first.\n'
+              + '2. Open or download the PDF below for the printable sheets.\n'
+              + '3. Bring completed pages to your next planning meeting.\n\n'
+              + 'Tip: assign one person to collect filled worksheets so records stay in one place.',
           },
           {
             title: 'Reference: fattening cycle cash-flow example (filled)',
             type: 'pdf',
             pdfUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
             isPreview: false,
-            content: 'Sample fattening-cycle cash-flow sheet you can reuse with your team (PDF).',
+            content:
+              'This filled example shows a simple cattle fattening cycle cash-flow you can adapt.\n\n'
+              + 'What to look for\n'
+              + '• Opening stock and purchase cost\n'
+              + '• Feed and health spend by week or month\n'
+              + '• Expected sale proceeds and net margin\n\n'
+              + 'How to reuse it\n'
+              + 'Replace the sample numbers with your own herd size, feed prices, and target sale weight. Keep the same columns so your team can compare cycles over time.\n\n'
+              + 'Open the PDF below to view the filled sheet, or download a copy for offline review.',
           },
         ],
       },

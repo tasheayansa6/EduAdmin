@@ -4,6 +4,72 @@ import { CheckIcon, ChevronDownIcon, ClockIcon, PlayIcon } from '../components/i
 import { Meter, formatMinutes } from './components.jsx';
 import { VideoPlayer } from './VideoPlayer.jsx';
 
+function PdfLessonBody({ lesson }) {
+  const text = String(lesson.content || '').trim();
+  const embedSrc = lesson.pdfUrl
+    ? `${lesson.pdfUrl}${lesson.pdfUrl.includes('#') ? '' : '#toolbar=1&navpanes=0'}`
+    : null;
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#f7f9fa]">
+      <article className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-10">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Resource · PDF</p>
+        <h2 className="mt-2 font-display text-2xl font-extrabold leading-snug text-charcoal sm:text-3xl">
+          {lesson.title}
+        </h2>
+
+        {text ? (
+          <div className="mt-6 rounded-2xl border border-hairline bg-white px-5 py-6 shadow-soft sm:px-8 sm:py-8">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-charcoal-muted">On this page</p>
+            <div className="mt-3 whitespace-pre-line text-[16px] leading-[1.75] text-charcoal">
+              {text}
+            </div>
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-charcoal-muted">
+            Read or download the PDF resource for this lesson below.
+          </p>
+        )}
+
+        {lesson.pdfUrl ? (
+          <div className="mt-6 overflow-hidden rounded-2xl border border-hairline bg-white shadow-soft">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-4 py-3">
+              <div>
+                <p className="text-sm font-bold text-charcoal">PDF document</p>
+                <p className="text-xs text-charcoal-muted">View on screen or open in a new tab</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={lesson.pdfUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-outline py-2 text-sm"
+                >
+                  Open PDF
+                </a>
+                <a
+                  href={lesson.pdfUrl}
+                  download
+                  className="btn-brand py-2 text-sm"
+                >
+                  Download
+                </a>
+              </div>
+            </div>
+            <div className="bg-sand">
+              <iframe
+                title={`${lesson.title} PDF`}
+                src={embedSrc}
+                className="h-[min(70vh,36rem)] w-full border-0 bg-white"
+              />
+            </div>
+          </div>
+        ) : null}
+      </article>
+    </div>
+  );
+}
+
 export function LessonBody({ lesson }) {
   if (lesson.videoUrl) {
     return (
@@ -14,31 +80,26 @@ export function LessonBody({ lesson }) {
       </div>
     );
   }
-  if (lesson.pdfUrl) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-4 py-3">
-          <div>
-            <p className="eyebrow">PDF</p>
-            <h2 className="text-lg font-bold text-charcoal">{lesson.title}</h2>
-          </div>
-          <a href={lesson.pdfUrl} target="_blank" rel="noreferrer" className="btn-outline py-2 text-sm">
-            Open PDF
-          </a>
-        </div>
-        <iframe title={lesson.title} src={lesson.pdfUrl} className="min-h-0 w-full flex-1 bg-sand" />
-      </div>
-    );
+  if (lesson.pdfUrl || lesson.type === 'pdf') {
+    return <PdfLessonBody lesson={lesson} />;
   }
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-white px-6 py-8 sm:px-8">
-      <p className="eyebrow">Reading</p>
-      <h2 className="mt-1 text-2xl font-bold text-charcoal">{lesson.title}</h2>
-      {lesson.content ? (
-        <div className="mt-5 max-w-3xl whitespace-pre-line text-[15px] leading-relaxed text-charcoal">{lesson.content}</div>
-      ) : (
-        <p className="mt-5 text-sm text-charcoal-muted">This lesson has no material yet.</p>
-      )}
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#f7f9fa]">
+      <article className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-10">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Reading</p>
+        <h2 className="mt-2 font-display text-2xl font-extrabold leading-snug text-charcoal sm:text-3xl">
+          {lesson.title}
+        </h2>
+        {lesson.content ? (
+          <div className="mt-6 rounded-2xl border border-hairline bg-white px-5 py-6 shadow-soft sm:px-8 sm:py-8">
+            <div className="whitespace-pre-line text-[16px] leading-[1.75] text-charcoal">
+              {lesson.content}
+            </div>
+          </div>
+        ) : (
+          <p className="mt-5 text-sm text-charcoal-muted">This lesson has no material yet.</p>
+        )}
+      </article>
     </div>
   );
 }
