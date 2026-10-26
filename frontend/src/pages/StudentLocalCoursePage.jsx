@@ -87,7 +87,20 @@ function ActionCard({ course, program }) {
           </Link>
           <Link to="/learn/my-learning" className="btn-outline w-full py-3 text-base">Go to My learning</Link>
         </div>
-      ) : course.published ? (
+      ) : course.isComingSoon || course.status === 'coming_soon' ? (
+        <>
+          <p className="mt-5 text-3xl font-extrabold text-brand">Coming Soon</p>
+          <p className="mt-1 text-xs text-charcoal-muted">This livestock program is not open for enrollment yet.</p>
+          <ProgramOverviewMeta
+            category={program.category}
+            moduleCount={program.modules.length}
+            materialCount={program.materials.length}
+          />
+          <button type="button" className="btn mt-6 w-full cursor-not-allowed border border-hairline bg-sand py-4 text-base text-charcoal-muted" disabled>
+            Coming Soon
+          </button>
+        </>
+      ) : course.published !== false ? (
         <>
           <p className="mt-5 text-3xl font-extrabold text-brand">{formatPrice(price, currency)}</p>
           <p className="mt-1 text-xs text-charcoal-muted">One-time payment</p>

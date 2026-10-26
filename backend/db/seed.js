@@ -3,8 +3,12 @@ import bcrypt from 'bcryptjs';
 import mysql from 'mysql2/promise';
 import { env } from '../src/config/env.js';
 
-/** Empty categories only — no fake students or demo courses. */
+import { AGRI_PROGRAMS, LIVESTOCK_CATEGORY } from './agriPrograms.js';
+import { assignLessonIds } from '../src/lib/courseDetails.js';
+
+/** Categories + livestock agri programs (Ailg-aligned). No fake students. */
 const categories = [
+  LIVESTOCK_CATEGORY,
   ['Communications', 'Speaking, media, and audience messaging'],
   ['Media', 'Journalism, production, and digital storytelling'],
   ['Writing', 'Writing craft, editing, and narrative'],
@@ -49,11 +53,32 @@ async function seed() {
       await connection.query('INSERT INTO categories (name, description) VALUES (?, ?)', [name, description]);
     }
 
-    await connection.query(
+    const [adminResult] = await connection.query(
       `INSERT INTO users (name, email, password_hash, role, status)
        VALUES (?, ?, ?, 'super_admin', 'active')`,
       ['Administrator', 'super@eduadmin.test', adminHash],
     );
+    const adminId = adminResult.insertId;
+    const [[livestock]] = await connection.query('SELECT id FROM categories WHERE name = ?', [LIVESTOCK_CATEGORY[0]]);
+
+    for (const program of AGRI_PROGRAMS) {
+      const outline = JSON.stringify(assignLessonIds(program.outline));
+      await connection.query(
+        `INSERT INTO courses
+           (title, subtitle, description, image_url, instructor_name, level, language,
+            outcomes, requirements, includes, outline, category_id, status, price, currency, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS JSON), CAST(? AS JSON), CAST(? AS JSON), CAST(? AS JSON), ?, ?, ?, ?, ?)`,
+        [
+          program.title, program.subtitle, program.description, program.imageUrl,
+          program.instructorName, program.level, program.language,
+          JSON.stringify(program.outcomes ?? []),
+          JSON.stringify(program.requirements ?? []),
+          JSON.stringify(program.includes ?? []),
+          outline,
+          livestock.id, program.status, program.price, program.currency, adminId,
+        ],
+      );
+    }
 
     await connection.commit();
   } catch (error) {
@@ -63,7 +88,7 @@ async function seed() {
     await connection.end();
   }
 
-  console.log('Seed complete (admin + categories only — no demo students or courses).');
+  console.log('Seed complete (admin + Livestock agri programs).');
   console.log('Super admin    super@eduadmin.test');
   console.log('Password       Admin123!');
 }

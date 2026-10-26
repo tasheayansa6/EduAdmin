@@ -182,6 +182,7 @@ async function requireLocalCourse(courseId) {
     [courseId],
   );
   if (!row || row.source_slug) throw new AppError(404, 'This course is not available.');
+  if (row.status === 'coming_soon') throw new AppError(400, 'This program is coming soon and cannot be purchased yet.');
   if (row.status !== 'published') throw new AppError(404, 'This course is not published.');
   return {
     local: true,

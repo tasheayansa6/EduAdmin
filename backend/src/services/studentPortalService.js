@@ -54,6 +54,9 @@ function mapCourse(row) {
     modules: parseList(row.modules),
     materials: parseList(row.materials),
     sections: parseOutline(row.outline),
+    status: row.status || 'published',
+    isComingSoon: row.status === 'coming_soon',
+    badge: row.status === 'coming_soon' ? 'Coming Soon' : (row.subtitle || null),
     categoryName: row.category_name,
     category: row.category_name,
     createdAt: row.created_at,
@@ -75,14 +78,14 @@ export async function getPublicExplore() {
   const [catalogRows] = await pool.query(
     `SELECT c.id, c.title, c.subtitle, c.description, c.image_url, c.preview_video_url, c.instructor_name,
             c.level, c.language, c.total_minutes, c.outcomes, c.requirements, c.includes, c.outline,
-            c.created_at, c.updated_at, c.price, c.currency, cat.name AS category_name,
+            c.status, c.created_at, c.updated_at, c.price, c.currency, cat.name AS category_name,
             NULL AS enrollment_status, NULL AS enrolled_at,
             NULL AS percent, NULL AS progress_status,
             0 AS in_cart, 0 AS favorite
      FROM courses c
      JOIN categories cat ON cat.id = c.category_id
-     WHERE c.status = 'published' AND c.source_slug IS NULL
-     ORDER BY c.title ASC`,
+     WHERE c.status IN ('published', 'coming_soon') AND c.source_slug IS NULL
+     ORDER BY FIELD(c.status, 'published', 'coming_soon'), c.title ASC`,
   );
 
   const [categoryRows] = await pool.query(
@@ -129,7 +132,7 @@ export async function getStudentHome(userId) {
   const [catalogRows] = await pool.query(
     `SELECT c.id, c.title, c.subtitle, c.description, c.image_url, c.preview_video_url, c.instructor_name,
             c.level, c.language, c.total_minutes, c.outcomes, c.requirements, c.includes, c.outline,
-            c.created_at, c.updated_at, c.price, c.currency, cat.name AS category_name,
+            c.status, c.created_at, c.updated_at, c.price, c.currency, cat.name AS category_name,
             e.status AS enrollment_status, e.enrolled_at,
             p.percent, p.status AS progress_status,
             EXISTS (SELECT 1 FROM cart_items ci WHERE ci.user_id = ? AND ci.course_id = c.id) AS in_cart,
@@ -138,8 +141,8 @@ export async function getStudentHome(userId) {
      JOIN categories cat ON cat.id = c.category_id
      LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = ?
      LEFT JOIN progress p ON p.course_id = c.id AND p.user_id = ?
-     WHERE c.status = 'published' AND c.source_slug IS NULL
-     ORDER BY c.title ASC`,
+     WHERE c.status IN ('published', 'coming_soon') AND c.source_slug IS NULL
+     ORDER BY FIELD(c.status, 'published', 'coming_soon'), c.title ASC`,
     [userId, userId, userId, userId],
   );
 

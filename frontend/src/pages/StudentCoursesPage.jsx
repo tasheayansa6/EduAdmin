@@ -1,7 +1,15 @@
-import { useSearchParams } from 'react-router-dom';
-import { SearchIcon } from '../components/icons.jsx';
+import { Link, useSearchParams } from 'react-router-dom';
+import { CheckIcon, SearchIcon } from '../components/icons.jsx';
 import { useAllCourses, useDocumentTitle } from '../student/StudentData.jsx';
-import { CARD_GRID, CatalogCard, PageSkeleton, PageTitle, StudentEmpty } from '../student/components.jsx';
+import {
+  CARD_GRID,
+  CatalogCard,
+  CourseImage,
+  PageSkeleton,
+  StudentEmpty,
+  formatPrice,
+} from '../student/components.jsx';
+import { DEFAULT_PROCESS } from '../student/programDetail.jsx';
 
 const SORTS = {
   newest: { label: 'Newest', compare: (a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0) },
@@ -12,8 +20,8 @@ const SORTS = {
 
 const SHOW = {
   all: { label: 'All courses', test: () => true },
-  free: { label: 'Free', test: (course) => course.isFree },
-  paid: { label: 'Paid', test: (course) => !course.isFree },
+  free: { label: 'Free', test: (course) => course.isFree && !course.isComingSoon },
+  paid: { label: 'Paid', test: (course) => !course.isFree && !course.isComingSoon },
   enrolled: { label: 'Enrolled', test: (course) => Boolean(course.enrollment) },
   favorites: { label: 'Favorites', test: (course) => course.favorite },
 };
@@ -24,7 +32,7 @@ function SearchBox({ value, onSearch }) {
     onSearch(String(new FormData(event.currentTarget).get('q') || '').trim());
   }
   return (
-    <form onSubmit={onSubmit} role="search" className="w-full sm:max-w-sm">
+    <form onSubmit={onSubmit} role="search" className="mx-auto w-full max-w-xl">
       <label htmlFor="course-search" className="sr-only">Search courses</label>
       <div className="relative">
         <span className="pointer-events-none absolute inset-y-0 left-3.5 grid place-items-center text-charcoal-muted [&_svg]:h-[18px] [&_svg]:w-[18px]">
@@ -41,6 +49,97 @@ function SearchBox({ value, onSearch }) {
         />
       </div>
     </form>
+  );
+}
+
+function FeaturedProgram({ course }) {
+  if (!course || course.isComingSoon) return null;
+  const detailTo = course.local ? `/learn/my-courses/${course.id}` : `/learn/courses/${course.slug}`;
+  const modules = (course.modules?.length
+    ? course.modules.map((item) => item.title || item)
+    : (course.sections || []).map((section) => section.title)).filter(Boolean);
+  const materials = course.includes?.length
+    ? course.includes
+    : ['Video lessons', 'Guided readings', 'Downloadable materials', 'Lifetime access to updates'];
+
+  return (
+    <section className="mt-12 overflow-hidden rounded-3xl border border-hairline bg-white shadow-soft" aria-labelledby="featured-program-title">
+      <div className="grid lg:grid-cols-2">
+        <div className="relative min-h-[16rem]">
+          <CourseImage course={course} className="!aspect-auto h-full min-h-[16rem]" />
+          <div className="absolute left-4 top-4 rounded-xl bg-[#43AA5C] px-4 py-2 text-lg font-bold text-white shadow-lg">
+            {formatPrice(course.price, course.currency)}
+          </div>
+        </div>
+        <div className="flex flex-col p-6 lg:p-8">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Featured Program</p>
+          <h2 id="featured-program-title" className="mt-2 text-2xl font-bold text-charcoal lg:text-3xl">{course.title}</h2>
+          <p className="mt-3 text-sm leading-relaxed text-charcoal-muted line-clamp-4">{course.description}</p>
+
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wide text-charcoal-muted">Price</h3>
+              <p className="mt-1 text-xl font-extrabold text-brand">{formatPrice(course.price, course.currency)}</p>
+              <p className="text-xs text-charcoal-muted">One-time payment</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wide text-charcoal-muted">Level</h3>
+              <p className="mt-1 font-bold text-charcoal">{course.level || course.category || 'Livestock'}</p>
+            </div>
+          </div>
+
+          {modules.length ? (
+            <div className="mt-6">
+              <h3 className="text-sm font-bold uppercase tracking-wide text-charcoal-muted">Modules</h3>
+              <ul className="mt-2 space-y-1.5">
+                {modules.map((title) => (
+                  <li key={title} className="flex items-start gap-2 text-sm text-charcoal [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:text-brand">
+                    <CheckIcon />
+                    <span>{title}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <div className="mt-6">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-charcoal-muted">Materials</h3>
+            <ul className="mt-2 space-y-1.5">
+              {materials.map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-charcoal [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:text-brand">
+                  <CheckIcon />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-charcoal-muted">How it works</h3>
+            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-charcoal-muted">
+              {DEFAULT_PROCESS.map((step) => (
+                <li key={step.step}>
+                  <span className="font-semibold text-charcoal">{step.title}</span>
+                  {' — '}
+                  {step.description.replace(/^Pay the one-time tuition and unlock the full program in your account—no hidden modules or surprise fees\.$/, 'Pay the one-time tuition and unlock the full program')
+                    .replace(/^Watch the video lesson, read the on-page guides, and download the PDFs when you need them offline\.$/, 'Watch video, read guides, download PDFs offline')
+                    .replace(/^Use the module outline to run short sessions with your board or fattening group; materials are written to be shared\.$/, 'Run short sessions with your board or farm group')}
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="mt-8">
+            <Link
+              to={detailTo}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-8 py-3.5 text-sm font-bold text-white shadow-soft hover:bg-brand-hover"
+            >
+              Open program
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -61,6 +160,9 @@ function ExploreBody({ catalog }) {
     .filter(SHOW[show].test)
     .sort(SORTS[sort].compare);
 
+  const featured = catalog.find((course) => !course.isComingSoon && /cattle fattening fundamentals/i.test(course.title))
+    || catalog.find((course) => !course.isComingSoon);
+
   function update(key, value, fallback) {
     const next = new URLSearchParams(params);
     if (!value || value === fallback) next.delete(key);
@@ -72,12 +174,15 @@ function ExploreBody({ catalog }) {
 
   return (
     <>
-      <PageTitle
-        title="Courses"
-        description={`${catalog.length} published course${catalog.length === 1 ? '' : 's'}. New courses appear here as soon as an administrator publishes them.`}
-      >
-        <SearchBox value={q} onSearch={(text) => update('q', text)} />
-      </PageTitle>
+      <header className="mb-10 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-charcoal lg:text-4xl">Browse All Learning Programs</h1>
+        <p className="mx-auto mt-4 max-w-2xl text-charcoal-muted">
+          Choose from our structured learning programs designed for cattle fattening operators, cooperative leaders, and livestock enterprises.
+        </p>
+        <div className="mt-6">
+          <SearchBox value={q} onSearch={(text) => update('q', text)} />
+        </div>
+      </header>
 
       <div className="mb-6 space-y-4">
         {categories.length ? (
@@ -133,6 +238,8 @@ function ExploreBody({ catalog }) {
           action={filtered ? <button type="button" className="btn-outline" onClick={() => setParams({}, { replace: true })}>Reset filters</button> : null}
         />
       )}
+
+      {!filtered ? <FeaturedProgram course={featured} /> : null}
     </>
   );
 }

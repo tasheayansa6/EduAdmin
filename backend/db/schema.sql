@@ -51,7 +51,7 @@ CREATE TABLE courses (
   includes JSON NULL,
   outline JSON NULL,
   category_id INT UNSIGNED NOT NULL,
-  status ENUM('draft', 'published') NOT NULL DEFAULT 'draft',
+  status ENUM('draft', 'published', 'coming_soon') NOT NULL DEFAULT 'draft',
   price DECIMAL(10, 2) NOT NULL DEFAULT 0,
   currency CHAR(3) NOT NULL DEFAULT 'ETB',
   source_slug VARCHAR(160) NULL,

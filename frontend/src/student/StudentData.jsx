@@ -189,6 +189,10 @@ export function useStudentData() {
 /** EduAdmin courses open by id and share the catalog card shape with a `local` flag. */
 function fromLocalCourse(course) {
   const enrolled = course.enrollmentStatus && course.enrollmentStatus !== 'withdrawn';
+  const sections = course.sections || [];
+  const modules = (course.modules?.length
+    ? course.modules
+    : sections.map((section) => ({ title: section.title })));
   return {
     key: `local-${course.id}`,
     local: true,
@@ -202,7 +206,13 @@ function fromLocalCourse(course) {
     category: course.categoryName,
     instructorName: course.instructorName || null,
     level: course.level || null,
-    lessonCount: (course.sections || []).reduce((sum, section) => sum + (section.lessons?.length || 0), 0) || null,
+    lessonCount: sections.reduce((sum, section) => sum + (section.lessons?.length || 0), 0) || null,
+    modules,
+    sections,
+    outcomes: course.outcomes || [],
+    includes: course.includes || [],
+    requirements: course.requirements || [],
+    audience: course.audience || course.requirements || [],
     totalMinutes: course.totalMinutes ?? null,
     isFree: Boolean(course.isFree ?? Number(course.price) <= 0),
     price: Number(course.price) || 0,
@@ -210,6 +220,9 @@ function fromLocalCourse(course) {
     favorite: Boolean(course.favorite),
     inCart: Boolean(course.inCart),
     publishedAt: course.createdAt,
+    status: course.status || 'published',
+    isComingSoon: Boolean(course.isComingSoon || course.status === 'coming_soon'),
+    badge: course.badge || (course.status === 'coming_soon' ? 'Coming Soon' : null),
     enrollment: enrolled ? { status: course.enrollmentStatus, percent: course.percent } : null,
   };
 }
@@ -243,7 +256,12 @@ export function useAllCourses() {
 export function courseIndex(data) {
   const byId = new Map();
   for (const course of data?.catalog ?? []) {
-    byId.set(course.id, { ...course, published: true, enrollment: null });
+    byId.set(course.id, {
+      ...course,
+      published: course.status !== 'coming_soon',
+      isComingSoon: Boolean(course.isComingSoon || course.status === 'coming_soon'),
+      enrollment: null,
+    });
   }
   for (const row of data?.enrollments ?? []) {
     const existing = byId.get(row.courseId);

@@ -201,10 +201,20 @@ function moduleCountFor(course) {
   return null;
 }
 
-/** Ailg-style card footer: Details | Buy Now (or Enrolled / free enroll). */
+/** Ailg-style card footer: Details | Buy Now (or Coming Soon / Enrolled). */
 function CourseCardActions({ course, detailTo, learnTo }) {
   const detailClass = 'flex items-center justify-center gap-1.5 rounded-2xl border border-hairline bg-white py-2.5 text-sm font-bold text-brand shadow-soft transition hover:border-brand/40 hover:scale-[1.02] active:scale-95';
   const buyClass = 'flex items-center justify-center gap-1.5 rounded-2xl bg-brand py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-brand-hover hover:scale-[1.02] active:scale-95';
+  const soonClass = 'flex items-center justify-center gap-1.5 rounded-2xl bg-sand py-2.5 text-sm font-bold text-charcoal-muted';
+
+  if (course.isComingSoon) {
+    return (
+      <div className="relative z-10 grid grid-cols-2 gap-2">
+        <Link to={detailTo} className={detailClass}>Details</Link>
+        <span className={soonClass} aria-disabled="true">Coming Soon</span>
+      </div>
+    );
+  }
 
   if (course.enrollment) {
     return (
@@ -281,16 +291,23 @@ export function LocalCourseCard({ course }) {
   const detailTo = `/learn/my-courses/${course.id}`;
   const learnTo = `/learn/my-courses/${course.id}/learn`;
   const modules = moduleCountFor(course);
+  const comingSoon = Boolean(course.isComingSoon);
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-hairline bg-white shadow-soft transition duration-200 focus-within:shadow-lift hover:-translate-y-0.5 hover:shadow-lift motion-reduce:hover:translate-y-0">
       <div className="relative">
         <Link to={detailTo} tabIndex={-1} aria-hidden="true">
-          <CourseImage course={course} />
+          <div className={comingSoon ? '[&_img]:grayscale-[60%]' : undefined}>
+            <CourseImage course={course} />
+          </div>
         </Link>
         {course.category ? (
           <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-brand shadow-soft">{course.category}</span>
         ) : null}
-        <FavoriteButton course={course} className="absolute right-3 top-3 z-10" />
+        {comingSoon ? (
+          <span className="absolute right-3 top-3 rounded-full bg-wheat px-3 py-1.5 text-sm font-bold text-charcoal shadow-soft">Coming Soon</span>
+        ) : (
+          <FavoriteButton course={course} className="absolute right-3 top-3 z-10" />
+        )}
       </div>
       <div className="flex flex-1 flex-col p-4">
         <h3 className="line-clamp-2 text-base font-bold leading-snug text-charcoal">
@@ -311,7 +328,9 @@ export function LocalCourseCard({ course }) {
               {duration ? <span className="inline-flex items-center gap-1"><ClockIcon />{duration}</span> : null}
             </span>
           )}
-          <span className="text-lg font-bold text-brand">{formatPrice(course.price, course.currency)}</span>
+          <span className="text-lg font-bold text-brand">
+            {comingSoon ? 'Coming Soon' : formatPrice(course.price, course.currency)}
+          </span>
         </div>
         <div className="mt-auto pt-4">
           <CourseCardActions course={course} detailTo={detailTo} learnTo={learnTo} />

@@ -75,7 +75,10 @@ export function normalizeProgram(course) {
     materials,
     audience,
     process,
-    isActive: course.is_active !== false && course.published !== false,
+    isActive: !course.isComingSoon
+      && course.status !== 'coming_soon'
+      && course.is_active !== false
+      && course.published !== false,
   };
 }
 
