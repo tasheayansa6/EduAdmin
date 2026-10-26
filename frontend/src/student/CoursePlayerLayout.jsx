@@ -74,14 +74,14 @@ export function CourseContentPanel({ sections, currentId, busyId, onSelect, onTo
   const doneLessons = sections.reduce((sum, section) => sum + section.lessons.filter((l) => l.completed).length, 0);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-none border-0 bg-white lg:rounded-none">
-      <div className="border-b border-hairline bg-sand/80 px-4 py-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-0 bg-white lg:rounded-none">
+      <div className="shrink-0 border-b border-hairline bg-sand/80 px-4 py-3">
         <h2 className="text-base font-bold text-charcoal">Course content</h2>
         <p className="mt-0.5 text-xs text-charcoal-muted">
           {doneLessons} / {totalLessons} · videos, PDFs & readings
         </p>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {sections.map((section, sectionIndex) => {
           const done = section.lessons.filter((lesson) => lesson.completed).length;
           const minutes = formatMinutes(section.lessons.reduce((sum, lesson) => sum + (lesson.durationMinutes || 0), 0));
@@ -178,10 +178,13 @@ export function CoursePlayerChrome({
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:grid-rows-1 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
-        <div className="flex min-h-0 min-w-0 flex-col bg-black">
-          <LessonBody lesson={current} />
-          <div className="shrink-0 border-t border-white/10 bg-[#1c1d1f] px-4 py-3 text-white sm:px-5">
+      <div className="grid min-h-0 flex-1 overflow-hidden grid-rows-[minmax(0,58%)_minmax(0,42%)] lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:grid-rows-1 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+        {/* Left: video / lesson scrolls on its own */}
+        <div className="flex min-h-0 min-w-0 flex-col overflow-y-auto overscroll-contain bg-black">
+          <div className="flex min-h-0 flex-1 flex-col">
+            <LessonBody lesson={current} />
+          </div>
+          <div className="sticky bottom-0 shrink-0 border-t border-white/10 bg-[#1c1d1f] px-4 py-3 text-white sm:px-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="min-w-0 truncate text-sm">
                 <span className="text-white/65">Lesson {position + 1} of {total}:</span>{' '}
@@ -202,7 +205,8 @@ export function CoursePlayerChrome({
           </div>
         </div>
 
-        <aside className="flex min-h-[40vh] flex-col border-t border-hairline bg-white lg:min-h-0 lg:border-l lg:border-t-0" aria-label="Course content">
+        {/* Right: course content scrolls independently */}
+        <aside className="flex min-h-0 flex-col overflow-hidden border-t border-hairline bg-white lg:border-l lg:border-t-0" aria-label="Course content">
           <CourseContentPanel
             sections={sections}
             currentId={current.id}
