@@ -518,21 +518,21 @@ describe('Reports', () => {
   });
 });
 describe('Courses', () => {
-  test('DELETE unpublishes a course instead of removing it', async () => {
+  test('DELETE permanently removes a course', async () => {
     const { payload: session } = await login(ADMIN);
     const created = await request('/api/v1/courses', {
       method: 'POST',
       token: session.token,
       body: {
         title: `Temp Course ${Date.now()}`,
-        description: 'Temporary course for soft-delete coverage.',
+        description: 'Temporary course for hard-delete coverage.',
         categoryId: 1,
         status: 'published',
       },
     });
     assert.equal(created.status, 201);
     const courseId = created.payload.data.id;
-    createdCourseIds.push(courseId);
+    const title = created.payload.data.title;
 
     const deleted = await request(`/api/v1/courses/${courseId}`, {
       method: 'DELETE',
@@ -540,11 +540,10 @@ describe('Courses', () => {
     });
     assert.equal(deleted.status, 204);
 
-    const listed = await request(`/api/v1/courses?q=${encodeURIComponent(created.payload.data.title)}&limit=20`, {
+    const listed = await request(`/api/v1/courses?q=${encodeURIComponent(title)}&limit=20`, {
       token: session.token,
     });
     const row = listed.payload.data.find((item) => item.id === courseId);
-    assert.ok(row, 'course should remain in the catalog');
-    assert.equal(row.status, 'draft');
+    assert.equal(row, undefined, 'course should be removed from the catalog');
   });
 });

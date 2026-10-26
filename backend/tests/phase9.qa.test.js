@@ -214,7 +214,7 @@ describe('Students', () => {
 });
 
 describe('Courses integrity', () => {
-  test('creates, updates, and soft-unpublishes an isolated course', async () => {
+  test('creates, updates, and permanently deletes an isolated course', async () => {
     const session = await login();
     const lookups = await request('/api/v1/lookups', { token: session.token });
     const categoryId = lookups.payload.data.categories[0].id;
@@ -232,7 +232,6 @@ describe('Courses integrity', () => {
     });
     assert.equal(created.status, 201);
     const courseId = created.payload.data.id;
-    createdCourseIds.push(courseId);
 
     const published = await request(`/api/v1/courses/${courseId}`, {
       method: 'PATCH',
@@ -252,8 +251,7 @@ describe('Courses integrity', () => {
       token: session.token,
     });
     const row = listed.payload.data.find((item) => item.id === courseId);
-    assert.ok(row);
-    assert.equal(row.status, 'draft');
+    assert.equal(row, undefined, 'deleted course should not remain in the list');
   });
 
   test('rejects enrollment into draft courses', async () => {
