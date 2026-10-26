@@ -30,8 +30,9 @@ export default {
           DEFAULT: '#191c1a',
           muted: '#59615b',
         },
-        // Page canvas aligned with AilgAgro (#f8faf6); mint stays for chips/overlays only.
+        // Cool cream aligned with AilgAgro membership chrome (not warm beige).
         canvas: '#f8faf6',
+        cream: '#fbfcf9',
         sand: '#edeeeb',
         hairline: '#d5ded3',
         mint: {

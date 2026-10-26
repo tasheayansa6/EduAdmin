@@ -29,6 +29,18 @@ const parsed = z
     CHAPA_SECRET_KEY: z.string().optional(),
     CHAPA_API_URL: z.string().url().default('https://api.chapa.co/v1'),
     API_PUBLIC_URL: z.preprocess((value) => (value === '' ? undefined : value), z.string().url().optional()),
+    // Gmail SMTP (use an App Password). Without SMTP_PASS, sends are logged only.
+    SMTP_HOST: z.string().optional().default(''),
+    SMTP_PORT: z.coerce.number().optional().default(587),
+    SMTP_SECURE: z
+      .string()
+      .optional()
+      .transform((value) => ['1', 'true', 'yes', 'on'].includes(String(value || '').toLowerCase())),
+    SMTP_USER: z.string().optional().default(''),
+    SMTP_PASS: z.string().optional().default(''),
+    SMTP_FROM: z.string().optional().default(''),
+    // Inbox for career applications, contact messages, and admin test emails.
+    MAIL_NOTIFY_TO: z.string().email().optional().default('tasheayansa6@gmail.com'),
   })
   .parse(process.env);
 
@@ -68,4 +80,13 @@ export const env = {
     apiUrl: parsed.CHAPA_API_URL.replace(/\/+$/, ''),
   },
   apiPublicUrl: parsed.API_PUBLIC_URL?.replace(/\/+$/, '') || null,
+  smtp: {
+    host: parsed.SMTP_HOST?.trim() || '',
+    port: parsed.SMTP_PORT,
+    secure: Boolean(parsed.SMTP_SECURE),
+    user: parsed.SMTP_USER?.trim() || '',
+    pass: parsed.SMTP_PASS || '',
+    from: parsed.SMTP_FROM?.trim() || '',
+  },
+  mailNotifyTo: parsed.MAIL_NOTIFY_TO?.trim() || 'tasheayansa6@gmail.com',
 };

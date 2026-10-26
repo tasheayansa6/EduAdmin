@@ -4,8 +4,8 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { login, logout, registerStudent, updateProfile } from '../services/authService.js';
-import { getDashboard } from '../services/dashboardService.js';
-import { createStudent, getStudent, listStudents, updateStudent } from '../services/studentService.js';
+import { getAdminNotifications, getDashboard } from '../services/dashboardService.js';
+import { createStudent, deleteStudent, getStudent, listStudents, updateStudent } from '../services/studentService.js';
 import { createCourse, deleteCourse, listCourses, updateCourse } from '../services/courseService.js';
 import {
   createEnrollment,
@@ -17,6 +17,46 @@ import {
 import { listProgress } from '../services/progressService.js';
 import { getReport, reportToCsv } from '../services/reportService.js';
 import { createAdmin, listAdmins, updateAdminStatus } from '../services/adminService.js';
+import {
+  createBlog,
+  deleteBlog,
+  getBlog,
+  getPublishedBlogBySlug,
+  listBlogs,
+  listPublishedBlogs,
+  updateBlog,
+} from '../services/blogService.js';
+import {
+  createContactMessage,
+  deleteContactMessage,
+  getContactInfo,
+  listContactMessages,
+  updateContactInfo,
+  updateContactMessageStatus,
+} from '../services/contactService.js';
+import { mailNotifyTo, sendEmail, verifyMailer } from '../lib/mailer.js';
+import {
+  deleteSubscription,
+  listCampaigns,
+  listSubscriptions,
+  sendCampaign,
+  setSubscriptionStatus,
+  subscribe,
+  subscriptionStats,
+  unsubscribe,
+} from '../services/subscriptionService.js';
+import {
+  applyToCareer,
+  createCareer,
+  deleteCareer,
+  getCareer,
+  getOpenCareerBySlug,
+  listApplications,
+  listCareers,
+  listOpenCareers,
+  updateApplicationStatus,
+  updateCareer,
+} from '../services/careerService.js';
 import { getLookups } from '../services/lookupService.js';
 import { getPublicExplore, getStudentHome } from '../services/studentPortalService.js';
 import * as store from '../services/storeService.js';
@@ -26,6 +66,27 @@ import * as account from '../services/studentAccountService.js';
 import {
   adminCreateSchema,
   adminPatchSchema,
+  blogCreateSchema,
+  blogListSchema,
+  blogPatchSchema,
+  publishedBlogListSchema,
+  contactInfoUpdateSchema,
+  contactMessageCreateSchema,
+  contactMessageListSchema,
+  contactMessagePatchSchema,
+  subscribeSchema,
+  unsubscribeSchema,
+  subscriptionListSchema,
+  subscriptionStatusSchema,
+  campaignSendSchema,
+  campaignListSchema,
+  careerListSchema,
+  careerCreateSchema,
+  careerPatchSchema,
+  openCareerListSchema,
+  careerApplySchema,
+  careerApplicationListSchema,
+  careerApplicationPatchSchema,
   courseCreateSchema,
   courseListSchema,
   coursePatchSchema,
@@ -118,6 +179,9 @@ dashboardRouter.use(...adminOnly);
 dashboardRouter.get('/', asyncHandler(async (req, res) => {
   res.json({ data: await getDashboard() });
 }));
+dashboardRouter.get('/notifications', asyncHandler(async (req, res) => {
+  res.json({ data: await getAdminNotifications(req.query.limit) });
+}));
 
 const studentRouter = Router();
 studentRouter.use(...adminOnly);
@@ -132,6 +196,10 @@ studentRouter.get('/:id', validate(recordParams), asyncHandler(async (req, res) 
 }));
 studentRouter.patch('/:id', validate(studentUpdateSchema), asyncHandler(async (req, res) => {
   res.json({ data: await updateStudent(req.user.id, req.valid.params.id, req.valid.body) });
+}));
+studentRouter.delete('/:id', validate(recordParams), asyncHandler(async (req, res) => {
+  await deleteStudent(req.user.id, req.valid.params.id);
+  res.status(204).end();
 }));
 
 const courseRouter = Router();
@@ -202,6 +270,129 @@ adminRouter.patch('/:id', validate(adminPatchSchema), asyncHandler(async (req, r
   res.json({ data: await listAdmins() });
 }));
 
+const blogRouter = Router();
+blogRouter.use(...adminOnly);
+blogRouter.get('/', validate(blogListSchema), asyncHandler(async (req, res) => {
+  res.json(await listBlogs(req.valid.query));
+}));
+blogRouter.post('/', validate(blogCreateSchema), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await createBlog(req.user.id, req.valid.body) });
+}));
+blogRouter.get('/:id', validate(recordParams), asyncHandler(async (req, res) => {
+  res.json({ data: await getBlog(req.valid.params.id) });
+}));
+blogRouter.patch('/:id', validate(blogPatchSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await updateBlog(req.user.id, req.valid.params.id, req.valid.body) });
+}));
+blogRouter.delete('/:id', validate(recordParams), asyncHandler(async (req, res) => {
+  await deleteBlog(req.user.id, req.valid.params.id);
+  res.status(204).end();
+}));
+
+const contactRouter = Router();
+contactRouter.use(...adminOnly);
+contactRouter.get('/', asyncHandler(async (req, res) => {
+  res.json({ data: await getContactInfo() });
+}));
+contactRouter.put('/', validate(contactInfoUpdateSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await updateContactInfo(req.user.id, req.valid.body) });
+}));
+contactRouter.get('/messages', validate(contactMessageListSchema), asyncHandler(async (req, res) => {
+  res.json(await listContactMessages(req.valid.query));
+}));
+contactRouter.patch('/messages/:id', validate(contactMessagePatchSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await updateContactMessageStatus(req.user.id, req.valid.params.id, req.valid.body.status) });
+}));
+contactRouter.delete('/messages/:id', validate(recordParams), asyncHandler(async (req, res) => {
+  await deleteContactMessage(req.user.id, req.valid.params.id);
+  res.status(204).end();
+}));
+
+const subscriptionRouter = Router();
+subscriptionRouter.use(...adminOnly);
+subscriptionRouter.get('/stats', asyncHandler(async (req, res) => {
+  res.json({ data: await subscriptionStats() });
+}));
+subscriptionRouter.get('/mail-status', asyncHandler(async (req, res) => {
+  try {
+    res.json({ data: await verifyMailer() });
+  } catch (error) {
+    res.json({
+      data: {
+        ok: false,
+        configured: true,
+        notifyTo: mailNotifyTo(),
+        message: error.message || 'SMTP verification failed.',
+      },
+    });
+  }
+}));
+subscriptionRouter.post('/mail-test', asyncHandler(async (req, res) => {
+  const to = mailNotifyTo();
+  const result = await sendEmail({
+    to,
+    subject: 'EduAdmin SMTP test',
+    text: [
+      'This is a test email from EduAdmin.',
+      '',
+      `Sent at: ${new Date().toISOString()}`,
+      `Notify inbox: ${to}`,
+      '',
+      'If you received this, live SMTP is working.',
+    ].join('\n'),
+  });
+  res.json({
+    data: {
+      ...result,
+      notifyTo: to,
+      message: result.mode === 'smtp'
+        ? `Test email sent to ${to}.`
+        : `SMTP not fully configured — test was logged only. Add SMTP_PASS (Gmail App Password) to backend/.env.`,
+    },
+  });
+}));
+subscriptionRouter.get('/campaigns', validate(campaignListSchema), asyncHandler(async (req, res) => {
+  res.json(await listCampaigns(req.valid.query));
+}));
+subscriptionRouter.post('/campaigns', validate(campaignSendSchema), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await sendCampaign(req.user.id, req.valid.body) });
+}));
+subscriptionRouter.get('/', validate(subscriptionListSchema), asyncHandler(async (req, res) => {
+  res.json(await listSubscriptions(req.valid.query));
+}));
+subscriptionRouter.patch('/:id', validate(subscriptionStatusSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await setSubscriptionStatus(req.user.id, req.valid.params.id, req.valid.body.status) });
+}));
+subscriptionRouter.delete('/:id', validate(recordParams), asyncHandler(async (req, res) => {
+  await deleteSubscription(req.user.id, req.valid.params.id);
+  res.status(204).end();
+}));
+
+const careerRouter = Router();
+careerRouter.use(...adminOnly);
+careerRouter.get('/', validate(careerListSchema), asyncHandler(async (req, res) => {
+  res.json(await listCareers(req.valid.query));
+}));
+careerRouter.post('/', validate(careerCreateSchema), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await createCareer(req.user.id, req.valid.body) });
+}));
+careerRouter.get('/applications', validate(careerApplicationListSchema), asyncHandler(async (req, res) => {
+  res.json(await listApplications(req.valid.query));
+}));
+careerRouter.patch('/applications/:id', validate(careerApplicationPatchSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await updateApplicationStatus(req.user.id, req.valid.params.id, req.valid.body.status) });
+}));
+careerRouter.get('/:id', validate(recordParams), asyncHandler(async (req, res) => {
+  res.json({ data: await getCareer(req.valid.params.id) });
+}));
+careerRouter.patch('/:id', validate(careerPatchSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await updateCareer(req.user.id, req.valid.params.id, req.valid.body) });
+}));
+careerRouter.delete('/:id', validate(recordParams), asyncHandler(async (req, res) => {
+  await deleteCareer(req.user.id, req.valid.params.id);
+  res.status(204).end();
+}));
+
 const lookupRouter = Router();
 lookupRouter.use(...adminOnly);
 
@@ -209,6 +400,43 @@ const portalRouter = Router();
 portalRouter.use(authenticate, authorize('student'));
 portalRouter.get('/home', asyncHandler(async (req, res) => {
   res.json({ data: await getStudentHome(req.user.id) });
+}));
+portalRouter.get('/blogs', validate(publishedBlogListSchema), asyncHandler(async (req, res) => {
+  res.json(await listPublishedBlogs(req.valid.query));
+}));
+portalRouter.get('/blogs/:slug', validate(slugParams), asyncHandler(async (req, res) => {
+  res.json({ data: await getPublishedBlogBySlug(req.valid.params.slug) });
+}));
+portalRouter.get('/contact', asyncHandler(async (req, res) => {
+  res.json({ data: await getContactInfo() });
+}));
+portalRouter.post('/contact/messages', validate(contactMessageCreateSchema), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await createContactMessage(req.user.id, req.valid.body) });
+}));
+portalRouter.post('/subscribe', validate(subscribeSchema), asyncHandler(async (req, res) => {
+  res.status(201).json({
+    data: await subscribe({
+      email: req.valid.body.email,
+      name: req.valid.body.name || req.user.name,
+      source: 'student',
+      userId: req.user.id,
+    }),
+  });
+}));
+portalRouter.get('/careers', validate(openCareerListSchema), asyncHandler(async (req, res) => {
+  res.json(await listOpenCareers(req.valid.query));
+}));
+portalRouter.get('/careers/:slug', validate(slugParams), asyncHandler(async (req, res) => {
+  res.json({ data: await getOpenCareerBySlug(req.valid.params.slug) });
+}));
+portalRouter.post('/careers/:slug/apply', validate(careerApplySchema), asyncHandler(async (req, res) => {
+  res.status(201).json({ data: await applyToCareer(req.user.id, req.valid.params.slug, {
+    name: req.valid.body.name,
+    email: req.valid.body.email,
+    phone: req.valid.body.phone,
+    coverLetter: req.valid.body.coverLetter,
+    resumeUrl: req.valid.body.resumeUrl,
+  }) });
 }));
 portalRouter.post('/enrollments', validate(studentEnrollSchema), asyncHandler(async (req, res) => {
   await assertLocalCourse(req.valid.body.courseId);
@@ -322,6 +550,21 @@ export function registerRoutes(app) {
   publicRouter.get('/catalog/:slug', validate(slugParams), asyncHandler(async (req, res) => {
     res.json({ data: await store.getCatalogDetail(null, req.valid.params.slug) });
   }));
+  publicRouter.get('/contact', asyncHandler(async (req, res) => {
+    res.json({ data: await getContactInfo() });
+  }));
+  publicRouter.post('/subscribe', validate(subscribeSchema), asyncHandler(async (req, res) => {
+    res.status(201).json({
+      data: await subscribe({
+        email: req.valid.body.email,
+        name: req.valid.body.name || null,
+        source: 'public',
+      }),
+    });
+  }));
+  publicRouter.post('/unsubscribe', validate(unsubscribeSchema), asyncHandler(async (req, res) => {
+    res.json({ data: await unsubscribe(req.valid.body.email) });
+  }));
 
   v1.use('/auth', authRouter);
   v1.use('/public', publicRouter);
@@ -332,6 +575,10 @@ export function registerRoutes(app) {
   v1.use('/progress', progressRouter);
   v1.use('/reports', reportRouter);
   v1.use('/administrators', adminRouter);
+  v1.use('/blogs', blogRouter);
+  v1.use('/contact', contactRouter);
+  v1.use('/subscriptions', subscriptionRouter);
+  v1.use('/careers', careerRouter);
   v1.use('/lookups', lookupRouter);
   v1.use('/student', portalRouter);
   v1.use('/payments', paymentRouter);

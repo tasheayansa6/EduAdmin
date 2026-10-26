@@ -8,11 +8,14 @@ import {
   BookIcon,
   CartIcon,
   ChartIcon,
+  ClipboardIcon,
   CloseIcon,
   CompassIcon,
   HeartIcon,
   LogoutIcon,
+  MailIcon,
   MenuIcon,
+  PenIcon,
   SearchIcon,
   UserIcon,
 } from '../icons.jsx';
@@ -24,12 +27,21 @@ const SECTIONS = [
   { to: '/learn/profile', label: 'Account', icon: UserIcon },
 ];
 
+const MORE_LINKS = [
+  { to: '/learn/blogs', label: 'Blog', icon: PenIcon },
+  { to: '/learn/careers', label: 'Careers', icon: ClipboardIcon },
+  { to: '/learn/contact', label: 'Contact', icon: MailIcon },
+];
+
 const PAGE_LABELS = {
   '/learn': 'HOME',
   '/learn/courses': 'COURSES',
   '/learn/academy': 'AILG ACADEMY',
   '/learn/my-learning': 'MY LEARNING',
   '/learn/progress': 'MY PROGRESS',
+  '/learn/blogs': 'BLOG',
+  '/learn/careers': 'CAREERS',
+  '/learn/contact': 'CONTACT',
   '/learn/profile': 'ACCOUNT',
   '/learn/favorites': 'FAVORITES',
   '/learn/cart': 'CART',
@@ -41,12 +53,17 @@ const DESKTOP_NAV = [
   { to: '/learn/courses', label: 'Courses' },
   { to: '/learn/my-learning', label: 'Learning' },
   { to: '/learn/progress', label: 'Progress' },
+  { to: '/learn/blogs', label: 'Blog' },
+  { to: '/learn/careers', label: 'Careers' },
+  { to: '/learn/contact', label: 'Contact' },
 ];
 
 function pageLabel(pathname) {
   if (PAGE_LABELS[pathname]) return PAGE_LABELS[pathname];
   if (pathname.startsWith('/learn/courses/')) return 'COURSE';
   if (pathname.startsWith('/learn/my-courses/')) return 'COURSE';
+  if (pathname.startsWith('/learn/blogs/')) return 'BLOG';
+  if (pathname.startsWith('/learn/careers/')) return 'CAREERS';
   if (pathname.startsWith('/learn/profile')) return 'ACCOUNT';
   return 'LEARNING';
 }
@@ -158,7 +175,14 @@ function MobileDrawer({ open, onClose, user, onLogout }) {
     { to: '/learn', label: 'Explore', end: true },
     { to: '/learn/courses', label: 'Courses' },
   ];
-  const signedInLinks = [...SECTIONS, { to: '/learn/courses', label: 'Courses' }, { to: '/learn/favorites', label: 'Favorites' }, { to: '/learn/cart', label: 'Cart' }, { to: '/learn/notifications', label: 'Notifications' }];
+  const signedInLinks = [
+    ...SECTIONS,
+    ...MORE_LINKS,
+    { to: '/learn/courses', label: 'Courses' },
+    { to: '/learn/favorites', label: 'Favorites' },
+    { to: '/learn/cart', label: 'Cart' },
+    { to: '/learn/notifications', label: 'Notifications' },
+  ];
 
   useEffect(() => {
     if (!open) return undefined;

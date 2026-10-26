@@ -1,6 +1,10 @@
 /** Explore menu taxonomy. Live AILG catalog courses stay inside EduAdmin routes. */
 
 export const AILG_SITE_URL = 'https://test.ailgagro.com/';
+/** SPA section on the public site (/membership alone 404s on the host). */
+export const AILG_MEMBERSHIP_URL = 'https://test.ailgagro.com/#membership';
+/** /contact 404s on the host; use in-app Contact instead. */
+export const AILG_CONTACT_URL = 'https://test.ailgagro.com/#contact';
 export const AILG_ACADEMY_PATH = '/learn/academy';
 
 export const EXPLORE_GOALS = [

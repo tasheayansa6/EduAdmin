@@ -19,7 +19,28 @@ const ACTION_LABELS = {
   'course.updated': 'Course updated',
   'course.published': 'Course published',
   'course.unpublished': 'Course unpublished',
-  'course.deleted': 'Course unpublished',
+  'course.deleted': 'Course deleted',
+  'student.deleted': 'Student deleted',
+  'blog.created': 'Blog drafted',
+  'blog.updated': 'Blog updated',
+  'blog.published': 'Blog published',
+  'blog.unpublished': 'Blog unpublished',
+  'blog.deleted': 'Blog deleted',
+  'contact.updated': 'Contact info updated',
+  'contact.message_received': 'Contact message received',
+  'contact.message_updated': 'Contact message updated',
+  'contact.message_deleted': 'Contact message deleted',
+  'career.application_received': 'Career application received',
+  'subscription.campaign_sent': 'Subscription email sent',
+  'subscription.unsubscribed': 'Subscriber unsubscribed',
+  'subscription.reactivated': 'Subscriber reactivated',
+  'subscription.deleted': 'Subscriber removed',
+  'career.created': 'Career drafted',
+  'career.published': 'Career opened',
+  'career.closed': 'Career closed',
+  'career.updated': 'Career updated',
+  'career.deleted': 'Career deleted',
+  'career.application_updated': 'Career application updated',
   'enrollment.created': 'Enrollment added',
   'enrollment.updated': 'Enrollment updated',
   'enrollment.deleted': 'Enrollment withdrawn',
@@ -29,9 +50,9 @@ const ACTION_LABELS = {
 };
 
 const TABS = [
-  { key: 'students', label: 'Students' },
-  { key: 'courses', label: 'Courses' },
-  { key: 'enrollment', label: 'Enrollment' },
+  { key: 'students', label: 'Students', to: '/students' },
+  { key: 'courses', label: 'Courses', to: '/courses' },
+  { key: 'enrollment', label: 'Enrollment', to: '/enrollments' },
 ];
 
 function MetricCard({ label, value, badge, badgeTone = 'good', children }) {
@@ -161,13 +182,13 @@ export function DashboardPage() {
               </div>
             </MetricCard>
             <MetricCard
-              label="Faculty & staff"
-              value={(data.instructors || data.activeAdmins || 0).toLocaleString()}
+              label="Administrators"
+              value={(data.activeAdmins || 0).toLocaleString()}
               badge="Active"
               badgeTone="good"
             >
               <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-muted [&_svg]:h-3.5 [&_svg]:w-3.5">
-                <TrendIcon /> {data.activeAdmins} admin{data.activeAdmins === 1 ? '' : 's'} · {data.instructors} instructor name{data.instructors === 1 ? '' : 's'}
+                <TrendIcon /> {data.activeAdmins} active admin{data.activeAdmins === 1 ? '' : 's'}
               </p>
             </MetricCard>
           </div>
@@ -181,9 +202,9 @@ export function DashboardPage() {
                   : data.enrollments;
               const selected = tab === item.key;
               return (
-                <button
+                <Link
                   key={item.key}
-                  type="button"
+                  to={item.to}
                   role="tab"
                   aria-selected={selected}
                   className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${selected ? 'bg-accent text-white shadow-soft' : 'text-ink-muted hover:text-ink'}`}
@@ -191,7 +212,7 @@ export function DashboardPage() {
                 >
                   {item.label}
                   <span className={`ml-1.5 tabular-nums ${selected ? 'text-white/80' : ''}`}>({count})</span>
-                </button>
+                </Link>
               );
             })}
           </div>

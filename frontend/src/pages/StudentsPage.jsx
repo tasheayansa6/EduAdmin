@@ -101,8 +101,8 @@ export function StudentsPage() {
         <StudentDialog
           id={selectedId}
           onClose={() => setSelectedId(null)}
-          onSaved={() => {
-            toast.success('Student updated.');
+          onSaved={(message = 'Student updated.') => {
+            toast.success(message);
             setSelectedId(null);
             resource.reload();
           }}
@@ -180,10 +180,12 @@ function CreateStudentDialog({ onClose, onSaved }) {
 }
 
 function StudentDialog({ id, onClose, onSaved }) {
+  const toast = useToast();
   const [student, setStudent] = useState(null);
   const [error, setError] = useState('');
   const [fieldError, setFieldError] = useState({});
   const [pending, setPending] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -220,47 +222,94 @@ function StudentDialog({ id, onClose, onSaved }) {
     }
   }
 
+  async function remove() {
+    setPending(true);
+    try {
+      await api(`/api/v1/students/${id}`, { method: 'DELETE' });
+      onSaved('Student deleted permanently.');
+    } catch (deleteError) {
+      setConfirmingDelete(false);
+      toast.error(deleteError.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
-    <Modal title="Manage student" onClose={onClose}>
-      {!student && !error ? <p className="text-sm text-ink-muted">Loading student…</p> : null}
-      {error ? <p role="alert" className="text-sm font-semibold text-red-800">{error}</p> : null}
-      {student ? (
-        <form onSubmit={onSubmit} className="space-y-4" noValidate>
-          <Field id="student-name" label="Name" error={fieldError.name}>
-            <TextInput id="student-name" value={student.name} error={fieldError.name} onChange={(event) => setStudent({ ...student, name: event.target.value })} />
-          </Field>
-          <Field id="student-email" label="Email" error={fieldError.email}>
-            <TextInput id="student-email" type="email" value={student.email} error={fieldError.email} onChange={(event) => setStudent({ ...student, email: event.target.value })} />
-          </Field>
-          <Field id="student-edit-status" label="Status" error={fieldError.status}>
-            <SelectInput id="student-edit-status" value={student.status} error={fieldError.status} onChange={(event) => setStudent({ ...student, status: event.target.value })}>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="suspended">Suspended</option>
-            </SelectInput>
-          </Field>
-          <div>
-            <h3 className="text-sm font-semibold">Enrollments</h3>
-            {student.enrollments.length ? (
-              <ul className="mt-2 space-y-2">
-                {student.enrollments.map((enrollment) => (
-                  <li key={enrollment.id} className="flex items-center justify-between gap-3 text-sm">
-                    <span>{enrollment.courseTitle}</span>
-                    <span className="flex items-center gap-2">
-                      <StatusBadge status={enrollment.status} />
-                      <ProgressBar value={enrollment.percent} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="mt-2 text-sm text-ink-muted">No enrollments for this student.</p>}
+    <>
+      <Modal title="Manage student" onClose={onClose}>
+        {!student && !error ? <p className="text-sm text-ink-muted">Loading student…</p> : null}
+        {error ? <p role="alert" className="text-sm font-semibold text-red-800">{error}</p> : null}
+        {student ? (
+          <form onSubmit={onSubmit} className="space-y-4" noValidate>
+            <Field id="student-name" label="Name" error={fieldError.name}>
+              <TextInput id="student-name" value={student.name} error={fieldError.name} onChange={(event) => setStudent({ ...student, name: event.target.value })} />
+            </Field>
+            <Field id="student-email" label="Email" error={fieldError.email}>
+              <TextInput id="student-email" type="email" value={student.email} error={fieldError.email} onChange={(event) => setStudent({ ...student, email: event.target.value })} />
+            </Field>
+            <Field id="student-edit-status" label="Status" error={fieldError.status}>
+              <SelectInput id="student-edit-status" value={student.status} error={fieldError.status} onChange={(event) => setStudent({ ...student, status: event.target.value })}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="suspended">Suspended</option>
+              </SelectInput>
+            </Field>
+            <div>
+              <h3 className="text-sm font-semibold">Enrollments</h3>
+              {student.enrollments.length ? (
+                <ul className="mt-2 space-y-2">
+                  {student.enrollments.map((enrollment) => (
+                    <li key={enrollment.id} className="flex items-center justify-between gap-3 text-sm">
+                      <span>{enrollment.courseTitle}</span>
+                      <span className="flex items-center gap-2">
+                        <StatusBadge status={enrollment.status} />
+                        <ProgressBar value={enrollment.percent} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="mt-2 text-sm text-ink-muted">No enrollments for this student.</p>}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+              <button type="button" className="btn-danger" disabled={pending} onClick={() => setConfirmingDelete(true)}>
+                Delete student
+              </button>
+              <div className="flex gap-2">
+                <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={pending}>{pending ? 'Saving…' : 'Save student'}</button>
+              </div>
+            </div>
+          </form>
+        ) : null}
+      </Modal>
+
+      {confirmingDelete && student ? (
+        <Modal title="Delete student" onClose={() => { if (!pending) setConfirmingDelete(false); }}>
+          <p className="text-sm leading-relaxed text-ink">
+            Permanently delete “{student.name}”? This cannot be undone.
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            Their enrollments, progress, cart, favorites, and notifications will also be removed.
+            {student.enrollmentCount ? (
+              <>
+                {' '}
+                <span className="font-semibold text-red-800">
+                  {student.enrollmentCount} enrollment{student.enrollmentCount === 1 ? '' : 's'} will be deleted.
+                </span>
+              </>
+            ) : null}
+          </p>
+          <div className="mt-5 flex justify-end gap-2">
+            <button type="button" className="btn-secondary" disabled={pending} onClick={() => setConfirmingDelete(false)}>
+              Cancel
+            </button>
+            <button type="button" className="btn-danger" disabled={pending} onClick={remove}>
+              {pending ? 'Deleting…' : 'Delete permanently'}
+            </button>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-primary" disabled={pending}>{pending ? 'Saving…' : 'Save student'}</button>
-          </div>
-        </form>
+        </Modal>
       ) : null}
-    </Modal>
+    </>
   );
 }

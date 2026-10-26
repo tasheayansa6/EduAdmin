@@ -54,6 +54,17 @@ async function migrate() {
     }
     await connection.query(await readFile(new URL('./store.sql', import.meta.url), 'utf8'));
     console.log('Store tables are ready.');
+    await connection.query(await readFile(new URL('./blogs.sql', import.meta.url), 'utf8'));
+    console.log('Blogs table is ready.');
+    await connection.query(await readFile(new URL('./contact.sql', import.meta.url), 'utf8'));
+    console.log('Contact tables are ready.');
+    await connection.query(await readFile(new URL('./subscriptions.sql', import.meta.url), 'utf8'));
+    console.log('Subscription tables are ready.');
+    await connection.query(await readFile(new URL('./careers.sql', import.meta.url), 'utf8'));
+    console.log('Careers tables are ready.');
+    await connection.query(
+      `UPDATE contact_info SET email = 'tasheayansa6@gmail.com' WHERE id = 1`,
+    );
 
     const [statusColumn] = await connection.query(
       `SELECT COLUMN_TYPE AS columnType FROM information_schema.COLUMNS

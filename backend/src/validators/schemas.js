@@ -264,6 +264,220 @@ export const recordParams = {
   params: idParam,
 };
 
+export const blogListSchema = {
+  query: z.object({
+    q: search,
+    page,
+    limit,
+    status: z.enum(['', 'draft', 'published']).optional().default(''),
+  }),
+};
+
+export const blogCreateSchema = {
+  body: z.object({
+    title: z.string().trim().min(3, 'Enter a title of at least 3 characters.').max(180),
+    excerpt: optionalText(500).optional(),
+    body: z.string().trim().min(20, 'Write at least 20 characters.').max(100_000),
+    coverImageUrl: optionalUrl.optional(),
+    status: z.enum(['draft', 'published']).optional().default('draft'),
+  }),
+};
+
+export const blogPatchSchema = {
+  params: idParam,
+  body: z.object({
+    title: z.string().trim().min(3).max(180).optional(),
+    excerpt: optionalText(500).optional(),
+    body: z.string().trim().min(20).max(100_000).optional(),
+    coverImageUrl: optionalUrl.optional(),
+    status: z.enum(['draft', 'published']).optional(),
+  }).refine((value) => Object.keys(value).length > 0, {
+    message: 'Provide at least one field to update.',
+  }),
+};
+
+export const publishedBlogListSchema = {
+  query: z.object({
+    page,
+    limit: z.coerce.number().int().min(1).max(50).default(12),
+  }),
+};
+
+export const contactInfoUpdateSchema = {
+  body: z.object({
+    organizationName: z.string().trim().min(2).max(160),
+    headline: optionalText(255).optional(),
+    intro: optionalText(2000).optional(),
+    email: z.preprocess(
+      (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+      z.string().email('Enter a valid email.').max(255).nullable(),
+    ).optional(),
+    phone: optionalText(60).optional(),
+    whatsapp: optionalText(60).optional(),
+    telegram: optionalText(120).optional(),
+    addressLine: optionalText(255).optional(),
+    city: optionalText(120).optional(),
+    region: optionalText(120).optional(),
+    country: optionalText(120).optional(),
+    hours: optionalText(255).optional(),
+    mapUrl: optionalUrl.optional(),
+  }),
+};
+
+export const contactMessageCreateSchema = {
+  body: z.object({
+    name: personName,
+    email,
+    subject: z.string().trim().min(3, 'Enter a subject.').max(180),
+    body: z.string().trim().min(10, 'Write at least 10 characters.').max(5000),
+  }),
+};
+
+export const contactMessageListSchema = {
+  query: z.object({
+    q: search,
+    page,
+    limit,
+    status: z.enum(['', 'new', 'read', 'archived']).optional().default(''),
+  }),
+};
+
+export const contactMessagePatchSchema = {
+  params: idParam,
+  body: z.object({
+    status: z.enum(['new', 'read', 'archived']),
+  }),
+};
+
+export const subscribeSchema = {
+  body: z.object({
+    email,
+    name: optionalText(120).optional(),
+  }),
+};
+
+export const unsubscribeSchema = {
+  body: z.object({
+    email,
+  }),
+};
+
+export const subscriptionListSchema = {
+  query: z.object({
+    q: search,
+    page,
+    limit,
+    status: z.enum(['', 'active', 'unsubscribed']).optional().default(''),
+  }),
+};
+
+export const subscriptionStatusSchema = {
+  params: idParam,
+  body: z.object({
+    status: z.enum(['active', 'unsubscribed']),
+  }),
+};
+
+export const campaignSendSchema = {
+  body: z.object({
+    subject: z.string().trim().min(3).max(180),
+    body: z.string().trim().min(10).max(20_000),
+  }),
+};
+
+export const campaignListSchema = {
+  query: z.object({
+    page,
+    limit,
+  }),
+};
+
+const optionalDateOnly = z.preprocess(
+  (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD.').nullable(),
+);
+
+export const careerListSchema = {
+  query: z.object({
+    q: search,
+    page,
+    limit,
+    status: z.enum(['', 'draft', 'open', 'closed']).optional().default(''),
+  }),
+};
+
+export const careerCreateSchema = {
+  body: z.object({
+    title: z.string().trim().min(3).max(180),
+    location: optionalText(180).optional(),
+    employmentType: z.string().trim().min(2).max(60).optional().default('Full time'),
+    department: optionalText(120).optional(),
+    summary: optionalText(500).optional(),
+    description: z.string().trim().min(20).max(100_000),
+    applicationEmail: z.preprocess(
+      (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+      z.string().email().max(255).nullable(),
+    ).optional(),
+    deadline: optionalDateOnly.optional(),
+    status: z.enum(['draft', 'open', 'closed']).optional().default('draft'),
+  }),
+};
+
+export const careerPatchSchema = {
+  params: idParam,
+  body: z.object({
+    title: z.string().trim().min(3).max(180).optional(),
+    location: optionalText(180).optional(),
+    employmentType: z.string().trim().min(2).max(60).optional(),
+    department: optionalText(120).optional(),
+    summary: optionalText(500).optional(),
+    description: z.string().trim().min(20).max(100_000).optional(),
+    applicationEmail: z.preprocess(
+      (value) => (value == null || String(value).trim() === '' ? null : String(value).trim()),
+      z.string().email().max(255).nullable(),
+    ).optional(),
+    deadline: optionalDateOnly.optional(),
+    status: z.enum(['draft', 'open', 'closed']).optional(),
+  }).refine((value) => Object.keys(value).length > 0, {
+    message: 'Provide at least one field to update.',
+  }),
+};
+
+export const openCareerListSchema = {
+  query: z.object({
+    page,
+    limit: z.coerce.number().int().min(1).max(50).default(20),
+  }),
+};
+
+export const careerApplySchema = {
+  params: z.object({ slug: z.string().trim().min(1).max(200).regex(/^[a-z0-9-]+$/) }),
+  body: z.object({
+    name: personName,
+    email,
+    phone: optionalText(60).optional(),
+    coverLetter: z.string().trim().min(20, 'Write at least 20 characters.').max(10_000),
+    resumeUrl: optionalUrl.optional(),
+  }),
+};
+
+export const careerApplicationListSchema = {
+  query: z.object({
+    q: search,
+    page,
+    limit,
+    status: z.enum(['', 'new', 'reviewed', 'shortlisted', 'rejected', 'hired']).optional().default(''),
+    careerId: optionalId,
+  }),
+};
+
+export const careerApplicationPatchSchema = {
+  params: idParam,
+  body: z.object({
+    status: z.enum(['new', 'reviewed', 'shortlisted', 'rejected', 'hired']),
+  }),
+};
+
 const courseSlug = z.string().trim().min(1).max(160).regex(/^[a-z0-9-]+$/, 'Choose a valid course.');
 
 export const slugParams = {

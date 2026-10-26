@@ -141,3 +141,11 @@ export function FlameIcon() {
 export function LeafIcon() {
   return <Icon><path d="M5 19c8 0 14-6 14-14-8 0-14 6-14 14z" /><path d="M5 19c3-3 6-6 9-8" /></Icon>;
 }
+
+export function PenIcon() {
+  return <Icon><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></Icon>;
+}
+
+export function MailIcon() {
+  return <Icon><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Icon>;
+}

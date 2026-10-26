@@ -141,3 +141,31 @@ export async function updateStudent(actorId, id, body) {
   });
   return getStudent(id);
 }
+
+/** Permanently delete a student account. Related enrollments and progress cascade. */
+export async function deleteStudent(actorId, id) {
+  const existing = await getStudent(id);
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.query(
+      `DELETE FROM users WHERE id = ? AND role = 'student'`,
+      [id],
+    );
+    if (!result.affectedRows) throw new AppError(404, 'Student not found.');
+    await logActivity(connection, {
+      actorId,
+      action: 'student.deleted',
+      entityType: 'user',
+      entityId: id,
+      details: `Deleted student ${existing.name}`,
+    });
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+  return { id, deleted: true };
+}

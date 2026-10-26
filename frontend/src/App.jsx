@@ -4,7 +4,11 @@ import { AppShell } from './components/layout/AppShell.jsx';
 import { StudentShell } from './components/layout/StudentShell.jsx';
 import { ErrorState } from './components/ui.jsx';
 import { AdminsPage } from './pages/AdminsPage.jsx';
+import { BlogsPage } from './pages/BlogsPage.jsx';
+import { CareersPage } from './pages/CareersPage.jsx';
+import { ContactPage } from './pages/ContactPage.jsx';
 import { CoursesPage } from './pages/CoursesPage.jsx';
+import { StudentCareerDetailPage, StudentCareersPage } from './pages/StudentCareersPage.jsx';
 import { DashboardPage } from './pages/DashboardPage.jsx';
 import { EnrollmentsPage } from './pages/EnrollmentsPage.jsx';
 import { LoginPage } from './pages/LoginPage.jsx';
@@ -12,6 +16,9 @@ import { ProfilePage } from './pages/ProfilePage.jsx';
 import { ProgressPage } from './pages/ProgressPage.jsx';
 import { RegisterPage } from './pages/RegisterPage.jsx';
 import { ReportsPage } from './pages/ReportsPage.jsx';
+import { StudentBlogDetailPage, StudentBlogsPage } from './pages/StudentBlogsPage.jsx';
+import { StudentContactPage } from './pages/StudentContactPage.jsx';
+import { SubscriptionsPage } from './pages/SubscriptionsPage.jsx';
 import { StudentCartPage } from './pages/StudentCartPage.jsx';
 import { StudentCheckoutPage } from './pages/StudentCheckoutPage.jsx';
 import { StudentCourseDetailPage } from './pages/StudentCourseDetailPage.jsx';
@@ -73,6 +80,11 @@ export function App() {
           <Route path="learn/checkout/:txRef" element={<StudentCheckoutPage />} />
           <Route path="learn/my-learning" element={<StudentLearningPage />} />
           <Route path="learn/progress" element={<StudentProgressPage />} />
+          <Route path="learn/blogs" element={<StudentBlogsPage />} />
+          <Route path="learn/blogs/:slug" element={<StudentBlogDetailPage />} />
+          <Route path="learn/contact" element={<StudentContactPage />} />
+          <Route path="learn/careers" element={<StudentCareersPage />} />
+          <Route path="learn/careers/:slug" element={<StudentCareerDetailPage />} />
           <Route path="learn/notifications" element={<StudentNotificationsPage />} />
           <Route path="learn/profile" element={<StudentProfileLayout />}>
             <Route index element={<StudentPublicProfileForm />} />
@@ -88,6 +100,10 @@ export function App() {
           <Route index element={<DashboardPage />} />
           <Route path="students" element={<StudentsPage />} />
           <Route path="courses" element={<CoursesPage />} />
+          <Route path="blogs" element={<BlogsPage />} />
+          <Route path="contact" element={<ContactPage />} />
+          <Route path="careers" element={<CareersPage />} />
+          <Route path="subscriptions" element={<SubscriptionsPage />} />
           <Route path="enrollments" element={<EnrollmentsPage />} />
           <Route path="progress" element={<ProgressPage />} />
           <Route path="reports" element={<ReportsPage />} />

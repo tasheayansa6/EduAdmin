@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { roleLabel } from '../../lib/format.js';
+import { useResource } from '../../hooks/useResource.js';
+import { formatDateTime, roleLabel } from '../../lib/format.js';
 import { Avatar } from '../ui.jsx';
 import {
   BellIcon,
@@ -12,9 +14,11 @@ import {
   CloseIcon,
   GridIcon,
   LogoutIcon,
+  MailIcon,
   Mark,
   MenuIcon,
   PanelLeftIcon,
+  PenIcon,
   SearchIcon,
   SettingsIcon,
   ShieldIcon,
@@ -28,6 +32,10 @@ const NAV = [
   { to: '/', label: 'Dashboard', icon: GridIcon, end: true },
   { to: '/students', label: 'Students', icon: UsersIcon },
   { to: '/courses', label: 'Courses', icon: BookIcon },
+  { to: '/blogs', label: 'Blogs', icon: PenIcon },
+  { to: '/contact', label: 'Contact', icon: MailIcon },
+  { to: '/careers', label: 'Careers', icon: ClipboardIcon },
+  { to: '/subscriptions', label: 'Subscriptions', icon: BellIcon },
   { to: '/enrollments', label: 'Enrollments', icon: ClipboardIcon },
   { to: '/progress', label: 'Progress', icon: TrendIcon },
   { to: '/reports', label: 'Reports', icon: ChartIcon },
@@ -38,6 +46,10 @@ const TITLES = {
   '/': 'Admin management',
   '/students': 'Students',
   '/courses': 'Courses',
+  '/blogs': 'Blogs',
+  '/contact': 'Contact Us',
+  '/careers': 'Careers',
+  '/subscriptions': 'Subscriptions',
   '/enrollments': 'Enrollments',
   '/progress': 'Progress',
   '/reports': 'Reports',
@@ -49,12 +61,12 @@ const MOBILE_NAV = [
   { to: '/', label: 'Dashboard', icon: GridIcon, end: true },
   { to: '/students', label: 'Students', icon: UsersIcon },
   { to: '/courses', label: 'Courses', icon: BookIcon },
-  { to: '/reports', label: 'Reports', icon: ChartIcon },
+  { to: '/enrollments', label: 'Enroll', icon: ClipboardIcon },
 ];
 
 function SidebarNav({ user, collapsed, onNavigate }) {
   return (
-    <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Dashboard">
+    <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Dashboard" dir="ltr">
       {!collapsed ? (
         <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Workspace</p>
       ) : null}
@@ -68,15 +80,17 @@ function SidebarNav({ user, collapsed, onNavigate }) {
             title={collapsed ? item.label : undefined}
             onClick={onNavigate}
             className={({ isActive }) =>
-              `nav-link ${collapsed ? 'justify-center px-2' : ''} ${
+              `nav-link flex-row ${collapsed ? 'justify-center px-2' : 'justify-start'} ${
                 isActive
                   ? 'bg-accent/10 text-accent'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-ink'
               }`
             }
           >
-            <Icon />
-            {!collapsed ? <span className="truncate">{item.label}</span> : <span className="sr-only">{item.label}</span>}
+            <span className="grid h-5 w-5 shrink-0 place-items-center [&_svg]:h-5 [&_svg]:w-5" aria-hidden="true">
+              <Icon />
+            </span>
+            {!collapsed ? <span className="min-w-0 flex-1 truncate text-left">{item.label}</span> : <span className="sr-only">{item.label}</span>}
           </NavLink>
         );
       })}
@@ -84,12 +98,29 @@ function SidebarNav({ user, collapsed, onNavigate }) {
   );
 }
 
+const ADMIN_ACTION_LABELS = {
+  'enrollment.created': 'New enrollment',
+  'enrollment.updated': 'Enrollment updated',
+  'enrollment.deleted': 'Enrollment withdrawn',
+  'student.created': 'Student added',
+  'course.published': 'Course published',
+  'course.created': 'Course created',
+  'career.application_received': 'Career application',
+  'contact.message_received': 'Contact message',
+  'subscription.campaign_sent': 'Campaign sent',
+};
+
 function NotificationsMenu() {
   const [open, setOpen] = useState(false);
   const wrapper = useRef(null);
+  const feed = useResource(() => api('/api/v1/dashboard/notifications?limit=12'), []);
+  const items = feed.data?.data?.items ?? [];
+  const summary = feed.data?.data?.summary;
+  const badgeCount = (summary?.newEnrollments || 0) + (summary?.newMessages || 0) + (summary?.newApplications || 0);
 
   useEffect(() => {
     if (!open) return undefined;
+    feed.reload();
     function onPointer(event) {
       if (!wrapper.current?.contains(event.target)) setOpen(false);
     }
@@ -102,34 +133,81 @@ function NotificationsMenu() {
       document.removeEventListener('mousedown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- reload only when opened
 
   return (
     <div ref={wrapper} className="relative">
       <button
         type="button"
-        className="admin-icon-btn"
+        className="admin-icon-btn relative"
         aria-expanded={open}
         aria-controls="admin-notifications"
-        aria-label="Notifications"
+        aria-label={badgeCount ? `Notifications, ${badgeCount} new` : 'Notifications'}
         onClick={() => setOpen((value) => !value)}
       >
         <BellIcon />
+        {badgeCount ? (
+          <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+            {badgeCount > 9 ? '9+' : badgeCount}
+          </span>
+        ) : null}
       </button>
       {open ? (
         <div
           id="admin-notifications"
-          className="absolute right-0 top-full z-40 mt-2 w-80 overflow-hidden rounded-2xl border border-line bg-white shadow-lift"
+          className="absolute right-0 top-full z-40 mt-2 w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-line bg-white shadow-lift"
         >
           <div className="border-b border-line px-4 py-3">
             <p className="text-sm font-semibold text-ink">Notifications</p>
-            <p className="text-xs text-ink-muted">Operational alerts for this workspace</p>
+            <p className="text-xs text-ink-muted">
+              {summary?.newEnrollments
+                ? `${summary.newEnrollments} enrollment${summary.newEnrollments === 1 ? '' : 's'} this week`
+                : 'Enrollments, applications, and messages'}
+            </p>
           </div>
-          <div className="px-4 py-8 text-center">
-            <p className="text-sm font-semibold text-ink">You are all caught up</p>
-            <p className="mt-1 text-sm text-ink-muted">New enrollment and course events will appear here.</p>
-            <Link to="/reports" className="mt-4 inline-flex text-sm font-semibold text-accent hover:text-accent-hover" onClick={() => setOpen(false)}>
-              Open reports
+          {items.length ? (
+            <ul className="max-h-80 overflow-y-auto">
+              {items.map((item) => (
+                <li key={item.id} className="border-b border-line last:border-0">
+                  <Link
+                    to={item.link || '/enrollments'}
+                    className="block px-4 py-3 hover:bg-slate-50"
+                    onClick={() => setOpen(false)}
+                  >
+                    <p className="text-xs font-bold uppercase tracking-wide text-accent">
+                      {ADMIN_ACTION_LABELS[item.action] || item.action}
+                    </p>
+                    <p className="mt-0.5 text-sm font-medium text-ink line-clamp-2">
+                      {item.details || ADMIN_ACTION_LABELS[item.action] || item.action}
+                    </p>
+                    <p className="mt-1 text-xs text-ink-muted">
+                      {item.actorName ? `${item.actorName} · ` : ''}
+                      {formatDateTime(item.createdAt)}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm font-semibold text-ink">You are all caught up</p>
+              <p className="mt-1 text-sm text-ink-muted">New enrollments and course events will appear here.</p>
+            </div>
+          )}
+          <div className="flex border-t border-line">
+            <Link
+              to="/enrollments"
+              className="flex-1 px-4 py-3 text-center text-sm font-semibold text-accent hover:bg-slate-50"
+              onClick={() => setOpen(false)}
+            >
+              Enrollments
+            </Link>
+            <Link
+              to="/reports"
+              className="flex-1 border-l border-line px-4 py-3 text-center text-sm font-semibold text-ink hover:bg-slate-50"
+              onClick={() => setOpen(false)}
+            >
+              Reports
             </Link>
           </div>
         </div>
@@ -234,6 +312,7 @@ export function AppShell() {
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchText, setSearchText] = useState(() => new URLSearchParams(location.search).get('q') || '');
+  const searchTypedRef = useRef(false);
   const title = TITLES[location.pathname] ?? 'EduAdmin';
 
   useEffect(() => {
@@ -242,8 +321,12 @@ export function AppShell() {
   }, [title, location.pathname]);
 
   useEffect(() => {
+    searchTypedRef.current = false;
     if (location.pathname === '/students') {
       setSearchText(new URLSearchParams(location.search).get('q') || '');
+    } else {
+      // Clear header search when leaving Students so nav to Courses/Reports is not bounced back.
+      setSearchText('');
     }
   }, [location.pathname, location.search]);
 
@@ -252,14 +335,26 @@ export function AppShell() {
     const onStudents = location.pathname === '/students';
     const currentQ = onStudents ? (new URLSearchParams(location.search).get('q') || '') : '';
     if (onStudents && trimmed === currentQ) return undefined;
-    if (!onStudents && !trimmed) return undefined;
+    // Only jump to Students when the admin typed in search — not when we clear on route change.
+    if (!onStudents && (!trimmed || !searchTypedRef.current)) return undefined;
+    if (!onStudents && trimmed) {
+      const timer = window.setTimeout(() => {
+        navigate(`/students?q=${encodeURIComponent(trimmed)}`, { replace: true });
+        setMobileOpen(false);
+      }, 280);
+      return () => window.clearTimeout(timer);
+    }
 
     const timer = window.setTimeout(() => {
       navigate(trimmed ? `/students?q=${encodeURIComponent(trimmed)}` : '/students', { replace: true });
-      setMobileOpen(false);
     }, 280);
     return () => window.clearTimeout(timer);
   }, [searchText, location.pathname, location.search, navigate]);
+
+  function onSearchChange(event) {
+    searchTypedRef.current = true;
+    setSearchText(event.target.value);
+  }
 
   useEffect(() => {
     try {
@@ -291,26 +386,33 @@ export function AppShell() {
 
   const sidebar = (
     <>
-      <div className={`flex items-center gap-3 border-b border-line px-4 py-4 ${collapsed ? 'justify-center' : ''}`}>
+      <div
+        dir="ltr"
+        className={`flex flex-row items-center gap-3 border-b border-line px-4 py-4 ${collapsed ? 'justify-center' : 'justify-start'}`}
+      >
         <Mark />
         {!collapsed ? (
-          <div className="min-w-0">
+          <div className="min-w-0 text-left">
             <p className="truncate font-display text-base font-bold leading-none text-ink">EduAdmin</p>
             <p className="mt-1 truncate text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">Admin management</p>
           </div>
         ) : null}
       </div>
       <SidebarNav user={user} collapsed={collapsed} onNavigate={() => setMobileOpen(false)} />
-      <div className="border-t border-line p-3">
+      <div className="border-t border-line p-3" dir="ltr">
         <button
           type="button"
-          className={`admin-icon-btn w-full ${collapsed ? '' : 'sm:justify-start sm:gap-2 sm:px-3'}`}
+          className={`inline-flex h-10 w-full flex-row items-center rounded-xl border border-line bg-white text-ink-muted shadow-soft hover:bg-slate-50 hover:text-ink ${
+            collapsed ? 'justify-center px-0' : 'justify-start gap-2 px-3'
+          }`}
           onClick={() => setCollapsed((value) => !value)}
           aria-pressed={collapsed}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <PanelLeftIcon />
-          {!collapsed ? <span className="hidden text-sm font-semibold sm:inline">Collapse</span> : null}
+          <span className="grid h-5 w-5 shrink-0 place-items-center [&_svg]:h-5 [&_svg]:w-5" aria-hidden="true">
+            <PanelLeftIcon />
+          </span>
+          {!collapsed ? <span className="text-sm font-semibold">Collapse</span> : null}
         </button>
       </div>
     </>
@@ -348,10 +450,10 @@ export function AppShell() {
         {/* Mobile overlay menu (no slide animation) */}
         {mobileOpen ? (
           <aside className="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-line bg-white lg:hidden">
-            <div className="flex items-center justify-between border-b border-line px-4 py-4">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between border-b border-line px-4 py-4" dir="ltr">
+              <div className="flex flex-row items-center gap-3">
                 <Mark />
-                <div>
+                <div className="text-left">
                   <p className="font-display text-base font-bold leading-none text-ink">EduAdmin</p>
                   <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">Admin management</p>
                 </div>
@@ -393,7 +495,7 @@ export function AppShell() {
                     className="field pl-10"
                     placeholder="Type to search students"
                     value={searchText}
-                    onChange={(event) => setSearchText(event.target.value)}
+                    onChange={onSearchChange}
                     autoComplete="off"
                   />
                 </div>
@@ -413,7 +515,7 @@ export function AppShell() {
                   className="field pl-10"
                   placeholder="Type to search students"
                   value={searchText}
-                  onChange={(event) => setSearchText(event.target.value)}
+                  onChange={onSearchChange}
                   autoComplete="off"
                 />
               </div>

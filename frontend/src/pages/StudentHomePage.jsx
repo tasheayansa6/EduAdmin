@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -11,7 +12,14 @@ import {
   UserIcon,
 } from '../components/icons.jsx';
 import { PaceRing } from '../student/charts.jsx';
-import { currentEnrollments, useAllCourses, useDocumentTitle, useStudentData } from '../student/StudentData.jsx';
+import { AILG_MEMBERSHIP_URL } from '../student/exploreMenu.js';
+import {
+  currentEnrollments,
+  useAllCourses,
+  useDocumentTitle,
+  useStore,
+  useStudentData,
+} from '../student/StudentData.jsx';
 import {
   CardGridSkeleton,
   CourseCover,
@@ -27,6 +35,8 @@ function FeatureResume({ enrollment }) {
   const lessonsDone = enrollment.lessonsCompleted ?? 0;
   const lessonsTotal = enrollment.lessonsTotal;
   const resume = percent <= 0 ? 'Start learning' : 'Continue learning';
+  const imageUrl = enrollment.courseImageUrl || enrollment.imageUrl || null;
+  const [imageBroken, setImageBroken] = useState(false);
 
   return (
     <article id="active-hero" className="relative overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
@@ -101,11 +111,20 @@ function FeatureResume({ enrollment }) {
         </div>
 
         <div className="relative min-h-[14rem] bg-sand lg:col-span-5 lg:min-h-full">
-          <CourseCover
-            category={enrollment.categoryName}
-            title={enrollment.courseTitle}
-            className="!aspect-auto absolute inset-0 h-full w-full"
-          />
+          {imageUrl && !imageBroken ? (
+            <img
+              src={imageUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+              onError={() => setImageBroken(true)}
+            />
+          ) : (
+            <CourseCover
+              category={enrollment.categoryName}
+              title={enrollment.courseTitle}
+              className="!aspect-auto absolute inset-0 h-full w-full"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-brand/70 via-brand/20 to-mint-soft/15" />
           <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/95 p-3.5 shadow-soft backdrop-blur-sm sm:left-auto sm:right-4 sm:w-64">
             <p className="text-[10px] font-bold uppercase tracking-wide text-charcoal-muted">
@@ -125,9 +144,17 @@ function FeatureResume({ enrollment }) {
 }
 
 function CuratedCard({ course }) {
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { enroll } = useStudentData();
+  const { enrollFree, afterEnrollment } = useStore();
+  const [busy, setBusy] = useState(false);
   const to = course.local || !course.slug
     ? `/learn/my-courses/${course.id}`
     : `/learn/courses/${course.slug}`;
+  const learnTo = course.local || !course.slug
+    ? `/learn/my-courses/${course.id}/learn`
+    : `/learn/courses/${course.slug}/learn`;
   const enrolled = course.enrollment && course.enrollment.status !== 'withdrawn';
   const percent = course.enrollment?.percent ?? 0;
   const modules = course.lessonCount
@@ -137,6 +164,33 @@ function CuratedCard({ course }) {
   const about = String(course.description || course.subtitle || '').trim();
   const price = Number(course.price ?? 0);
   const isFree = course.isFree || price <= 0;
+  const ctaLabel = enrolled ? 'Continue' : course.isComingSoon ? 'Coming Soon' : isFree ? 'Enroll' : 'Buy Now';
+
+  async function onPrimary() {
+    if (enrolled) {
+      navigate(learnTo);
+      return;
+    }
+    if (course.isComingSoon) return;
+    if (!isFree) {
+      navigate(`${to}?buy=1`);
+      return;
+    }
+    setBusy(true);
+    try {
+      if (course.local || !course.slug) {
+        await enroll(course.id ?? course.courseId);
+        await afterEnrollment();
+      } else {
+        await enrollFree(course.slug);
+      }
+      toast.success(`Enrolled in ${course.title}. It is now in My learning.`);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-hairline">
@@ -197,12 +251,14 @@ function CuratedCard({ course }) {
             >
               Details
             </Link>
-            <Link
-              to={enrolled ? to : `${to}?buy=1`}
-              className="inline-flex items-center justify-center gap-1 rounded-2xl bg-brand px-3.5 py-2.5 text-sm font-bold text-white shadow-soft hover:bg-brand-hover"
+            <button
+              type="button"
+              disabled={busy || course.isComingSoon}
+              onClick={onPrimary}
+              className="inline-flex items-center justify-center gap-1 rounded-2xl bg-brand px-3.5 py-2.5 text-sm font-bold text-white shadow-soft hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {enrolled ? 'Continue' : 'Buy Now'}
-            </Link>
+              {busy ? 'Enrolling…' : ctaLabel}
+            </button>
           </div>
         </div>
       </div>
@@ -212,6 +268,7 @@ function CuratedCard({ course }) {
 
 function HomeBody({ data }) {
   const { user } = useAuth();
+  const { favorites } = useStore();
   const firstName = user?.name?.trim().split(/\s+/)[0] || 'there';
   const [category, setCategory] = useState('All');
   const [pathway, setPathway] = useState('recommended');
@@ -220,6 +277,7 @@ function HomeBody({ data }) {
   const [sort, setSort] = useState('relevance');
 
   const current = currentEnrollments(data);
+  const savedReady = (favorites || []).filter((item) => !item.unavailable && !item.enrollment);
   const active = current
     .filter((row) => row.status === 'active')
     .sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0));
@@ -384,16 +442,29 @@ function HomeBody({ data }) {
       ) : (
         <StudentEmpty
           title="You have not enrolled in a course yet"
-          message="Browse curated courses below, or open all courses."
-          action={<Link to="/learn/courses" className="btn-brand">Explore courses</Link>}
+          message={
+            savedReady.length
+              ? 'You liked some courses — open Favorites and tap Enroll, or pick a course below and tap Enroll.'
+              : 'Scroll to curated courses below and tap Enroll (free) or Buy Now (paid). Liking a course only saves it — you still need to enroll.'
+          }
+          action={(
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Link to="/learn/courses" className="btn-brand">Enroll from catalog</Link>
+              {savedReady.length ? (
+                <Link to="/learn/favorites" className="btn-outline">
+                  Enroll from favorites ({savedReady.length})
+                </Link>
+              ) : null}
+            </div>
+          )}
         />
       )}
 
-      <section aria-labelledby="curated-heading" className="space-y-4">
+      <section aria-labelledby="curated-heading" className="scroll-mt-24 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">Course catalog</p>
-            <h2 id="curated-heading" className="mt-1 font-display text-4xl font-extrabold tracking-tight text-charcoal md:text-5xl">
+            <h2 id="curated-heading" className="mt-1 scroll-mt-24 font-display text-4xl font-extrabold tracking-tight text-charcoal md:text-5xl">
               Curated for your path
             </h2>
             <p className="mt-1 text-xl text-charcoal-muted">
@@ -618,6 +689,34 @@ function HomeBody({ data }) {
               >
                 Open progress
               </Link>
+            </section>
+
+            <section
+              aria-labelledby="membership-heading"
+              className="overflow-hidden rounded-2xl border border-hairline bg-[#fbfcf9] shadow-soft"
+            >
+              <div className="border-b border-hairline/80 bg-gradient-to-r from-brand/[0.06] via-transparent to-wheat/20 px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand">
+                  AILG membership
+                </p>
+              </div>
+              <div className="space-y-3 p-4">
+                <h3 id="membership-heading" className="font-display text-xl font-extrabold text-charcoal">
+                  Join the membership
+                </h3>
+                <p className="text-sm leading-relaxed text-charcoal-muted">
+                  Mentorship, academy access, and field programs from Agricultural Leadership &amp; Investment Group.
+                </p>
+                <a
+                  href={AILG_MEMBERSHIP_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-wheat px-4 text-sm font-bold text-brand shadow-soft hover:bg-wheat-hover"
+                >
+                  Join membership
+                  <ArrowRightIcon />
+                </a>
+              </div>
             </section>
           </aside>
         </div>

@@ -109,3 +109,65 @@ export async function getDashboard() {
     })),
   };
 }
+
+const ADMIN_FEED_ACTIONS = [
+  'enrollment.created',
+  'enrollment.updated',
+  'enrollment.deleted',
+  'student.created',
+  'course.published',
+  'course.created',
+  'career.application_received',
+  'contact.message_received',
+  'subscription.campaign_sent',
+];
+
+function adminNotificationLink(action) {
+  if (action.startsWith('enrollment.')) return '/enrollments';
+  if (action.startsWith('student.')) return '/students';
+  if (action.startsWith('course.')) return '/courses';
+  if (action.startsWith('career.')) return '/careers';
+  if (action.startsWith('contact.')) return '/contact';
+  if (action.startsWith('subscription.')) return '/subscriptions';
+  if (action.startsWith('blog.')) return '/blogs';
+  return '/reports';
+}
+
+/** Recent operational events for the admin header bell (enrollments first). */
+export async function getAdminNotifications(limit = 20) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 50);
+  const placeholders = ADMIN_FEED_ACTIONS.map(() => '?').join(', ');
+  const [rows] = await pool.query(
+    `SELECT a.id, a.action, a.details, a.created_at, u.name AS actor_name
+     FROM activity_logs a
+     LEFT JOIN users u ON u.id = a.actor_id
+     WHERE a.action IN (${placeholders})
+     ORDER BY a.created_at DESC, a.id DESC
+     LIMIT ?`,
+    [...ADMIN_FEED_ACTIONS, safeLimit],
+  );
+
+  const [[counts]] = await pool.query(
+    `SELECT
+       (SELECT COUNT(*) FROM enrollments WHERE status = 'active'
+          AND enrolled_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)) AS new_enrollments,
+       (SELECT COUNT(*) FROM contact_messages WHERE status = 'new') AS new_messages,
+       (SELECT COUNT(*) FROM career_applications WHERE status = 'new') AS new_applications`,
+  );
+
+  return {
+    items: rows.map((row) => ({
+      id: row.id,
+      action: row.action,
+      details: row.details,
+      createdAt: row.created_at,
+      actorName: row.actor_name,
+      link: adminNotificationLink(row.action),
+    })),
+    summary: {
+      newEnrollments: Number(counts.new_enrollments),
+      newMessages: Number(counts.new_messages),
+      newApplications: Number(counts.new_applications),
+    },
+  };
+}
