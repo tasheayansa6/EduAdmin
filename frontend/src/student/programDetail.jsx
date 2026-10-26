@@ -13,12 +13,12 @@ export const DEFAULT_PROCESS = [
   {
     step: 2,
     title: 'Learn your way',
-    description: 'Watch video lessons, read the guides, and download materials when you need them offline.',
+    description: 'Watch the video lesson, read the on-page guides, and download the PDFs when you need them offline.',
   },
   {
     step: 3,
     title: 'Apply with your team',
-    description: 'Use the module outline to run short sessions with your board or farm group; materials are written to be shared.',
+    description: 'Use the module outline to run short sessions with your board or fattening group; materials are written to be shared.',
   },
 ];
 
@@ -106,28 +106,35 @@ function HeroMedia({ course, category }) {
   );
 }
 
-export function ProgramHero({ course, category, priceLabel, isActive }) {
+export function ProgramHero({ course, category, priceLabel, isActive, badge = null }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-charcoal shadow-soft">
+    <div className="relative mt-2 overflow-hidden rounded-3xl bg-charcoal shadow-soft">
       <div className="relative h-64 lg:h-96">
         <HeroMedia course={course} category={category} />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" aria-hidden="true" />
         {priceLabel ? (
-          <div className="absolute left-4 top-4 rounded-xl bg-brand px-4 py-2 text-lg font-bold text-white shadow-lg">
+          <div className="absolute left-4 top-4 rounded-xl bg-[#43AA5C] px-4 py-2 text-lg font-bold text-white shadow-lg">
             {priceLabel}
           </div>
         ) : null}
         {isActive ? (
-          <div className="absolute right-4 top-4 rounded-full bg-brand px-3 py-1.5 text-sm font-medium text-white">
+          <div className="absolute right-4 top-4 rounded-full bg-[#43AA5C] px-3 py-1.5 text-sm font-medium text-white">
             Active
           </div>
         ) : null}
         <div className="absolute bottom-6 left-6 right-6">
-          {category ? (
-            <span className="inline-block rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-brand backdrop-blur">
-              {category}
-            </span>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            {category ? (
+              <span className="inline-block rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-brand backdrop-blur">
+                {category}
+              </span>
+            ) : null}
+            {badge ? (
+              <span className="inline-block rounded-full bg-brand/90 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-white backdrop-blur">
+                {badge}
+              </span>
+            ) : null}
+          </div>
           <h1 className="mt-3 text-3xl font-bold text-white lg:text-4xl">{course.title}</h1>
           {course.subtitle ? <p className="mt-2 max-w-3xl text-base text-white/85 lg:text-lg">{course.subtitle}</p> : null}
         </div>
@@ -270,34 +277,17 @@ export function ProgramDetailChrome({ course, category, children, related, relat
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <CourseBackButton
-          className="!bg-white !text-brand !ring-hairline hover:!bg-canvas"
-        />
-        <nav aria-label="Breadcrumb" className="text-sm">
-          <ol className="flex flex-wrap items-center gap-1.5 text-charcoal-muted">
-            <li>
-              <Link to="/learn/courses" className="font-semibold text-brand hover:underline">Explore courses</Link>
-            </li>
-            {category ? (
-              <>
-                <li aria-hidden="true">/</li>
-                <li>
-                  <Link to={`/learn/courses?category=${encodeURIComponent(category)}`} className="font-semibold text-charcoal hover:underline">
-                    {category}
-                  </Link>
-                </li>
-              </>
-            ) : null}
-          </ol>
-        </nav>
-      </div>
+      {/* Matches AilgAgro /program/:id — text back link only */}
+      <CourseBackButton
+        className="!rounded-none !bg-transparent !px-0 !py-0 !font-bold !text-brand !shadow-none !ring-0 hover:!bg-transparent hover:!text-brand-hover"
+      />
 
       <ProgramHero
         course={course}
         category={category}
         priceLabel={priceLabel}
         isActive={program.isActive}
+        badge={course.badge || null}
       />
 
       {children({ program, priceLabel })}

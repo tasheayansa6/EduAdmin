@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api, getToken } from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatDate, statusLabel } from '../lib/format.js';
@@ -45,11 +45,12 @@ function PreviewPanel({ course, lesson, playerRef }) {
   );
 }
 
-function PurchaseCard({ course, program }) {
+function PurchaseCard({ course, program, buyIntent = false, onBuyIntentHandled }) {
   const { cart, setInCart, setFavorite, enrollFree, checkout } = useStore();
   const toast = useToast();
   const [pending, setPending] = useState(null);
   const enrollment = course.enrollment;
+  const buyStarted = useRef(false);
 
   async function run(kind, action, message) {
     setPending(kind);
@@ -63,8 +64,26 @@ function PurchaseCard({ course, program }) {
     }
   }
 
+  useEffect(() => {
+    if (!buyIntent || buyStarted.current || enrollment) return;
+    if (!getToken()) return;
+    buyStarted.current = true;
+    onBuyIntentHandled?.();
+    if (course.isFree) {
+      run('enroll', () => enrollFree(course.slug), `Enrolled in ${course.title}.`);
+      return;
+    }
+    if (cart.paymentsEnabled) {
+      run('pay', () => checkout([course]));
+    } else {
+      run('cart', () => setInCart(course, true), 'Added to your cart. Open Cart to pay.');
+    }
+  // Intentional: fire once when arriving with ?buy=1
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buyIntent, enrollment]);
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-hairline bg-white p-6 shadow-soft lg:sticky lg:top-24 lg:p-8">
+    <div id="program-overview" className="overflow-hidden rounded-2xl border border-hairline bg-white p-6 shadow-soft lg:sticky lg:top-24 lg:p-8">
       <h2 className="text-xl font-bold tracking-tight text-charcoal">Program overview</h2>
       {enrollment ? (
         <div className="mt-5 space-y-4">
@@ -231,6 +250,8 @@ function Curriculum({ sections, current, onPlay }) {
 
 function DetailBody({ detail }) {
   const { catalog } = useStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const buyIntent = searchParams.get('buy') === '1';
   const live = catalog.data?.find((item) => item.slug === detail.slug);
   const course = live ? { ...detail, enrollment: live.enrollment, inCart: live.inCart, favorite: live.favorite } : detail;
   const previews = (course.sections ?? []).flatMap((section) => section.lessons).filter((lesson) => lesson.isPreview && lesson.videoUrl);
@@ -242,6 +263,11 @@ function DetailBody({ detail }) {
     setLesson(next);
     playerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+
+  useEffect(() => {
+    if (!buyIntent) return;
+    document.getElementById('program-overview')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [buyIntent]);
 
   const others = (catalog.data ?? []).filter((item) => item.slug !== course.slug);
   const sameCategory = others.filter((item) => item.category === course.category);
@@ -291,7 +317,15 @@ function DetailBody({ detail }) {
           </div>
 
           <aside className="lg:col-span-1" aria-label="Enroll in this course">
-            <PurchaseCard course={course} program={program} />
+            <PurchaseCard
+              course={course}
+              program={program}
+              buyIntent={buyIntent}
+              onBuyIntentHandled={() => {
+                searchParams.delete('buy');
+                setSearchParams(searchParams, { replace: true });
+              }}
+            />
           </aside>
         </div>
       )}
