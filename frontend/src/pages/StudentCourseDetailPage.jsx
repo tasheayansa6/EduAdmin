@@ -23,7 +23,6 @@ import {
   ProgramModules,
   ProgramOutcomes,
   ProgramOverviewMeta,
-  ProgramProcess,
   SidebarPreview,
 } from '../student/programDetail.jsx';
 
@@ -302,7 +301,6 @@ function DetailBody({ detail }) {
             <Curriculum sections={course.sections ?? []} current={lesson} onPlay={onPlay} />
             <PreviewPanel course={course} lesson={lesson} playerRef={playerRef} />
             <ProgramAudience items={program.audience} />
-            <ProgramProcess steps={program.process} />
           </div>
 
           <aside className="lg:col-span-1" aria-label="Enroll in this course">

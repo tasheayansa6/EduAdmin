@@ -24,7 +24,6 @@ import {
   ProgramModules,
   ProgramOutcomes,
   ProgramOverviewMeta,
-  ProgramProcess,
   SidebarPreview,
 } from '../student/programDetail.jsx';
 
@@ -249,7 +248,6 @@ function DetailBody({ data, courseId }) {
             <ProgramMaterials materials={program.materials} />
             <Outline sections={course.sections} />
             <ProgramAudience items={program.audience} />
-            <ProgramProcess steps={program.process} />
 
             {course.enrollment && course.enrollment.status !== 'withdrawn' ? (
               <ProgramCard id="record-title" title="Your learning record">

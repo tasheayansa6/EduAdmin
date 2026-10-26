@@ -67,7 +67,7 @@ export function normalizeProgram(course) {
       title: item.title || `Step ${index + 1}`,
       description: item.description || '',
     }))
-    : DEFAULT_PROCESS;
+    : [];
 
   return {
     category,

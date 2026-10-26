@@ -9,8 +9,6 @@ import {
   StudentEmpty,
   formatPrice,
 } from '../student/components.jsx';
-import { DEFAULT_PROCESS } from '../student/programDetail.jsx';
-
 const SORTS = {
   newest: { label: 'Newest', compare: (a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0) },
   'title-asc': { label: 'Title A–Z', compare: (a, b) => a.title.localeCompare(b.title) },
@@ -112,21 +110,6 @@ function FeaturedProgram({ course }) {
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div className="mt-6">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-charcoal-muted">How it works</h3>
-            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-charcoal-muted">
-              {DEFAULT_PROCESS.map((step) => (
-                <li key={step.step}>
-                  <span className="font-semibold text-charcoal">{step.title}</span>
-                  {' — '}
-                  {step.description.replace(/^Pay the one-time tuition and unlock the full program in your account—no hidden modules or surprise fees\.$/, 'Pay the one-time tuition and unlock the full program')
-                    .replace(/^Watch the video lesson, read the on-page guides, and download the PDFs when you need them offline\.$/, 'Watch video, read guides, download PDFs offline')
-                    .replace(/^Use the module outline to run short sessions with your board or fattening group; materials are written to be shared\.$/, 'Run short sessions with your board or farm group')}
-                </li>
-              ))}
-            </ol>
           </div>
 
           <div className="mt-8">
