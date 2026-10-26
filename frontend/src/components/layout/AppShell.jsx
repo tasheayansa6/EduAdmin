@@ -233,12 +233,33 @@ export function AppShell() {
     }
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchText, setSearchText] = useState(() => new URLSearchParams(location.search).get('q') || '');
   const title = TITLES[location.pathname] ?? 'EduAdmin';
 
   useEffect(() => {
     document.title = `${title} · EduAdmin`;
     setMobileOpen(false);
   }, [title, location.pathname]);
+
+  useEffect(() => {
+    if (location.pathname === '/students') {
+      setSearchText(new URLSearchParams(location.search).get('q') || '');
+    }
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    const trimmed = searchText.trim();
+    const onStudents = location.pathname === '/students';
+    const currentQ = onStudents ? (new URLSearchParams(location.search).get('q') || '') : '';
+    if (onStudents && trimmed === currentQ) return undefined;
+    if (!onStudents && !trimmed) return undefined;
+
+    const timer = window.setTimeout(() => {
+      navigate(trimmed ? `/students?q=${encodeURIComponent(trimmed)}` : '/students', { replace: true });
+      setMobileOpen(false);
+    }, 280);
+    return () => window.clearTimeout(timer);
+  }, [searchText, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     try {
@@ -260,14 +281,6 @@ export function AppShell() {
   async function onLogout() {
     await logout();
     navigate('/login', { replace: true });
-  }
-
-  function onSearch(event) {
-    event.preventDefault();
-    const query = new FormData(event.currentTarget).get('q');
-    const text = String(query || '').trim();
-    navigate(text ? `/students?q=${encodeURIComponent(text)}` : '/students');
-    setMobileOpen(false);
   }
 
   const today = new Date().toLocaleDateString(undefined, {
@@ -369,7 +382,7 @@ export function AppShell() {
                 <p className="hidden text-xs text-ink-muted sm:block">{today}</p>
               </div>
               <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
-                <form onSubmit={onSearch} className="relative hidden min-w-0 max-w-md flex-1 md:block" role="search">
+                <div className="relative hidden min-w-0 max-w-md flex-1 md:block" role="search">
                   <label className="sr-only" htmlFor="shell-search">Search students</label>
                   <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-ink-muted [&_svg]:h-4 [&_svg]:w-4">
                     <SearchIcon />
@@ -378,14 +391,17 @@ export function AppShell() {
                     id="shell-search"
                     name="q"
                     className="field pl-10"
-                    placeholder="Search students"
+                    placeholder="Type to search students"
+                    value={searchText}
+                    onChange={(event) => setSearchText(event.target.value)}
+                    autoComplete="off"
                   />
-                </form>
+                </div>
                 <NotificationsMenu />
                 <ProfileMenu user={user} onLogout={onLogout} />
               </div>
             </div>
-            <form onSubmit={onSearch} className="border-t border-line px-4 py-3 md:hidden" role="search">
+            <div className="border-t border-line px-4 py-3 md:hidden" role="search">
               <label className="sr-only" htmlFor="shell-search-mobile">Search students</label>
               <div className="relative">
                 <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-ink-muted [&_svg]:h-4 [&_svg]:w-4">
@@ -395,10 +411,13 @@ export function AppShell() {
                   id="shell-search-mobile"
                   name="q"
                   className="field pl-10"
-                  placeholder="Search students"
+                  placeholder="Type to search students"
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                  autoComplete="off"
                 />
               </div>
-            </form>
+            </div>
           </header>
           <main id="main" className="px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">
             <Outlet />

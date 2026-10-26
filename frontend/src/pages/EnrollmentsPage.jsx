@@ -60,18 +60,14 @@ export function EnrollmentsPage() {
         )}
       />
 
-      <Filters
-        onSubmit={(event) => {
-          event.preventDefault();
-          list.update({ q: list.draft.trim(), status: list.status, courseId: list.courseId });
-        }}
-      >
+      <Filters onSubmit={(event) => event.preventDefault()}>
         <Field id="enrollment-search" label="Search" className="min-w-[16rem] flex-1">
           <TextInput
             id="enrollment-search"
             value={list.draft}
             onChange={(event) => list.setDraft(event.target.value)}
-            placeholder="Student name, email, or course"
+            placeholder="Type to search student or course"
+            autoComplete="off"
           />
         </Field>
         <Field id="enrollment-course" label="Course">
@@ -98,7 +94,6 @@ export function EnrollmentsPage() {
             <option value="withdrawn">Withdrawn</option>
           </SelectInput>
         </Field>
-        <button type="submit" className="btn-primary">Search</button>
       </Filters>
 
       <DataPanel

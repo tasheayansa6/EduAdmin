@@ -153,13 +153,15 @@ export function CoursesPage() {
       <PageIntro action={<button type="button" className="btn-primary" onClick={() => setEditing(emptyCourse)}>New course</button>}>
         Build student courses: cover image, outcomes, outline, price, and publish. Students see the same details on Explore and the course page.
       </PageIntro>
-      <Filters onSubmit={(event) => {
-        event.preventDefault();
-        list.update({ q: list.draft.trim(), status: list.status, categoryId: list.categoryId });
-      }}
-      >
+      <Filters onSubmit={(event) => event.preventDefault()}>
         <Field id="course-search" label="Search" className="min-w-[16rem] flex-1">
-          <TextInput id="course-search" value={list.draft} onChange={(event) => list.setDraft(event.target.value)} placeholder="Title or description" />
+          <TextInput
+            id="course-search"
+            value={list.draft}
+            onChange={(event) => list.setDraft(event.target.value)}
+            placeholder="Type to search title or description"
+            autoComplete="off"
+          />
         </Field>
         <Field id="course-category" label="Category">
           <SelectInput id="course-category" value={list.categoryId} onChange={(event) => list.update({ q: list.q, status: list.status, categoryId: event.target.value })}>
@@ -174,7 +176,6 @@ export function CoursesPage() {
             <option value="draft">Draft</option>
           </SelectInput>
         </Field>
-        <button type="submit" className="btn-primary">Search</button>
       </Filters>
       <DataPanel
         status={resource.status}

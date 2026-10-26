@@ -240,12 +240,27 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
     : '/learn/courses';
   const searchParam = location.pathname.startsWith('/learn/my-learning') ? 'find' : 'q';
   const nextLogin = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+  const [searchText, setSearchText] = useState(
+    () => new URLSearchParams(location.search).get(searchParam) || '',
+  );
 
-  function onSearch(event) {
-    event.preventDefault();
-    const q = String(new FormData(event.currentTarget).get('q') || '').trim();
-    navigate(q ? `${searchTo}?${searchParam}=${encodeURIComponent(q)}` : searchTo);
-  }
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(location.search).get(searchParam) || '';
+    setSearchText(fromUrl);
+  }, [location.pathname, location.search, searchParam]);
+
+  useEffect(() => {
+    const trimmed = searchText.trim();
+    const onTarget = location.pathname === searchTo || location.pathname.startsWith(`${searchTo}/`);
+    const current = onTarget ? (new URLSearchParams(location.search).get(searchParam) || '') : '';
+    if (onTarget && trimmed === current) return undefined;
+    if (!onTarget && !trimmed) return undefined;
+
+    const timer = window.setTimeout(() => {
+      navigate(trimmed ? `${searchTo}?${searchParam}=${encodeURIComponent(trimmed)}` : searchTo, { replace: true });
+    }, 280);
+    return () => window.clearTimeout(timer);
+  }, [searchText, location.pathname, location.search, navigate, searchTo, searchParam]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-hairline/80 bg-[#fbfcf9]/95 backdrop-blur supports-[backdrop-filter]:bg-[#fbfcf9]/90">
@@ -270,13 +285,22 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
             </NavLink>
           ))}
         </nav>
-        <form onSubmit={onSearch} className="relative ml-auto hidden max-w-xl flex-1 md:block" role="search">
+        <div className="relative ml-auto hidden max-w-xl flex-1 md:block" role="search">
           <label className="sr-only" htmlFor="student-shell-search">Search for anything</label>
           <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4">
             <SearchIcon />
           </span>
-          <input id="student-shell-search" name="q" className="s-field rounded-full border-transparent bg-white pl-10 shadow-soft" placeholder="Search for anything" />
-        </form>
+          <input
+            id="student-shell-search"
+            name="q"
+            type="search"
+            className="s-field rounded-full border-transparent bg-white pl-10 shadow-soft"
+            placeholder="Type to search courses"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            autoComplete="off"
+          />
+        </div>
         <div className="ml-auto flex items-center gap-0.5 md:ml-2">
           <Link to={searchTo} className="icon-btn md:hidden" aria-label="Search">
             <SearchIcon />

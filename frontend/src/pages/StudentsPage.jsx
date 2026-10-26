@@ -39,9 +39,15 @@ export function StudentsPage() {
       <PageIntro action={<button type="button" className="btn-primary" onClick={() => setCreating(true)}>Add student</button>}>
         Create student accounts, then update a name, email, or status.
       </PageIntro>
-      <Filters onSubmit={(event) => { event.preventDefault(); list.update({ q: list.draft.trim(), status: list.status }); }}>
+      <Filters onSubmit={(event) => event.preventDefault()}>
         <Field id="student-search" label="Search" className="min-w-[16rem] flex-1">
-          <TextInput id="student-search" value={list.draft} onChange={(event) => list.setDraft(event.target.value)} placeholder="Name or email" />
+          <TextInput
+            id="student-search"
+            value={list.draft}
+            onChange={(event) => list.setDraft(event.target.value)}
+            placeholder="Type to search name or email"
+            autoComplete="off"
+          />
         </Field>
         <Field id="student-status" label="Status">
           <SelectInput id="student-status" value={list.status} onChange={(event) => list.update({ q: list.q, status: event.target.value })}>
@@ -51,7 +57,6 @@ export function StudentsPage() {
             <option value="suspended">Suspended</option>
           </SelectInput>
         </Field>
-        <button type="submit" className="btn-primary">Search</button>
       </Filters>
       <DataPanel
         status={resource.status}

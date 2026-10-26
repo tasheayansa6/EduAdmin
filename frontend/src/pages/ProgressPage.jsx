@@ -51,18 +51,14 @@ export function ProgressPage() {
         )}
       />
 
-      <Filters
-        onSubmit={(event) => {
-          event.preventDefault();
-          list.update({ q: list.draft.trim(), status: list.status, courseId: list.courseId });
-        }}
-      >
+      <Filters onSubmit={(event) => event.preventDefault()}>
         <Field id="progress-search" label="Search" className="min-w-[16rem] flex-1">
           <TextInput
             id="progress-search"
             value={list.draft}
             onChange={(event) => list.setDraft(event.target.value)}
-            placeholder="Student or course"
+            placeholder="Type to search student or course"
+            autoComplete="off"
           />
         </Field>
         <Field id="progress-course" label="Course">
@@ -89,7 +85,6 @@ export function ProgressPage() {
             <option value="completed">Completed</option>
           </SelectInput>
         </Field>
-        <button type="submit" className="btn-primary">Search</button>
       </Filters>
 
       <DataPanel

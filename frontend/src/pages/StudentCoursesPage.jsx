@@ -25,28 +25,25 @@ const SHOW = {
 };
 
 function SearchBox({ value, onSearch }) {
-  function onSubmit(event) {
-    event.preventDefault();
-    onSearch(String(new FormData(event.currentTarget).get('q') || '').trim());
-  }
   return (
-    <form onSubmit={onSubmit} role="search" className="mx-auto w-full max-w-xl">
+    <div role="search" className="mx-auto w-full max-w-xl">
       <label htmlFor="course-search" className="sr-only">Search courses</label>
       <div className="relative">
         <span className="pointer-events-none absolute inset-y-0 left-3.5 grid place-items-center text-charcoal-muted [&_svg]:h-[18px] [&_svg]:w-[18px]">
           <SearchIcon />
         </span>
         <input
-          key={value}
           id="course-search"
           name="q"
           type="search"
-          defaultValue={value}
-          placeholder="Search by title, topic, or instructor"
+          value={value}
+          onChange={(event) => onSearch(event.target.value)}
+          placeholder="Type to search by title, topic, or instructor"
+          autoComplete="off"
           className="w-full rounded-full border border-hairline bg-white py-2.5 pl-10 pr-4 text-sm text-charcoal shadow-soft placeholder:text-charcoal-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
         />
       </div>
-    </form>
+    </div>
   );
 }
 
