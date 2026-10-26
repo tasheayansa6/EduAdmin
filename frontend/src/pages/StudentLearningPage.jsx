@@ -294,7 +294,7 @@ function LearningBody({ data }) {
       visible = [...visible].sort((a, b) => String(a.courseTitle).localeCompare(String(b.courseTitle)));
     } else if (sort === 'progress') {
       visible = [...visible].sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0));
-    } else if (sort === 'deadlines') {
+    } else if (sort === 'resume') {
       visible = [...visible].sort((a, b) => (a.percent ?? 0) - (b.percent ?? 0));
     } else {
       visible = [...visible].sort((a, b) => new Date(b.enrolledAt || 0) - new Date(a.enrolledAt || 0) || (b.percent ?? 0) - (a.percent ?? 0));
@@ -455,7 +455,7 @@ function LearningBody({ data }) {
                 >
                   <option value="recent">Recently Accessed</option>
                   <option value="progress">Highest Progress</option>
-                  <option value="deadlines">Upcoming Deadlines</option>
+                  <option value="resume">Needs attention</option>
                   <option value="title">Title A–Z</option>
                 </select>
                 <span className="pointer-events-none absolute inset-y-0 right-2.5 grid place-items-center text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4">

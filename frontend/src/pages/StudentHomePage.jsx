@@ -283,9 +283,10 @@ function HomeBody({ data }) {
   const ects = Math.round(completed.length * 6 + active.length * 2.5 + 40) || 112;
   const unitsDone = featured ? Math.min(4, Math.max(1, Math.ceil((featured.percent || 20) / 25))) : 3;
   const pathwayPct = Math.min(100, Math.round(((completed.length + active.length * 0.4) / Math.max(8, completed.length + active.length + 3)) * 100)) || 74;
-  const deadlines = active.filter((row) => (row.percent ?? 0) < 85).slice(0, 3);
+  const continueLearning = active
+    .filter((row) => (row.percent ?? 0) < 100)
+    .slice(0, 3);
   const left = featured ? lessonsLeft(featured.percent) : null;
-  const dueSoon = Math.min(2, deadlines.length);
 
   const pathwaySteps = [
     ...completed.slice(0, 2).map((row) => ({
@@ -520,47 +521,50 @@ function HomeBody({ data }) {
           </div>
 
           <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
-            {deadlines.length ? (
+            {continueLearning.length ? (
               <section className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-hairline">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-lg font-extrabold text-charcoal">Upcoming Deadlines</h3>
-                  {dueSoon ? (
-                    <span className="rounded-full bg-wheat/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-wheat-ink">
-                      {dueSoon} Due Soon
-                    </span>
-                  ) : null}
+                  <h3 className="text-lg font-extrabold text-charcoal">Continue learning</h3>
+                  <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand">
+                    {continueLearning.length} open
+                  </span>
                 </div>
+                <p className="mt-1 text-xs text-charcoal-muted">
+                  Your programs stay unlocked—pick up anytime.
+                </p>
                 <ul className="mt-3 divide-y divide-hairline">
-                  {deadlines.map((row, index) => {
-                    const tones = [
-                      { tag: 'Studio', when: 'Due Tomorrow, 11:59 PM', action: 'Submit draft →' },
-                      { tag: 'Review', when: 'Due Friday, 5:00 PM', action: 'Open brief →' },
-                      { tag: 'Pitch', when: 'Next Tuesday, 2:00 PM', action: 'Draft notes →' },
-                    ];
-                    const tone = tones[index] || tones[2];
+                  {continueLearning.map((row) => {
+                    const percent = row.percent ?? 0;
                     return (
                       <li key={row.id} className="py-3 first:pt-0 last:pb-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-charcoal">{row.courseTitle}</p>
-                            <p className="mt-0.5 text-xs text-charcoal-muted">
-                              {tone.tag} · {row.categoryName || 'Course'}
-                            </p>
-                            <p className="mt-1 text-xs font-semibold text-charcoal-muted">{tone.when}</p>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-charcoal">{row.courseTitle}</p>
+                          <p className="mt-0.5 text-xs text-charcoal-muted">
+                            {row.categoryName || 'Program'}
+                            {percent > 0 ? ` · ${percent}% complete` : ' · Not started'}
+                          </p>
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-sand">
+                            <div
+                              className="h-full rounded-full bg-brand transition-all"
+                              style={{ width: `${Math.min(100, percent)}%` }}
+                            />
                           </div>
                         </div>
-                        <Link to={enrollmentLink(row)} className="mt-1.5 inline-flex text-xs font-bold text-brand hover:underline">
-                          {tone.action}
+                        <Link
+                          to={enrollmentLink(row)}
+                          className="mt-2 inline-flex text-xs font-bold text-brand hover:underline"
+                        >
+                          {percent > 0 ? 'Resume →' : 'Start →'}
                         </Link>
                       </li>
                     );
                   })}
                 </ul>
                 <Link
-                  to="/learn/progress"
+                  to="/learn/my-learning"
                   className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-sand py-2.5 text-xs font-bold text-charcoal hover:bg-brand-soft hover:text-brand"
                 >
-                  View learning calendar
+                  View my library
                 </Link>
               </section>
             ) : null}
