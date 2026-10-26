@@ -51,6 +51,8 @@ function PurchaseCard({ course, program, buyIntent = false, onBuyIntentHandled }
   const [pending, setPending] = useState(null);
   const enrollment = course.enrollment;
   const buyStarted = useRef(false);
+  const inCart = Boolean(course.inCart)
+    || cart.items.some((item) => item.slug && item.slug === course.slug);
 
   async function run(kind, action, message) {
     setPending(kind);
@@ -137,10 +139,21 @@ function PurchaseCard({ course, program, buyIntent = false, onBuyIntentHandled }
                 </button>
               ) : (
                 <>
-                  {course.inCart ? (
-                    <Link to="/learn/cart" className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5">
-                      <CartIcon /> Go to cart
-                    </Link>
+                  {inCart ? (
+                    <>
+                      <Link to="/learn/cart" className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5">
+                        <CartIcon /> Go to cart
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn-outline flex w-full items-center justify-center gap-2 py-3.5 text-base [&_svg]:h-5 [&_svg]:w-5"
+                        disabled={Boolean(pending)}
+                        onClick={() => run('cart', () => setInCart(course, false), 'Removed from your cart.')}
+                      >
+                        <CartIcon />
+                        {pending === 'cart' ? 'Removing…' : 'Remove from cart'}
+                      </button>
+                    </>
                   ) : (
                     <button
                       type="button"

@@ -37,13 +37,15 @@ function ActionCard({ course, program }) {
   const price = Number(course.price) || 0;
   const isFree = price <= 0;
   const currency = course.currency || 'ETB';
+  const inCart = Boolean(course.inCart)
+    || cart.items.some((item) => Number(item.courseId ?? item.id) === Number(course.id));
   const storeCourse = {
     local: true,
     id: course.id,
     courseId: course.id,
     title: course.title,
     favorite: Boolean(course.favorite),
-    inCart: Boolean(course.inCart),
+    inCart,
     price,
     currency,
     isFree,
@@ -117,10 +119,28 @@ function ActionCard({ course, program }) {
               </button>
             ) : (
               <>
-                {course.inCart ? (
-                  <Link to="/learn/cart" className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5"><CartIcon /> Go to cart</Link>
+                {inCart ? (
+                  <>
+                    <Link to="/learn/cart" className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5">
+                      <CartIcon /> Go to cart
+                    </Link>
+                    <button
+                      type="button"
+                      className="btn-outline flex w-full items-center justify-center gap-2 py-3.5 text-base [&_svg]:h-5 [&_svg]:w-5"
+                      disabled={Boolean(pending)}
+                      onClick={() => run('cart', () => setInCart(storeCourse, false), 'Removed from your cart.')}
+                    >
+                      <CartIcon />
+                      {pending === 'cart' ? 'Removing…' : 'Remove from cart'}
+                    </button>
+                  </>
                 ) : (
-                  <button type="button" className="btn-outline flex w-full items-center justify-center gap-2 py-3.5 text-base [&_svg]:h-5 [&_svg]:w-5" disabled={Boolean(pending)} onClick={() => run('cart', () => setInCart(storeCourse, true), 'Added to your cart. Open Cart to pay.')}>
+                  <button
+                    type="button"
+                    className="btn-outline flex w-full items-center justify-center gap-2 py-3.5 text-base [&_svg]:h-5 [&_svg]:w-5"
+                    disabled={Boolean(pending)}
+                    onClick={() => run('cart', () => setInCart(storeCourse, true), 'Added to your cart. Open Cart to pay.')}
+                  >
                     <CartIcon />
                     {pending === 'cart' ? 'Adding…' : 'Add to cart'}
                   </button>

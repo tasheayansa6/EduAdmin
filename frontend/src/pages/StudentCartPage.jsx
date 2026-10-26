@@ -28,10 +28,24 @@ function CartRow({ item, busy, onRemove, onSave }) {
           {item.instructorName ? <p className="text-sm text-charcoal-muted">By {item.instructorName}</p> : null}
           {item.unavailable ? <p className="mt-1 text-sm font-semibold text-red-700">This course is no longer available. Remove it to check out.</p> : null}
           {item.enrollment ? <p className="mt-1 text-sm font-semibold text-brand">You are already enrolled. Remove it from your cart.</p> : null}
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <button type="button" className="font-semibold text-brand hover:underline disabled:opacity-60" disabled={busy} onClick={onRemove}>Remove</button>
+          <div className="mt-3 flex flex-wrap gap-2 text-sm">
+            <button
+              type="button"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+              disabled={busy}
+              onClick={onRemove}
+            >
+              {busy ? 'Removing…' : 'Remove from cart'}
+            </button>
             {!item.unavailable && !item.favorite ? (
-              <button type="button" className="font-semibold text-brand hover:underline disabled:opacity-60" disabled={busy} onClick={onSave}>Move to favorites</button>
+              <button
+                type="button"
+                className="rounded-lg border border-hairline bg-white px-3 py-1.5 font-semibold text-brand hover:bg-sand disabled:opacity-60"
+                disabled={busy}
+                onClick={onSave}
+              >
+                Move to favorites
+              </button>
             ) : null}
           </div>
         </div>
