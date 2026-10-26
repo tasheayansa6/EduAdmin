@@ -83,12 +83,16 @@ export const AGRI_PROGRAMS = [
           {
             title: 'Course workbook — modules & worksheets',
             type: 'pdf',
+            pdfUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
             isPreview: false,
+            content: 'Downloadable workbook for module exercises and field worksheets (PDF).',
           },
           {
             title: 'Reference: fattening cycle cash-flow example (filled)',
             type: 'pdf',
+            pdfUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
             isPreview: false,
+            content: 'Sample fattening-cycle cash-flow sheet you can reuse with your team (PDF).',
           },
         ],
       },
