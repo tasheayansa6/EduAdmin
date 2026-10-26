@@ -90,6 +90,10 @@ export function ArrowRightIcon() {
   return <Icon><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></Icon>;
 }
 
+export function ArrowLeftIcon() {
+  return <Icon><path d="M19 12H5" /><path d="M11 18l-6-6 6-6" /></Icon>;
+}
+
 export function CheckIcon() {
   return <Icon><path d="M5 12.5l4.5 4.5L19 7" /></Icon>;
 }

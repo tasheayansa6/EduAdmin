@@ -219,23 +219,32 @@ function CuratedCard({ course }) {
           ) : (
             <span className="text-sm font-bold text-charcoal">{ects} credits</span>
           )}
-          <Link
-            to={to}
-            className={`inline-flex shrink-0 items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-bold ${
-              enrolled
-                ? 'bg-brand text-white hover:bg-brand-hover'
-                : 'bg-brand-soft text-brand hover:bg-brand hover:text-white'
-            }`}
-          >
-            {enrolled ? (
-              <>
-                Continue
-                <ArrowRightIcon />
-              </>
-            ) : (
-              '+ Enroll Now'
-            )}
-          </Link>
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            <Link
+              to={to}
+              className="inline-flex items-center gap-1 rounded-lg border border-hairline bg-white px-3.5 py-2 text-sm font-bold text-charcoal hover:bg-sand"
+            >
+              Details
+              <ArrowRightIcon />
+            </Link>
+            <Link
+              to={to}
+              className={`inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-bold ${
+                enrolled
+                  ? 'bg-brand text-white hover:bg-brand-hover'
+                  : 'bg-brand-soft text-brand hover:bg-brand hover:text-white'
+              }`}
+            >
+              {enrolled ? (
+                <>
+                  Continue
+                  <ArrowRightIcon />
+                </>
+              ) : (
+                '+ Enroll Now'
+              )}
+            </Link>
+          </div>
         </div>
       </div>
     </article>

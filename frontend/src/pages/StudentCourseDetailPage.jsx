@@ -8,6 +8,8 @@ import { useDocumentTitle, useStore } from '../student/StudentData.jsx';
 import { VideoPlayer } from '../student/VideoPlayer.jsx';
 import {
   CARD_GRID,
+  CourseBackButton,
+  CourseIncludes,
   CourseImage,
   Meter,
   SectionHeading,
@@ -160,6 +162,7 @@ function PurchaseCard({ course }) {
           <HeartIcon filled={Boolean(course.favorite)} />
           {course.favorite ? 'Saved for later' : 'Save for later'}
         </button>
+        {course.includes?.length ? <CourseIncludes items={course.includes} /> : null}
       </div>
     </div>
   );
@@ -269,32 +272,52 @@ function DetailBody({ detail }) {
     course.updatedAt ? `Updated ${formatDate(course.updatedAt)}` : null,
   ].filter(Boolean);
 
+  const lessonCount = course.lessonCount
+    || (course.sections ?? []).reduce((sum, section) => sum + (section.lessons?.length || 0), 0);
+  const sectionCount = course.sections?.length || 0;
+
   return (
     <div className="space-y-12">
       <section className="relative overflow-hidden rounded-3xl bg-brand text-white">
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-wheat/15" aria-hidden="true" />
         <div className="relative p-6 sm:p-8 lg:p-10">
-          <nav aria-label="Breadcrumb" className="text-sm">
-            <ol className="flex flex-wrap items-center gap-1.5 text-white/70">
-              <li><Link to="/learn/courses" className="font-semibold text-white/90 hover:underline">Explore courses</Link></li>
-              {course.category ? (
-                <>
-                  <li aria-hidden="true">/</li>
-                  <li>
-                    <Link to={`/learn/courses?category=${encodeURIComponent(course.category)}`} className="font-semibold text-white/90 hover:underline">
-                      {course.category}
-                    </Link>
-                  </li>
-                </>
-              ) : null}
-            </ol>
-          </nav>
+          <div className="flex flex-wrap items-center gap-3">
+            <CourseBackButton />
+            <nav aria-label="Breadcrumb" className="text-sm">
+              <ol className="flex flex-wrap items-center gap-1.5 text-white/70">
+                <li><Link to="/learn/courses" className="font-semibold text-white/90 hover:underline">Explore courses</Link></li>
+                {course.category ? (
+                  <>
+                    <li aria-hidden="true">/</li>
+                    <li>
+                      <Link to={`/learn/courses?category=${encodeURIComponent(course.category)}`} className="font-semibold text-white/90 hover:underline">
+                        {course.category}
+                      </Link>
+                    </li>
+                  </>
+                ) : null}
+              </ol>
+            </nav>
+          </div>
           <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{course.title}</h1>
           {course.subtitle ? <p className="mt-3 max-w-3xl text-lg leading-relaxed text-white/85">{course.subtitle}</p> : null}
           <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
             <span className="rounded-full bg-wheat px-3 py-1 font-bold text-charcoal">{formatPrice(course.price, course.currency)}</span>
             {meta.map((item) => <span key={item} className="rounded-full border border-white/25 px-3 py-1 text-white/90">{item}</span>)}
           </div>
+          <dl className="mt-6 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: 'Lessons', value: lessonCount || '—' },
+              { label: 'Sections', value: sectionCount || '—' },
+              { label: 'Level', value: course.level ? statusLabel(course.level) : 'All levels' },
+              { label: 'Language', value: course.language || 'English' },
+            ].map((row) => (
+              <div key={row.label} className="rounded-xl bg-white/10 px-3 py-2.5 ring-1 ring-white/15">
+                <dt className="text-[10px] font-bold uppercase tracking-wide text-white/70">{row.label}</dt>
+                <dd className="mt-0.5 text-sm font-bold text-white">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
@@ -313,6 +336,13 @@ function DetailBody({ detail }) {
             <div className="rounded-2xl border border-hairline bg-white p-6">
               <ListSection id="outcomes-title" title="What you’ll learn" items={course.outcomes} columns />
             </div>
+          ) : null}
+
+          {course.includes?.length ? (
+            <section aria-labelledby="includes-title">
+              <SectionHeading id="includes-title" title="What’s included" />
+              <CourseIncludes items={course.includes} />
+            </section>
           ) : null}
 
           {course.sections?.length ? <Curriculum sections={course.sections} current={lesson} onPlay={onPlay} /> : null}

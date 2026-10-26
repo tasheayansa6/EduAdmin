@@ -1,9 +1,50 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext.jsx';
 import { statusLabel } from '../lib/format.js';
-import { ArrowRightIcon, CartIcon, CheckIcon, ClockIcon, HeartIcon } from '../components/icons.jsx';
+import { ArrowLeftIcon, ArrowRightIcon, CartIcon, CheckIcon, ClockIcon, HeartIcon } from '../components/icons.jsx';
 import { useStore } from './StudentData.jsx';
+
+/** Back control for course detail pages — history when possible, else courses catalog. */
+export function CourseBackButton({ fallback = '/learn/courses', label = 'Back to courses' }) {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-sm font-bold text-white ring-1 ring-white/25 backdrop-blur hover:bg-white/25 [&_svg]:h-4 [&_svg]:w-4"
+      onClick={() => {
+        if (window.history.length > 1) navigate(-1);
+        else navigate(fallback);
+      }}
+    >
+      <ArrowLeftIcon />
+      {label}
+    </button>
+  );
+}
+
+/** “This course includes” list from admin/API includes field. */
+export function CourseIncludes({ items, tone = 'light' }) {
+  if (!items?.length) return null;
+  const wrap = tone === 'dark'
+    ? 'rounded-xl bg-white/10 p-4 text-white ring-1 ring-white/15'
+    : 'rounded-2xl border border-hairline bg-white p-5';
+  const title = tone === 'dark' ? 'text-sm font-bold uppercase tracking-wide text-white/80' : 'text-sm font-bold uppercase tracking-wide text-charcoal-muted';
+  const row = tone === 'dark' ? 'text-sm text-white/90' : 'text-sm text-charcoal';
+  return (
+    <div className={wrap}>
+      <p className={title}>This course includes</p>
+      <ul className="mt-3 space-y-2">
+        {items.map((item) => (
+          <li key={item} className={`flex gap-2.5 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 [&_svg]:text-brand ${row}`}>
+            <CheckIcon />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export const CARD_GRID = 'grid gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4';
 
@@ -184,13 +225,16 @@ function CardAction({ course }) {
   );
 }
 
-/** Catalog card for an AilgAdmin course. The title link covers the card; the heart and cart buttons sit above it. */
+/** Catalog card for an AilgAdmin course. */
 export function StoreCourseCard({ course }) {
   const duration = formatMinutes(course.totalMinutes);
+  const detailTo = `/learn/courses/${course.slug}`;
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-hairline bg-white shadow-soft transition duration-200 focus-within:shadow-lift hover:-translate-y-0.5 hover:shadow-lift motion-reduce:hover:translate-y-0">
       <div className="relative">
-        <CourseImage course={course} />
+        <Link to={detailTo} tabIndex={-1} aria-hidden="true">
+          <CourseImage course={course} />
+        </Link>
         {course.category ? (
           <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-brand shadow-soft">{course.category}</span>
         ) : null}
@@ -198,7 +242,7 @@ export function StoreCourseCard({ course }) {
       </div>
       <div className="flex flex-1 flex-col p-4">
         <h3 className="line-clamp-2 text-base font-bold leading-snug text-charcoal">
-          <Link to={`/learn/courses/${course.slug}`} className="after:absolute after:inset-0 focus-visible:outline-none group-hover:text-brand">
+          <Link to={detailTo} className="hover:text-brand focus-visible:outline-none">
             {course.title}
           </Link>
         </h3>
@@ -214,24 +258,35 @@ export function StoreCourseCard({ course }) {
           {course.level ? <span>{statusLabel(course.level)}</span> : null}
         </p>
         <div className="mt-auto pt-4">
-          <div className="flex items-center justify-between gap-2 border-t border-hairline pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-3">
             <span className={`text-lg font-extrabold ${course.isFree ? 'text-brand' : 'text-charcoal'}`}>{formatPrice(course.price, course.currency)}</span>
-            <CardAction course={course} />
+            <div className="relative z-10 flex flex-wrap items-center justify-end gap-2">
+              <Link
+                to={detailTo}
+                className="inline-flex items-center gap-1 rounded-full border border-hairline bg-white px-3 py-1.5 text-sm font-bold text-charcoal hover:bg-sand"
+              >
+                Details
+                <span className="[&_svg]:h-3.5 [&_svg]:w-3.5"><ArrowRightIcon /></span>
+              </Link>
+              <CardAction course={course} />
+            </div>
           </div>
         </div>
       </div>
-      <span className="pointer-events-none absolute inset-0 rounded-2xl ring-brand group-has-[:focus-visible]:ring-2" aria-hidden="true" />
     </article>
   );
 }
 
-/** Card for a course an administrator added in EduAdmin. Paid ones go through cart; free ones enroll on the course page. */
+/** Card for a course an administrator added in EduAdmin. */
 export function LocalCourseCard({ course }) {
   const duration = formatMinutes(course.totalMinutes);
+  const detailTo = `/learn/my-courses/${course.id}`;
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-hairline bg-white shadow-soft transition duration-200 focus-within:shadow-lift hover:-translate-y-0.5 hover:shadow-lift motion-reduce:hover:translate-y-0">
       <div className="relative">
-        <CourseImage course={course} />
+        <Link to={detailTo} tabIndex={-1} aria-hidden="true">
+          <CourseImage course={course} />
+        </Link>
         {course.category ? (
           <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-brand shadow-soft">{course.category}</span>
         ) : null}
@@ -239,7 +294,7 @@ export function LocalCourseCard({ course }) {
       </div>
       <div className="flex flex-1 flex-col p-4">
         <h3 className="line-clamp-2 text-base font-bold leading-snug text-charcoal">
-          <Link to={`/learn/my-courses/${course.id}`} className="after:absolute after:inset-0 focus-visible:outline-none group-hover:text-brand">
+          <Link to={detailTo} className="hover:text-brand focus-visible:outline-none">
             {course.title}
           </Link>
         </h3>
@@ -255,13 +310,21 @@ export function LocalCourseCard({ course }) {
           {course.level ? <span>{statusLabel(course.level)}</span> : null}
         </p>
         <div className="mt-auto pt-4">
-          <div className="flex items-center justify-between gap-2 border-t border-hairline pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-3">
             <span className={`text-lg font-extrabold ${course.isFree ? 'text-brand' : 'text-charcoal'}`}>{formatPrice(course.price, course.currency)}</span>
-            <CardAction course={course} />
+            <div className="relative z-10 flex flex-wrap items-center justify-end gap-2">
+              <Link
+                to={detailTo}
+                className="inline-flex items-center gap-1 rounded-full border border-hairline bg-white px-3 py-1.5 text-sm font-bold text-charcoal hover:bg-sand"
+              >
+                Details
+                <span className="[&_svg]:h-3.5 [&_svg]:w-3.5"><ArrowRightIcon /></span>
+              </Link>
+              <CardAction course={course} />
+            </div>
           </div>
         </div>
       </div>
-      <span className="pointer-events-none absolute inset-0 rounded-2xl ring-brand group-has-[:focus-visible]:ring-2" aria-hidden="true" />
     </article>
   );
 }
