@@ -8,21 +8,26 @@ import { VideoPlayer } from '../student/VideoPlayer.jsx';
 import {
   CARD_GRID,
   CatalogCard,
-  CourseBackButton,
-  CourseCover,
-  CourseIncludes,
-  CourseImage,
   Meter,
   PageSkeleton,
   Pill,
-  SectionHeading,
   StudentData,
   StudentEmpty,
   formatMinutes,
   formatPrice,
 } from '../student/components.jsx';
+import {
+  ProgramAudience,
+  ProgramCard,
+  ProgramDetailChrome,
+  ProgramMaterials,
+  ProgramModules,
+  ProgramOutcomes,
+  ProgramOverviewMeta,
+  ProgramProcess,
+} from '../student/programDetail.jsx';
 
-function ActionCard({ course }) {
+function ActionCard({ course, program }) {
   const { enroll, refresh } = useStudentData();
   const { cart, setInCart, setFavorite, checkout } = useStore();
   const toast = useToast();
@@ -58,112 +63,105 @@ function ActionCard({ course }) {
   }
 
   return (
-    <div className="s-card overflow-hidden lg:sticky lg:top-24">
-      {course.imageUrl ? <CourseImage course={course} /> : <CourseCover category={course.categoryName} title={course.title} />}
-      <div className="space-y-4 p-5">
-        {enrolled ? (
-          <>
-            <p className="flex items-center gap-2 text-lg font-bold text-brand [&_svg]:h-5 [&_svg]:w-5">
-              <CheckIcon />
-              {enrollment.status === 'completed' ? 'You completed this course' : 'You are enrolled'}
-            </p>
-            {enrollment.percent == null ? (
-              <p className="text-sm text-charcoal-muted">No progress recorded yet.</p>
-            ) : (
-              <div className="space-y-1.5">
-                <Meter value={enrollment.percent} label="Course progress" />
-                <p className="flex justify-between text-sm">
-                  <span className="font-semibold">{enrollment.percent}% complete</span>
-                  {enrollment.progressStatus ? <span className="text-charcoal-muted">{statusLabel(enrollment.progressStatus)}</span> : null}
-                </p>
-              </div>
-            )}
-            <Link to={`/learn/my-courses/${course.id}/learn`} className="btn-brand w-full py-3 text-base">
-              {enrollment.status === 'completed' ? 'Review lessons' : enrollment.percent > 0 ? 'Continue learning' : 'Start learning'}
-            </Link>
-            <Link to="/learn/my-learning" className="btn-outline w-full py-3 text-base">Go to My learning</Link>
-          </>
-        ) : course.published ? (
-          <>
-            <p className="text-3xl font-extrabold tracking-tight text-charcoal">{formatPrice(price, currency)}</p>
+    <div className="overflow-hidden rounded-2xl border border-hairline bg-white p-6 shadow-soft lg:sticky lg:top-24 lg:p-8">
+      <h2 className="text-xl font-bold tracking-tight text-charcoal">Program overview</h2>
+      {enrolled ? (
+        <div className="mt-5 space-y-4">
+          <p className="flex items-center gap-2 text-lg font-bold text-brand [&_svg]:h-5 [&_svg]:w-5">
+            <CheckIcon />
+            {enrollment.status === 'completed' ? 'You completed this course' : 'You are enrolled'}
+          </p>
+          {enrollment.percent == null ? (
+            <p className="text-sm text-charcoal-muted">No progress recorded yet.</p>
+          ) : (
+            <div className="space-y-1.5">
+              <Meter value={enrollment.percent} label="Course progress" />
+              <p className="flex justify-between text-sm">
+                <span className="font-semibold">{enrollment.percent}% complete</span>
+                {enrollment.progressStatus ? <span className="text-charcoal-muted">{statusLabel(enrollment.progressStatus)}</span> : null}
+              </p>
+            </div>
+          )}
+          <Link to={`/learn/my-courses/${course.id}/learn`} className="btn-brand w-full py-3.5 text-base">
+            {enrollment.status === 'completed' ? 'Review lessons' : enrollment.percent > 0 ? 'Continue learning' : 'Start learning'}
+          </Link>
+          <Link to="/learn/my-learning" className="btn-outline w-full py-3 text-base">Go to My learning</Link>
+        </div>
+      ) : course.published ? (
+        <>
+          <p className="mt-5 text-3xl font-extrabold text-brand">{formatPrice(price, currency)}</p>
+          <p className="mt-1 text-xs text-charcoal-muted">One-time payment</p>
+          <ProgramOverviewMeta
+            category={program.category}
+            moduleCount={program.modules.length}
+            materialCount={program.materials.length}
+          />
+          <div className="mt-6 space-y-3 border-t border-hairline pt-6">
             {isFree ? (
-              <button type="button" className="btn-brand w-full py-3 text-base" disabled={Boolean(pending)} onClick={() => run('enroll', () => enroll(course.id), `Enrolled in ${course.title}. It is now in My learning.`)}>
+              <button type="button" className="btn-brand w-full py-4 text-base" disabled={Boolean(pending)} onClick={() => run('enroll', () => enroll(course.id), `Enrolled in ${course.title}. It is now in My learning.`)}>
                 {pending === 'enroll' ? 'Enrolling…' : enrollment ? 'Enroll again' : 'Enroll for free'}
               </button>
             ) : (
               <>
                 {course.inCart ? (
-                  <Link to="/learn/cart" className="btn-brand w-full py-3 text-base [&_svg]:h-4 [&_svg]:w-4"><CartIcon /> Go to cart</Link>
+                  <Link to="/learn/cart" className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5"><CartIcon /> Go to cart</Link>
                 ) : (
-                  <button type="button" className="btn-brand w-full py-3 text-base [&_svg]:h-4 [&_svg]:w-4" disabled={Boolean(pending)} onClick={() => run('cart', () => setInCart(storeCourse, true), 'Added to your cart. Open Cart to pay.')}>
+                  <button type="button" className="btn-outline flex w-full items-center justify-center gap-2 py-3.5 text-base [&_svg]:h-5 [&_svg]:w-5" disabled={Boolean(pending)} onClick={() => run('cart', () => setInCart(storeCourse, true), 'Added to your cart. Open Cart to pay.')}>
                     <CartIcon />
                     {pending === 'cart' ? 'Adding…' : 'Add to cart'}
                   </button>
                 )}
-                <button type="button" className="btn-wheat w-full py-3 text-base" disabled={Boolean(pending) || !cart.paymentsEnabled} onClick={() => run('pay', () => checkout([storeCourse]))}>
-                  {pending === 'pay' ? 'Opening Chapa…' : 'Buy now'}
+                <button type="button" className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base [&_svg]:h-5 [&_svg]:w-5" disabled={Boolean(pending) || !cart.paymentsEnabled} onClick={() => run('pay', () => checkout([storeCourse]))}>
+                  <CartIcon />
+                  {pending === 'pay' ? 'Opening Chapa…' : 'Buy Now'}
                 </button>
-                {course.favorite && !course.inCart ? (
-                  <p className="rounded-lg bg-brand-soft px-3 py-2 text-sm text-brand">
-                    Saved for later.{' '}
-                    <button type="button" className="font-bold underline underline-offset-2" disabled={Boolean(pending)} onClick={() => run('cart', () => setInCart(storeCourse, true), 'Added to your cart.')}>
-                      Add to cart
-                    </button>
-                  </p>
-                ) : null}
+                <p className="text-center text-xs text-charcoal-muted">
+                  {cart.paymentsEnabled ? 'Secure payment via Chapa' : 'Online payment is not set up yet.'}
+                </p>
               </>
             )}
-            {course.includes?.length ? (
-              <ul className="space-y-2 border-t border-hairline pt-4 text-sm text-charcoal">
-                {course.includes.map((item) => (
-                  <li key={item} className="flex gap-2 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:text-brand">
-                    <CheckIcon />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </>
-        ) : (
-          <p className="text-sm text-charcoal-muted">This course is no longer published, so it cannot be joined again.</p>
-        )}
-        <button
-          type="button"
-          className={`btn w-full border px-4 py-2.5 [&_svg]:h-4 [&_svg]:w-4 ${course.favorite ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' : 'border-hairline bg-white text-charcoal hover:bg-sand'}`}
-          aria-pressed={Boolean(course.favorite)}
-          disabled={Boolean(pending)}
-          onClick={() => run('favorite', () => setFavorite(storeCourse, !course.favorite), course.favorite ? 'Removed from favorites.' : 'Saved for later. You can add it to your cart when you are ready.')}
-        >
-          <HeartIcon filled={Boolean(course.favorite)} />
-          {course.favorite ? 'Saved for later' : 'Save for later'}
-        </button>
-      </div>
+          </div>
+        </>
+      ) : (
+        <p className="mt-5 text-sm text-charcoal-muted">This course is no longer published, so it cannot be joined again.</p>
+      )}
+      <button
+        type="button"
+        className={`btn mt-4 w-full border px-4 py-2.5 [&_svg]:h-4 [&_svg]:w-4 ${course.favorite ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' : 'border-hairline bg-white text-charcoal hover:bg-sand'}`}
+        aria-pressed={Boolean(course.favorite)}
+        disabled={Boolean(pending)}
+        onClick={() => run('favorite', () => setFavorite(storeCourse, !course.favorite), course.favorite ? 'Removed from favorites.' : 'Saved for later.')}
+      >
+        <HeartIcon filled={Boolean(course.favorite)} />
+        {course.favorite ? 'Saved for later' : 'Save for later'}
+      </button>
     </div>
   );
 }
 
 function Outline({ sections }) {
   if (!sections?.length) return null;
+  const hasLessons = sections.some((section) => section.lessons?.length);
+  if (!hasLessons) return null;
   const lessonCount = sections.reduce((sum, section) => sum + section.lessons.length, 0);
   const total = formatMinutes(sections.reduce((sum, section) => sum + section.lessons.reduce((acc, lesson) => acc + (lesson.durationMinutes || 0), 0), 0));
   return (
-    <section aria-labelledby="outline-title">
-      <SectionHeading
-        id="outline-title"
-        title="Course content"
-        description={`${sections.length} section${sections.length === 1 ? '' : 's'} · ${lessonCount} lesson${lessonCount === 1 ? '' : 's'}${total ? ` · ${total} total` : ''}`}
-      />
-      <div className="divide-y divide-hairline overflow-hidden rounded-2xl border border-hairline bg-white">
+    <ProgramCard
+      id="outline-title"
+      title="Course content"
+      badge={`${sections.length} section${sections.length === 1 ? '' : 's'} · ${lessonCount} lesson${lessonCount === 1 ? '' : 's'}${total ? ` · ${total}` : ''}`}
+    >
+      <div className="divide-y divide-hairline overflow-hidden rounded-xl border border-hairline">
         {sections.map((section, sectionIndex) => (
           <details key={`${section.title}-${sectionIndex}`} open={sectionIndex === 0} className="group/section">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 bg-sand/60 px-5 py-3.5 font-bold text-charcoal hover:bg-sand [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 bg-canvas/80 px-5 py-3.5 font-bold text-charcoal hover:bg-sand [&::-webkit-details-marker]:hidden">
               <span>{section.title}</span>
               <span className="shrink-0 text-xs font-semibold text-charcoal-muted">
                 {section.lessons.length} lesson{section.lessons.length === 1 ? '' : 's'}
                 <span className="ml-2 inline-block transition-transform group-open/section:rotate-180" aria-hidden="true">▾</span>
               </span>
             </summary>
-            <ul className="divide-y divide-hairline">
+            <ul className="divide-y divide-hairline bg-white">
               {section.lessons.map((lesson, lessonIndex) => (
                 <li key={`${sectionIndex}-${lessonIndex}`} className="flex items-center gap-3 px-5 py-3 text-sm">
                   <span className="text-charcoal-muted [&_svg]:h-4 [&_svg]:w-4"><PlayIcon /></span>
@@ -177,24 +175,7 @@ function Outline({ sections }) {
           </details>
         ))}
       </div>
-    </section>
-  );
-}
-
-function ListSection({ id, title, items, columns = false }) {
-  if (!items?.length) return null;
-  return (
-    <section aria-labelledby={id}>
-      <SectionHeading id={id} title={title} />
-      <ul className={`grid gap-3 ${columns ? 'sm:grid-cols-2' : ''}`}>
-        {items.map((item) => (
-          <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-charcoal [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:text-brand">
-            <CheckIcon />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    </ProgramCard>
   );
 }
 
@@ -217,145 +198,80 @@ function DetailBody({ data, courseId }) {
   const related = courses
     .filter((item) => item.local && item.id !== course.id && item.category === course.categoryName)
     .slice(0, 4);
-  const duration = formatMinutes(course.totalMinutes);
-  const lessonCount = course.sections?.reduce((sum, section) => sum + section.lessons.length, 0) || 0;
-  const sectionCount = course.sections?.length || 0;
-  const meta = [
-    course.instructorName ? `By ${course.instructorName}` : null,
-    course.level ? statusLabel(course.level) : null,
-    course.language || null,
-    lessonCount ? `${lessonCount} lessons` : null,
-    duration,
-    course.updatedAt ? `Updated ${formatDate(course.updatedAt)}` : null,
-  ].filter(Boolean);
 
   return (
-    <div className="space-y-12">
-      <section className="relative overflow-hidden rounded-3xl bg-brand text-white">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-wheat/15" aria-hidden="true" />
-        <div className="relative p-6 sm:p-8 lg:p-10">
-          <div className="flex flex-wrap items-center gap-3">
-            <CourseBackButton />
-            <nav aria-label="Breadcrumb" className="text-sm">
-              <ol className="flex flex-wrap items-center gap-1.5 text-white/70">
-                <li><Link to="/learn/courses" className="font-semibold text-white/90 hover:underline">Explore courses</Link></li>
-                {course.categoryName ? (
-                  <>
-                    <li aria-hidden="true">/</li>
-                    <li>
-                      <Link to={`/learn/courses?category=${encodeURIComponent(course.categoryName)}`} className="font-semibold text-white/90 hover:underline">
-                        {course.categoryName}
-                      </Link>
-                    </li>
-                  </>
-                ) : null}
-              </ol>
-            </nav>
-          </div>
-          <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{course.title}</h1>
-          {course.subtitle ? <p className="mt-3 max-w-3xl text-lg leading-relaxed text-white/85">{course.subtitle}</p> : null}
-          <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
-            <span className="rounded-full bg-wheat px-3 py-1 font-bold text-charcoal">{formatPrice(course.price, course.currency)}</span>
-            {meta.map((item) => <span key={item} className="rounded-full border border-white/25 px-3 py-1 text-white/90">{item}</span>)}
-          </div>
-          <dl className="mt-6 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { label: 'Lessons', value: lessonCount || '—' },
-              { label: 'Sections', value: sectionCount || '—' },
-              { label: 'Level', value: course.level ? statusLabel(course.level) : 'All levels' },
-              { label: 'Language', value: course.language || 'English' },
-            ].map((row) => (
-              <div key={row.label} className="rounded-xl bg-white/10 px-3 py-2.5 ring-1 ring-white/15">
-                <dt className="text-[10px] font-bold uppercase tracking-wide text-white/70">{row.label}</dt>
-                <dd className="mt-0.5 text-sm font-bold text-white">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-        <div className="min-w-0 space-y-12">
-          {course.previewVideoUrl ? (
-            <section aria-labelledby="preview-title">
-              <SectionHeading id="preview-title" title="Course preview" />
-              <div className="overflow-hidden rounded-2xl border border-hairline bg-charcoal shadow-lift">
-                <VideoPlayer url={course.previewVideoUrl} title={`${course.title} preview`} />
-              </div>
-            </section>
-          ) : null}
-
-          {course.description ? (
-            <section aria-labelledby="about-title">
-              <SectionHeading id="about-title" title="About this course" />
-              <p className="whitespace-pre-line text-[15px] leading-relaxed text-charcoal">{course.description}</p>
-            </section>
-          ) : null}
-
-          {course.outcomes?.length ? (
-            <div className="rounded-2xl border border-hairline bg-white p-6">
-              <ListSection id="outcomes-title" title="What you’ll learn" items={course.outcomes} columns />
-            </div>
-          ) : null}
-
-          {course.includes?.length ? (
-            <section aria-labelledby="includes-title">
-              <SectionHeading id="includes-title" title="What’s included" />
-              <CourseIncludes items={course.includes} />
-            </section>
-          ) : null}
-
-          <Outline sections={course.sections} />
-          <ListSection id="requirements-title" title="Requirements" items={course.requirements} />
-
-          {course.instructorName ? (
-            <section aria-labelledby="instructor-title">
-              <SectionHeading id="instructor-title" title="Instructor" />
-              <div className="flex items-center gap-4 rounded-2xl border border-hairline bg-white p-5">
-                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-soft text-lg font-bold text-brand" aria-hidden="true">
-                  {course.instructorName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
-                </span>
-                <div>
-                  <p className="font-bold text-charcoal">{course.instructorName}</p>
-                  {course.categoryName ? <p className="text-sm text-charcoal-muted">{course.categoryName}</p> : null}
-                </div>
-              </div>
-            </section>
-          ) : null}
-
-          {course.enrollment && course.enrollment.status !== 'withdrawn' ? (
-            <section aria-labelledby="record-title" className="s-card p-6">
-              <h2 id="record-title" className="text-lg font-bold">Your learning record</h2>
-              <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-                {[
-                  { label: 'Enrollment', value: <Pill status={course.enrollment.status} /> },
-                  { label: 'Progress', value: course.enrollment.percent == null ? 'Not recorded' : `${course.enrollment.percent}%` },
-                  { label: 'Enrolled on', value: formatDate(course.enrollment.enrolledAt) },
-                ].map((row) => (
-                  <div key={row.label}>
-                    <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted">{row.label}</dt>
-                    <dd className="mt-1 text-sm font-semibold text-charcoal">{row.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          ) : null}
-        </div>
-
-        <aside aria-label="Enroll in this course">
-          <ActionCard course={course} />
-        </aside>
-      </div>
-
-      {related.length ? (
-        <section aria-labelledby="related-title">
-          <SectionHeading id="related-title" title={`More in ${course.categoryName}`} description="Other published courses in this category." />
-          <ul className={CARD_GRID}>
-            {related.map((item) => <li key={item.key}><CatalogCard course={item} /></li>)}
-          </ul>
-        </section>
+    <ProgramDetailChrome
+      course={course}
+      category={course.categoryName}
+      relatedTitle={course.categoryName ? `More in ${course.categoryName}` : 'More courses'}
+      related={related.length ? (
+        <ul className={CARD_GRID}>
+          {related.map((item) => <li key={item.key}><CatalogCard course={item} /></li>)}
+        </ul>
       ) : null}
-    </div>
+    >
+      {({ program }) => (
+        <div className="grid gap-8 lg:grid-cols-3 lg:items-start">
+          <div className="space-y-6 lg:col-span-2">
+            {course.previewVideoUrl ? (
+              <ProgramCard id="preview-title" title="Course preview">
+                <div className="overflow-hidden rounded-xl bg-charcoal">
+                  <VideoPlayer url={course.previewVideoUrl} title={`${course.title} preview`} />
+                </div>
+              </ProgramCard>
+            ) : null}
+
+            {course.description ? (
+              <ProgramCard id="about-title" title="About this program">
+                <p className="whitespace-pre-line leading-relaxed text-charcoal">{course.description}</p>
+              </ProgramCard>
+            ) : null}
+
+            <ProgramOutcomes items={course.outcomes} />
+            <ProgramModules modules={program.modules} />
+            <ProgramMaterials materials={program.materials} />
+            <Outline sections={course.sections} />
+            <ProgramAudience items={program.audience} />
+            <ProgramProcess steps={program.process} />
+
+            {course.instructorName ? (
+              <ProgramCard id="instructor-title" title="Instructor">
+                <div className="flex items-center gap-4">
+                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-soft text-lg font-bold text-brand" aria-hidden="true">
+                    {course.instructorName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
+                  </span>
+                  <div>
+                    <p className="font-bold text-charcoal">{course.instructorName}</p>
+                    {course.categoryName ? <p className="text-sm text-charcoal-muted">{course.categoryName}</p> : null}
+                  </div>
+                </div>
+              </ProgramCard>
+            ) : null}
+
+            {course.enrollment && course.enrollment.status !== 'withdrawn' ? (
+              <ProgramCard id="record-title" title="Your learning record">
+                <dl className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    { label: 'Enrollment', value: <Pill status={course.enrollment.status} /> },
+                    { label: 'Progress', value: course.enrollment.percent == null ? 'Not recorded' : `${course.enrollment.percent}%` },
+                    { label: 'Enrolled on', value: formatDate(course.enrollment.enrolledAt) },
+                  ].map((row) => (
+                    <div key={row.label}>
+                      <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted">{row.label}</dt>
+                      <dd className="mt-1 text-sm font-semibold text-charcoal">{row.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </ProgramCard>
+            ) : null}
+          </div>
+
+          <aside className="lg:col-span-1" aria-label="Enroll in this course">
+            <ActionCard course={course} program={program} />
+          </aside>
+        </div>
+      )}
+    </ProgramDetailChrome>
   );
 }
 

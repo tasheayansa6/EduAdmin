@@ -6,12 +6,16 @@ import { ArrowLeftIcon, ArrowRightIcon, CartIcon, CheckIcon, ClockIcon, HeartIco
 import { useStore } from './StudentData.jsx';
 
 /** Back control for course detail pages — history when possible, else courses catalog. */
-export function CourseBackButton({ fallback = '/learn/courses', label = 'Back to courses' }) {
+export function CourseBackButton({
+  fallback = '/learn/courses',
+  label = 'Back to courses',
+  className = 'bg-white/15 text-white ring-white/25 hover:bg-white/25',
+}) {
   const navigate = useNavigate();
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-sm font-bold text-white ring-1 ring-white/25 backdrop-blur hover:bg-white/25 [&_svg]:h-4 [&_svg]:w-4"
+      className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-bold ring-1 backdrop-blur [&_svg]:h-4 [&_svg]:w-4 ${className}`}
       onClick={() => {
         if (window.history.length > 1) navigate(-1);
         else navigate(fallback);
