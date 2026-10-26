@@ -219,6 +219,11 @@ export function ProgramMaterials({ materials }) {
   );
 }
 
+/** Removed from UI; kept as a no-op so stale HMR bundles don't crash. */
+export function ProgramProcess() {
+  return null;
+}
+
 export function ProgramAudience({ items }) {
   if (!items?.length) return null;
   return (

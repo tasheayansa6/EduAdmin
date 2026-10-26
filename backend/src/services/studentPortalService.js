@@ -234,7 +234,12 @@ export async function getStudentHome(userId) {
     'SELECT id, name, description FROM categories ORDER BY name ASC',
   );
 
-  const weeklyActivity = await weeklyLessonActivity(userId);
+  let weeklyActivity = { days: [], thisWeek: 0, prevWeek: 0 };
+  try {
+    weeklyActivity = await weeklyLessonActivity(userId);
+  } catch {
+    // Progress charts degrade gracefully if lesson_progress is unavailable.
+  }
 
   return {
     profile: profile
