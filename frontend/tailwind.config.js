@@ -30,12 +30,13 @@ export default {
           DEFAULT: '#191c1a',
           muted: '#59615b',
         },
-        canvas: '#eef8ef',
-        sand: '#e4f2e6',
-        hairline: '#becabd',
+        // Page canvas aligned with AilgAgro (#f8faf6); mint stays for chips/overlays only.
+        canvas: '#f8faf6',
+        sand: '#edeeeb',
+        hairline: '#d5ded3',
         mint: {
-          DEFAULT: '#d4e8d7',
-          soft: '#e6f4e8',
+          DEFAULT: '#d5ded3',
+          soft: '#edeeeb',
         },
       },
       fontFamily: {

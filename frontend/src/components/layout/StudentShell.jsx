@@ -248,7 +248,7 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-hairline/80 bg-mint-soft/95 backdrop-blur supports-[backdrop-filter]:bg-mint-soft/90">
+    <header className="sticky top-0 z-30 border-b border-hairline/80 bg-[#fbfcf9]/95 backdrop-blur supports-[backdrop-filter]:bg-[#fbfcf9]/90">
       <div className="flex h-16 items-center gap-3 px-3 sm:px-5">
         <button type="button" className="-ml-1 rounded-xl p-2 text-charcoal hover:bg-white md:hidden" aria-label="Open menu" onClick={onOpenMenu}>
           <MenuIcon />
@@ -360,10 +360,9 @@ export function StudentShell() {
       <NotificationsProvider>
         <div className="student-theme relative isolate flex min-h-screen flex-col overflow-x-hidden bg-canvas text-charcoal">
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-            <div className="absolute -left-24 -top-28 h-[28rem] w-[28rem] rounded-full bg-brand/[0.12] blur-3xl" />
-            <div className="absolute -right-20 top-24 h-[22rem] w-[22rem] rounded-full bg-mint/80 blur-3xl" />
-            <div className="absolute bottom-0 left-1/3 h-[18rem] w-[18rem] rounded-full bg-brand-soft/90 blur-3xl" />
-            <div className="absolute inset-0 bg-gradient-to-b from-mint-soft/70 via-transparent to-sand/40" />
+            <div className="absolute -left-24 -top-28 h-[22rem] w-[22rem] rounded-full bg-brand/[0.06] blur-3xl" />
+            <div className="absolute -right-20 top-32 h-[18rem] w-[18rem] rounded-full bg-brand-soft/50 blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-transparent" />
           </div>
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:font-semibold">
             Skip to content
