@@ -18,7 +18,7 @@ import { listProgress } from '../services/progressService.js';
 import { getReport, reportToCsv } from '../services/reportService.js';
 import { createAdmin, listAdmins, updateAdminStatus } from '../services/adminService.js';
 import { getLookups } from '../services/lookupService.js';
-import { getStudentHome } from '../services/studentPortalService.js';
+import { getPublicExplore, getStudentHome } from '../services/studentPortalService.js';
 import * as store from '../services/storeService.js';
 import { assertLocalCourse } from '../services/storeService.js';
 import { getLearning, getLocalLearning, setLessonCompleted, setLocalLessonCompleted } from '../services/learningService.js';
@@ -312,7 +312,19 @@ export function registerRoutes(app) {
   app.get('/api/v1/health', health);
 
   const v1 = Router();
+  const publicRouter = Router();
+  publicRouter.get('/explore', asyncHandler(async (req, res) => {
+    res.json({ data: await getPublicExplore() });
+  }));
+  publicRouter.get('/catalog', asyncHandler(async (req, res) => {
+    res.json({ data: await store.getCatalog(null) });
+  }));
+  publicRouter.get('/catalog/:slug', validate(slugParams), asyncHandler(async (req, res) => {
+    res.json({ data: await store.getCatalogDetail(null, req.valid.params.slug) });
+  }));
+
   v1.use('/auth', authRouter);
+  v1.use('/public', publicRouter);
   v1.use('/dashboard', dashboardRouter);
   v1.use('/students', studentRouter);
   v1.use('/courses', courseRouter);

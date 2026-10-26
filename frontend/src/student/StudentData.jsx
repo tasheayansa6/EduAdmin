@@ -1,15 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { api } from '../api/client.js';
+import { api, getToken } from '../api/client.js';
 
 const StudentDataContext = createContext(null);
 
 export function StudentDataProvider({ children }) {
   const [state, setState] = useState({ status: 'loading', data: null, error: null });
+  const signedIn = Boolean(getToken());
 
   const load = useCallback(async ({ quiet = false } = {}) => {
     if (!quiet) setState((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const result = await api('/api/v1/student/home');
+      const path = getToken() ? '/api/v1/student/home' : '/api/v1/public/explore';
+      const result = await api(path);
       setState({ status: 'ready', data: result.data, error: null });
       return true;
     } catch (error) {
@@ -26,16 +28,22 @@ export function StudentDataProvider({ children }) {
   }, [load]);
 
   const enroll = useCallback(async (courseId) => {
+    if (!getToken()) {
+      const error = new Error('Sign in to enroll in a course.');
+      error.status = 401;
+      throw error;
+    }
     await api('/api/v1/student/enrollments', { method: 'POST', body: { courseId } });
     await load({ quiet: true });
   }, [load]);
 
   const value = useMemo(() => ({
     ...state,
+    signedIn,
     reload: () => load(),
     refresh: () => load({ quiet: true }),
     enroll,
-  }), [state, load, enroll]);
+  }), [state, signedIn, load, enroll]);
 
   return (
     <StudentDataContext.Provider value={value}>
@@ -57,10 +65,11 @@ function StoreProvider({ onEnrolled, children }) {
   const loadCatalog = useCallback(async ({ quiet = false } = {}) => {
     if (!quiet) setCatalog((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const result = await api('/api/v1/student/catalog');
+      const path = getToken() ? '/api/v1/student/catalog' : '/api/v1/public/catalog';
+      const result = await api(path);
       setCatalog({ status: 'ready', data: Array.isArray(result.data) ? result.data : [], error: null });
     } catch {
-      // External store may be offline; EduAdmin courses still come from /student/home.
+      // External store may be offline; EduAdmin courses still come from explore/home.
       setCatalog((current) => (quiet && current.data
         ? current
         : { status: 'ready', data: [], error: null }));
@@ -68,6 +77,12 @@ function StoreProvider({ onEnrolled, children }) {
   }, []);
 
   const loadSaved = useCallback(async () => {
+    if (!getToken()) {
+      setCart(EMPTY_CART);
+      setFavorites([]);
+      setSavedLoaded(true);
+      return;
+    }
     const [cartResult, favoriteResult] = await Promise.allSettled([api('/api/v1/student/cart'), api('/api/v1/student/favorites')]);
     if (cartResult.status === 'fulfilled') setCart(cartResult.value.data);
     if (favoriteResult.status === 'fulfilled') setFavorites(favoriteResult.value.data);

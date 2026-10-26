@@ -152,6 +152,13 @@ function ProfileMenu({ user, onLogout }) {
 
 function MobileDrawer({ open, onClose, user, onLogout }) {
   const panel = useRef(null);
+  const location = useLocation();
+  const nextLogin = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+  const guestLinks = [
+    { to: '/learn', label: 'Explore', end: true },
+    { to: '/learn/courses', label: 'Courses' },
+  ];
+  const signedInLinks = [...SECTIONS, { to: '/learn/courses', label: 'Courses' }, { to: '/learn/favorites', label: 'Favorites' }, { to: '/learn/cart', label: 'Cart' }, { to: '/learn/notifications', label: 'Notifications' }];
 
   useEffect(() => {
     if (!open) return undefined;
@@ -174,19 +181,26 @@ function MobileDrawer({ open, onClose, user, onLogout }) {
       <button type="button" className="absolute inset-0 bg-charcoal/50" aria-label="Close menu" onClick={onClose} />
       <div ref={panel} role="dialog" aria-modal="true" aria-label="Menu" className="absolute inset-y-0 left-0 flex w-[min(20rem,85vw)] flex-col bg-white shadow-lift">
         <div className="flex items-center justify-between border-b border-hairline p-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Avatar name={user.name} tone="brand" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-charcoal">{user.name}</p>
-              <p className="truncate text-xs text-charcoal-muted">{user.email}</p>
+          {user ? (
+            <div className="flex min-w-0 items-center gap-3">
+              <Avatar name={user.name} tone="brand" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-charcoal">{user.name}</p>
+                <p className="truncate text-xs text-charcoal-muted">{user.email}</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-charcoal">EduAdmin</p>
+              <p className="text-xs text-charcoal-muted">Browse courses without an account</p>
+            </div>
+          )}
           <button type="button" className="rounded-md p-2 text-charcoal hover:bg-sand" aria-label="Close menu" onClick={onClose}>
             <CloseIcon />
           </button>
         </div>
         <nav aria-label="Student menu" className="flex-1 overflow-y-auto p-2">
-          {[...SECTIONS, { to: '/learn/courses', label: 'Courses' }, { to: '/learn/favorites', label: 'Favorites' }, { to: '/learn/cart', label: 'Cart' }, { to: '/learn/notifications', label: 'Notifications' }].map((link) => (
+          {(user ? signedInLinks : guestLinks).map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -199,10 +213,17 @@ function MobileDrawer({ open, onClose, user, onLogout }) {
           ))}
         </nav>
         <div className="border-t border-hairline p-2">
-          <button type="button" className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-charcoal hover:bg-sand" onClick={onLogout}>
-            <LogoutIcon />
-            Log out
-          </button>
+          {user ? (
+            <button type="button" className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-charcoal hover:bg-sand" onClick={onLogout}>
+              <LogoutIcon />
+              Log out
+            </button>
+          ) : (
+            <div className="space-y-2 p-1">
+              <Link to={nextLogin} onClick={onClose} className="btn-brand flex w-full">Sign in</Link>
+              <Link to="/register" onClick={onClose} className="btn-outline flex w-full">Create account</Link>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -218,6 +239,7 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
     ? '/learn/my-learning'
     : '/learn/courses';
   const searchParam = location.pathname.startsWith('/learn/my-learning') ? 'find' : 'q';
+  const nextLogin = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 
   function onSearch(event) {
     event.preventDefault();
@@ -259,21 +281,42 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
           <Link to={searchTo} className="icon-btn md:hidden" aria-label="Search">
             <SearchIcon />
           </Link>
-          <CountLink to="/learn/favorites" label="Favorites" count={favorites.length}><HeartIcon /></CountLink>
-          <CountLink to="/learn/cart" label="Cart" count={cart.items.length}><CartIcon /></CountLink>
-          <NotificationBell />
-          <ProfileMenu user={user} onLogout={onLogout} />
+          {user ? (
+            <>
+              <CountLink to="/learn/favorites" label="Favorites" count={favorites.length}><HeartIcon /></CountLink>
+              <CountLink to="/learn/cart" label="Cart" count={cart.items.length}><CartIcon /></CountLink>
+              <NotificationBell />
+              <ProfileMenu user={user} onLogout={onLogout} />
+            </>
+          ) : (
+            <div className="flex items-center gap-2 pl-1">
+              <Link to={nextLogin} className="rounded-full px-3 py-1.5 text-sm font-bold text-brand hover:bg-white">
+                Sign in
+              </Link>
+              <Link to="/register" className="rounded-full bg-brand px-3.5 py-1.5 text-sm font-bold text-white hover:bg-brand-hover">
+                Join free
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>
   );
 }
 
-function BottomNav() {
+function BottomNav({ guest }) {
+  const items = guest
+    ? [
+      { to: '/learn', label: 'Explore', end: true, icon: CompassIcon },
+      { to: '/learn/courses', label: 'Courses', icon: BookIcon },
+      { to: '/login', label: 'Sign in', icon: UserIcon },
+    ]
+    : SECTIONS;
+
   return (
     <nav className="bottom-nav" aria-label="Primary">
       <ul className="mx-auto flex max-w-lg">
-        {SECTIONS.map((item) => {
+        {items.map((item) => {
           const Icon = item.icon;
           return (
             <li key={item.to} className="flex flex-1">
@@ -340,7 +383,7 @@ export function StudentShell() {
           >
             <Outlet />
           </main>
-          <BottomNav />
+          <BottomNav guest={!user} />
         </div>
       </NotificationsProvider>
     </StudentDataProvider>

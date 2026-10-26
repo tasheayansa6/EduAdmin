@@ -1,16 +1,20 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { api } from '../api/client.js';
+import { api, getToken } from '../api/client.js';
 import { BellIcon } from '../components/icons.jsx';
 
 const POLL_MS = 60_000;
 const NotificationsContext = createContext(null);
 
 export function NotificationsProvider({ children }) {
-  const [state, setState] = useState({ status: 'loading', items: [], unread: 0, error: null });
+  const [state, setState] = useState({ status: 'ready', items: [], unread: 0, error: null });
   const location = useLocation();
 
   const load = useCallback(async () => {
+    if (!getToken()) {
+      setState({ status: 'ready', items: [], unread: 0, error: null });
+      return;
+    }
     try {
       const result = await api('/api/v1/student/notifications?limit=50');
       setState({ status: 'ready', items: result.data.items, unread: result.data.unread, error: null });

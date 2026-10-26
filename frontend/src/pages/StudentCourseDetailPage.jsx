@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api } from '../api/client.js';
+import { api, getToken } from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatDate, statusLabel } from '../lib/format.js';
 import { CartIcon, CheckIcon, ClockIcon, HeartIcon, LockIcon, PlayIcon } from '../components/icons.jsx';
@@ -88,7 +88,20 @@ function PurchaseCard({ course }) {
         ) : (
           <>
             <p className="text-3xl font-extrabold tracking-tight text-charcoal">{formatPrice(course.price, course.currency)}</p>
-            {course.isFree ? (
+            {!getToken() ? (
+              <>
+                <Link
+                  to={`/login?next=${encodeURIComponent(`/learn/courses/${course.slug}`)}`}
+                  className="btn-brand w-full py-3 text-base"
+                >
+                  Sign in to enroll
+                </Link>
+                <p className="text-sm text-charcoal-muted">
+                  New here?{' '}
+                  <Link to="/register" className="font-bold text-brand hover:underline">Create a free account</Link>
+                </p>
+              </>
+            ) : course.isFree ? (
               <button
                 type="button"
                 className="btn-brand w-full py-3 text-base"

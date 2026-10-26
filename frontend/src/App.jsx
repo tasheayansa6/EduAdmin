@@ -1,5 +1,5 @@
-import { Link, Route, Routes } from 'react-router-dom';
-import { GuestOnly, RequireAdmin, RequireRole, RequireStudent } from './auth/ProtectedRoutes.jsx';
+import { Link, Navigate, Route, Routes } from 'react-router-dom';
+import { AllowStudentOrGuest, GuestOnly, RequireAdmin, RequireRole, RequireStudent } from './auth/ProtectedRoutes.jsx';
 import { AppShell } from './components/layout/AppShell.jsx';
 import { StudentShell } from './components/layout/StudentShell.jsx';
 import { ErrorState } from './components/ui.jsx';
@@ -57,12 +57,20 @@ export function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Route>
-      <Route element={<RequireStudent />}>
+
+      {/* Public browse — no account required */}
+      <Route element={<AllowStudentOrGuest />}>
         <Route element={<StudentShell />}>
           <Route path="learn" element={<StudentHomePage />} />
           <Route path="learn/academy" element={<StudentAcademyPage />} />
           <Route path="learn/courses" element={<StudentCoursesPage />} />
           <Route path="learn/courses/:slug" element={<StudentCourseDetailPage />} />
+        </Route>
+      </Route>
+
+      {/* Personal learning — sign-in required */}
+      <Route element={<RequireStudent />}>
+        <Route element={<StudentShell />}>
           <Route path="learn/courses/:slug/learn" element={<StudentCoursePlayerPage />} />
           <Route path="learn/my-courses/:courseId" element={<StudentLocalCoursePage />} />
           <Route path="learn/my-courses/:courseId/learn" element={<StudentLocalPlayerPage />} />
@@ -80,6 +88,7 @@ export function App() {
           <Route path="learn/*" element={<StudentNotFound />} />
         </Route>
       </Route>
+
       <Route element={<RequireAdmin />}>
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />
@@ -95,6 +104,8 @@ export function App() {
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
+
+      <Route path="*" element={<Navigate to="/learn" replace />} />
     </Routes>
   );
 }

@@ -244,7 +244,7 @@ function CuratedCard({ course }) {
 
 function HomeBody({ data }) {
   const { user } = useAuth();
-  const firstName = user.name.trim().split(/\s+/)[0];
+  const firstName = user?.name?.trim().split(/\s+/)[0] || 'there';
   const [category, setCategory] = useState('All');
   const [pathway, setPathway] = useState('recommended');
   const [find, setFind] = useState('');

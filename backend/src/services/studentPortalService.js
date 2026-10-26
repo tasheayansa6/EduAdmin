@@ -64,6 +64,43 @@ function mapCourse(row) {
   };
 }
 
+/** Public Explore payload — published local courses + categories, no personal data. */
+export async function getPublicExplore() {
+  const [catalogRows] = await pool.query(
+    `SELECT c.id, c.title, c.subtitle, c.description, c.image_url, c.preview_video_url, c.instructor_name,
+            c.level, c.language, c.total_minutes, c.outcomes, c.requirements, c.includes, c.outline,
+            c.created_at, c.updated_at, c.price, c.currency, cat.name AS category_name,
+            NULL AS enrollment_status, NULL AS enrolled_at,
+            NULL AS percent, NULL AS progress_status,
+            0 AS in_cart, 0 AS favorite
+     FROM courses c
+     JOIN categories cat ON cat.id = c.category_id
+     WHERE c.status = 'published' AND c.source_slug IS NULL
+     ORDER BY c.title ASC`,
+  );
+
+  const [categoryRows] = await pool.query(
+    'SELECT id, name, description FROM categories ORDER BY name ASC',
+  );
+
+  return {
+    profile: null,
+    summary: {
+      enrollments: 0,
+      completed: 0,
+      averageProgress: null,
+      focusCategory: null,
+    },
+    categories: categoryRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description ?? null,
+    })),
+    enrollments: [],
+    catalog: catalogRows.map(mapCourse),
+  };
+}
+
 export async function getStudentHome(userId) {
   const [profileRows] = await pool.query(
     `SELECT id, name, email, role, status FROM users WHERE id = ? AND role = 'student'`,
