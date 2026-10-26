@@ -25,8 +25,9 @@ export function RequireAuth() {
 
 export function RequireAdmin() {
   const { user, ready } = useAuth();
+  const location = useLocation();
   if (!ready) return <BootScreen />;
-  if (!user) return <Navigate to="/learn" replace />;
+  if (!user) return <Navigate to={loginRedirect(location.pathname, location.search)} replace />;
   if (user.role === 'student') return <Navigate to="/learn" replace />;
   return <Outlet />;
 }
@@ -37,14 +38,6 @@ export function RequireStudent() {
   if (!ready) return <BootScreen />;
   if (!user) return <Navigate to={loginRedirect(location.pathname, location.search)} replace />;
   if (user.role !== 'student') return <Navigate to="/" replace />;
-  return <Outlet />;
-}
-
-/** Public learning pages: guests can browse; students stay; admins go to the dashboard. */
-export function AllowStudentOrGuest() {
-  const { user, ready } = useAuth();
-  if (!ready) return <BootScreen />;
-  if (user && user.role !== 'student') return <Navigate to="/" replace />;
   return <Outlet />;
 }
 

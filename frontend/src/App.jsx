@@ -1,5 +1,5 @@
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
-import { AllowStudentOrGuest, GuestOnly, RequireAdmin, RequireRole, RequireStudent } from './auth/ProtectedRoutes.jsx';
+import { GuestOnly, RequireAdmin, RequireRole, RequireStudent } from './auth/ProtectedRoutes.jsx';
 import { AppShell } from './components/layout/AppShell.jsx';
 import { StudentShell } from './components/layout/StudentShell.jsx';
 import { ErrorState } from './components/ui.jsx';
@@ -53,24 +53,18 @@ function StudentNotFound() {
 export function App() {
   return (
     <Routes>
+      {/* Auth first — shared links land here until the visitor has an account */}
       <Route element={<GuestOnly />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
-      {/* Public browse — no account required */}
-      <Route element={<AllowStudentOrGuest />}>
+      <Route element={<RequireStudent />}>
         <Route element={<StudentShell />}>
           <Route path="learn" element={<StudentHomePage />} />
           <Route path="learn/academy" element={<StudentAcademyPage />} />
           <Route path="learn/courses" element={<StudentCoursesPage />} />
           <Route path="learn/courses/:slug" element={<StudentCourseDetailPage />} />
-        </Route>
-      </Route>
-
-      {/* Personal learning — sign-in required */}
-      <Route element={<RequireStudent />}>
-        <Route element={<StudentShell />}>
           <Route path="learn/courses/:slug/learn" element={<StudentCoursePlayerPage />} />
           <Route path="learn/my-courses/:courseId" element={<StudentLocalCoursePage />} />
           <Route path="learn/my-courses/:courseId/learn" element={<StudentLocalPlayerPage />} />
@@ -105,7 +99,7 @@ export function App() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/learn" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
