@@ -34,7 +34,15 @@ import {
   updateContactInfo,
   updateContactMessageStatus,
 } from '../services/contactService.js';
-import { getMembershipSettings, updateMembershipSettings } from '../services/membershipService.js';
+import {
+  createMembershipRequest,
+  deleteMembershipRequest,
+  getMembershipSettings,
+  listMembershipRequests,
+  membershipRequestStats,
+  updateMembershipRequest,
+  updateMembershipSettings,
+} from '../services/membershipService.js';
 import { mailNotifyTo, sendEmail, verifyMailer } from '../lib/mailer.js';
 import {
   deleteSubscription,
@@ -76,6 +84,9 @@ import {
   contactMessageListSchema,
   contactMessagePatchSchema,
   membershipUpdateSchema,
+  membershipRequestCreateSchema,
+  membershipRequestListSchema,
+  membershipRequestPatchSchema,
   subscribeSchema,
   unsubscribeSchema,
   subscriptionListSchema,
@@ -317,6 +328,27 @@ membershipRouter.get('/', asyncHandler(async (req, res) => {
 }));
 membershipRouter.put('/', validate(membershipUpdateSchema), asyncHandler(async (req, res) => {
   res.json({ data: await updateMembershipSettings(req.user.id, req.valid.body) });
+}));
+membershipRouter.get('/requests/stats', asyncHandler(async (req, res) => {
+  res.json({ data: await membershipRequestStats() });
+}));
+membershipRouter.get('/requests', validate(membershipRequestListSchema), asyncHandler(async (req, res) => {
+  res.json(await listMembershipRequests(req.valid.query));
+}));
+membershipRouter.post('/requests', validate(membershipRequestCreateSchema), asyncHandler(async (req, res) => {
+  res.status(201).json({
+    data: await createMembershipRequest(req.valid.body, {
+      actorId: req.user.id,
+      source: 'admin',
+    }),
+  });
+}));
+membershipRouter.patch('/requests/:id', validate(membershipRequestPatchSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await updateMembershipRequest(req.user.id, req.valid.params.id, req.valid.body) });
+}));
+membershipRouter.delete('/requests/:id', validate(recordParams), asyncHandler(async (req, res) => {
+  await deleteMembershipRequest(req.user.id, req.valid.params.id);
+  res.status(204).end();
 }));
 
 const subscriptionRouter = Router();
@@ -569,6 +601,11 @@ export function registerRoutes(app) {
   }));
   publicRouter.get('/membership', asyncHandler(async (req, res) => {
     res.json({ data: await getMembershipSettings() });
+  }));
+  publicRouter.post('/membership/requests', validate(membershipRequestCreateSchema), asyncHandler(async (req, res) => {
+    res.status(201).json({
+      data: await createMembershipRequest(req.valid.body, { source: 'public' }),
+    });
   }));
   publicRouter.post('/subscribe', validate(subscribeSchema), asyncHandler(async (req, res) => {
     res.status(201).json({

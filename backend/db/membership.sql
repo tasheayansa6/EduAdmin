@@ -23,3 +23,21 @@ VALUES (
   'https://test.ailgagro.com/#membership'
 )
 ON DUPLICATE KEY UPDATE id = id;
+
+CREATE TABLE IF NOT EXISTS membership_requests (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NULL,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(60) NULL,
+  organization VARCHAR(180) NULL,
+  message TEXT NULL,
+  status ENUM('new', 'reviewing', 'approved', 'rejected') NOT NULL DEFAULT 'new',
+  admin_notes TEXT NULL,
+  source VARCHAR(40) NOT NULL DEFAULT 'admin',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_membership_requests_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+  KEY idx_membership_requests_status (status, created_at),
+  KEY idx_membership_requests_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

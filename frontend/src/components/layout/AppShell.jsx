@@ -110,6 +110,7 @@ const ADMIN_ACTION_LABELS = {
   'course.created': 'Course created',
   'career.application_received': 'Career application',
   'contact.message_received': 'Contact message',
+  'membership.request_received': 'Membership request',
   'subscription.campaign_sent': 'Campaign sent',
 };
 
@@ -119,7 +120,10 @@ function NotificationsMenu() {
   const feed = useResource(() => api('/api/v1/dashboard/notifications?limit=12'), []);
   const items = feed.data?.data?.items ?? [];
   const summary = feed.data?.data?.summary;
-  const badgeCount = (summary?.newEnrollments || 0) + (summary?.newMessages || 0) + (summary?.newApplications || 0);
+  const badgeCount = (summary?.newEnrollments || 0)
+    + (summary?.newMessages || 0)
+    + (summary?.newApplications || 0)
+    + (summary?.newMembershipRequests || 0);
 
   useEffect(() => {
     if (!open) return undefined;

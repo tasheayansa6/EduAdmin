@@ -119,6 +119,7 @@ const ADMIN_FEED_ACTIONS = [
   'course.created',
   'career.application_received',
   'contact.message_received',
+  'membership.request_received',
   'subscription.campaign_sent',
 ];
 
@@ -128,6 +129,7 @@ function adminNotificationLink(action) {
   if (action.startsWith('course.')) return '/courses';
   if (action.startsWith('career.')) return '/careers';
   if (action.startsWith('contact.')) return '/contact';
+  if (action.startsWith('membership.')) return '/membership';
   if (action.startsWith('subscription.')) return '/subscriptions';
   if (action.startsWith('blog.')) return '/blogs';
   return '/reports';
@@ -152,7 +154,8 @@ export async function getAdminNotifications(limit = 20) {
        (SELECT COUNT(*) FROM enrollments WHERE status = 'active'
           AND enrolled_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)) AS new_enrollments,
        (SELECT COUNT(*) FROM contact_messages WHERE status = 'new') AS new_messages,
-       (SELECT COUNT(*) FROM career_applications WHERE status = 'new') AS new_applications`,
+       (SELECT COUNT(*) FROM career_applications WHERE status = 'new') AS new_applications,
+       (SELECT COUNT(*) FROM membership_requests WHERE status = 'new') AS new_membership_requests`,
   );
 
   return {
@@ -168,6 +171,7 @@ export async function getAdminNotifications(limit = 20) {
       newEnrollments: Number(counts.new_enrollments),
       newMessages: Number(counts.new_messages),
       newApplications: Number(counts.new_applications),
+      newMembershipRequests: Number(counts.new_membership_requests),
     },
   };
 }

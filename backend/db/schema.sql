@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS subscription_campaigns;
 DROP TABLE IF EXISTS subscriptions;
 DROP TABLE IF EXISTS contact_messages;
 DROP TABLE IF EXISTS contact_info;
+DROP TABLE IF EXISTS membership_requests;
 DROP TABLE IF EXISTS membership_settings;
 DROP TABLE IF EXISTS blogs;
 DROP TABLE IF EXISTS activity_logs;
@@ -163,6 +164,24 @@ CREATE TABLE membership_settings (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT chk_membership_singleton CHECK (id = 1),
   CONSTRAINT fk_membership_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE membership_requests (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NULL,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(60) NULL,
+  organization VARCHAR(180) NULL,
+  message TEXT NULL,
+  status ENUM('new', 'reviewing', 'approved', 'rejected') NOT NULL DEFAULT 'new',
+  admin_notes TEXT NULL,
+  source VARCHAR(40) NOT NULL DEFAULT 'admin',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_membership_requests_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+  KEY idx_membership_requests_status (status, created_at),
+  KEY idx_membership_requests_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE contact_messages (

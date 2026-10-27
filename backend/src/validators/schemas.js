@@ -344,6 +344,35 @@ export const membershipUpdateSchema = {
   }),
 };
 
+export const membershipRequestCreateSchema = {
+  body: z.object({
+    name: personName,
+    email,
+    phone: optionalText(60).optional(),
+    organization: optionalText(180).optional(),
+    message: optionalText(5000).optional(),
+  }),
+};
+
+export const membershipRequestListSchema = {
+  query: z.object({
+    q: search,
+    page,
+    limit,
+    status: z.enum(['', 'new', 'reviewing', 'approved', 'rejected']).optional().default(''),
+  }),
+};
+
+export const membershipRequestPatchSchema = {
+  params: idParam,
+  body: z.object({
+    status: z.enum(['new', 'reviewing', 'approved', 'rejected']).optional(),
+    adminNotes: optionalText(5000).optional(),
+  }).refine((value) => Object.keys(value).length > 0, {
+    message: 'Provide at least one field to update.',
+  }),
+};
+
 export const contactMessageListSchema = {
   query: z.object({
     q: search,
