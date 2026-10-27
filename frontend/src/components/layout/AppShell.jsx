@@ -470,7 +470,7 @@ export function AppShell() {
         ) : null}
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-line bg-white/95 backdrop-blur-sm">
+          <header className="sticky top-0 z-20 border-b border-line bg-white/95 backdrop-blur-sm supports-[backdrop-filter]:bg-white/90">
             <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
               <button
                 type="button"

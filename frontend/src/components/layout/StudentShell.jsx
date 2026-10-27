@@ -269,7 +269,7 @@ function HeaderBar({ user, onLogout, onOpenMenu }) {
   }, [searchText, location.pathname, location.search, navigate, searchTo, searchParam]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-hairline/80 bg-[#fbfcf9]/95 backdrop-blur supports-[backdrop-filter]:bg-[#fbfcf9]/90">
+    <header className="fixed inset-x-0 top-0 z-30 border-b border-hairline/80 bg-[#fbfcf9]/95 backdrop-blur supports-[backdrop-filter]:bg-[#fbfcf9]/90">
       <div className="flex h-16 items-center gap-3 px-3 sm:px-5">
         <button type="button" className="-ml-1 rounded-xl p-2 text-charcoal hover:bg-white md:hidden" aria-label="Open menu" onClick={onOpenMenu}>
           <MenuIcon />
@@ -389,7 +389,7 @@ export function StudentShell() {
   return (
     <StudentDataProvider>
       <NotificationsProvider>
-        <div className="student-theme relative isolate flex min-h-screen flex-col overflow-x-hidden bg-canvas text-charcoal">
+        <div className="student-theme relative isolate flex min-h-screen flex-col bg-canvas text-charcoal">
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
             <div className="absolute -left-24 -top-28 h-[22rem] w-[22rem] rounded-full bg-brand/[0.06] blur-3xl" />
             <div className="absolute -right-20 top-32 h-[18rem] w-[18rem] rounded-full bg-brand-soft/50 blur-3xl" />
@@ -399,6 +399,7 @@ export function StudentShell() {
             Skip to content
           </a>
           <HeaderBar user={user} onLogout={onLogout} onOpenMenu={() => setDrawer(true)} />
+          <div className="h-16 shrink-0" aria-hidden="true" />
           <MobileDrawer open={drawer} onClose={closeDrawer} user={user} onLogout={onLogout} />
           <main
             id="main"

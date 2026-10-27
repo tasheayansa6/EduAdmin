@@ -8,7 +8,7 @@
   }
 
   body {
-    @apply m-0 min-h-screen font-sans;
+    @apply m-0 min-h-screen overflow-x-clip font-sans;
   }
 
   button,
