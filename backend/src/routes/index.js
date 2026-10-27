@@ -34,6 +34,7 @@ import {
   updateContactInfo,
   updateContactMessageStatus,
 } from '../services/contactService.js';
+import { getMembershipSettings, updateMembershipSettings } from '../services/membershipService.js';
 import { mailNotifyTo, sendEmail, verifyMailer } from '../lib/mailer.js';
 import {
   deleteSubscription,
@@ -74,6 +75,7 @@ import {
   contactMessageCreateSchema,
   contactMessageListSchema,
   contactMessagePatchSchema,
+  membershipUpdateSchema,
   subscribeSchema,
   unsubscribeSchema,
   subscriptionListSchema,
@@ -308,6 +310,15 @@ contactRouter.delete('/messages/:id', validate(recordParams), asyncHandler(async
   res.status(204).end();
 }));
 
+const membershipRouter = Router();
+membershipRouter.use(...adminOnly);
+membershipRouter.get('/', asyncHandler(async (req, res) => {
+  res.json({ data: await getMembershipSettings() });
+}));
+membershipRouter.put('/', validate(membershipUpdateSchema), asyncHandler(async (req, res) => {
+  res.json({ data: await updateMembershipSettings(req.user.id, req.valid.body) });
+}));
+
 const subscriptionRouter = Router();
 subscriptionRouter.use(...adminOnly);
 subscriptionRouter.get('/stats', asyncHandler(async (req, res) => {
@@ -409,6 +420,9 @@ portalRouter.get('/blogs/:slug', validate(slugParams), asyncHandler(async (req, 
 }));
 portalRouter.get('/contact', asyncHandler(async (req, res) => {
   res.json({ data: await getContactInfo() });
+}));
+portalRouter.get('/membership', asyncHandler(async (req, res) => {
+  res.json({ data: await getMembershipSettings() });
 }));
 portalRouter.post('/contact/messages', validate(contactMessageCreateSchema), asyncHandler(async (req, res) => {
   res.status(201).json({ data: await createContactMessage(req.user.id, req.valid.body) });
@@ -553,6 +567,9 @@ export function registerRoutes(app) {
   publicRouter.get('/contact', asyncHandler(async (req, res) => {
     res.json({ data: await getContactInfo() });
   }));
+  publicRouter.get('/membership', asyncHandler(async (req, res) => {
+    res.json({ data: await getMembershipSettings() });
+  }));
   publicRouter.post('/subscribe', validate(subscribeSchema), asyncHandler(async (req, res) => {
     res.status(201).json({
       data: await subscribe({
@@ -577,6 +594,7 @@ export function registerRoutes(app) {
   v1.use('/administrators', adminRouter);
   v1.use('/blogs', blogRouter);
   v1.use('/contact', contactRouter);
+  v1.use('/membership', membershipRouter);
   v1.use('/subscriptions', subscriptionRouter);
   v1.use('/careers', careerRouter);
   v1.use('/lookups', lookupRouter);

@@ -10,7 +10,7 @@ import {
   DataPanel,
   ProgressBar,
 } from '../components/ui.jsx';
-import { BookIcon, ClipboardIcon, TrendIcon, UsersIcon } from '../components/icons.jsx';
+import { BookIcon, ClipboardIcon, LeafIcon, TrendIcon, UsersIcon } from '../components/icons.jsx';
 
 const ACTION_LABELS = {
   'student.updated': 'Student updated',
@@ -41,6 +41,7 @@ const ACTION_LABELS = {
   'career.updated': 'Career updated',
   'career.deleted': 'Career deleted',
   'career.application_updated': 'Career application updated',
+  'membership.updated': 'Membership CTA updated',
   'enrollment.created': 'Enrollment added',
   'enrollment.updated': 'Enrollment updated',
   'enrollment.deleted': 'Enrollment withdrawn',
@@ -325,6 +326,11 @@ export function DashboardPage() {
                   <li>
                     <Link to="/enrollments" className="flex items-center gap-2 rounded-xl px-3 py-2.5 font-semibold text-ink hover:bg-slate-50 [&_svg]:h-4 [&_svg]:w-4">
                       <ClipboardIcon /> Enrollments
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/membership" className="flex items-center gap-2 rounded-xl px-3 py-2.5 font-semibold text-ink hover:bg-slate-50 [&_svg]:h-4 [&_svg]:w-4">
+                      <LeafIcon /> Membership CTA
                     </Link>
                   </li>
                 </ul>

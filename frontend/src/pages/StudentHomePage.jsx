@@ -12,7 +12,6 @@ import {
   UserIcon,
 } from '../components/icons.jsx';
 import { PaceRing } from '../student/charts.jsx';
-import { AILG_MEMBERSHIP_URL } from '../student/exploreMenu.js';
 import {
   currentEnrollments,
   useAllCourses,
@@ -691,33 +690,6 @@ function HomeBody({ data }) {
               </Link>
             </section>
 
-            <section
-              aria-labelledby="membership-heading"
-              className="overflow-hidden rounded-2xl border border-hairline bg-[#fbfcf9] shadow-soft"
-            >
-              <div className="border-b border-hairline/80 bg-gradient-to-r from-brand/[0.06] via-transparent to-wheat/20 px-4 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand">
-                  AILG membership
-                </p>
-              </div>
-              <div className="space-y-3 p-4">
-                <h3 id="membership-heading" className="font-display text-xl font-extrabold text-charcoal">
-                  Join the membership
-                </h3>
-                <p className="text-sm leading-relaxed text-charcoal-muted">
-                  Mentorship, academy access, and field programs from Agricultural Leadership &amp; Investment Group.
-                </p>
-                <a
-                  href={AILG_MEMBERSHIP_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-wheat px-4 text-sm font-bold text-brand shadow-soft hover:bg-wheat-hover"
-                >
-                  Join membership
-                  <ArrowRightIcon />
-                </a>
-              </div>
-            </section>
           </aside>
         </div>
       </section>

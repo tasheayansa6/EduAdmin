@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS subscription_campaigns;
 DROP TABLE IF EXISTS subscriptions;
 DROP TABLE IF EXISTS contact_messages;
 DROP TABLE IF EXISTS contact_info;
+DROP TABLE IF EXISTS membership_settings;
 DROP TABLE IF EXISTS blogs;
 DROP TABLE IF EXISTS activity_logs;
 DROP TABLE IF EXISTS progress;
@@ -148,6 +149,20 @@ CREATE TABLE contact_info (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT chk_contact_singleton CHECK (id = 1),
   CONSTRAINT fk_contact_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE membership_settings (
+  id TINYINT UNSIGNED NOT NULL PRIMARY KEY DEFAULT 1,
+  enabled TINYINT(1) NOT NULL DEFAULT 1,
+  eyebrow VARCHAR(80) NOT NULL DEFAULT 'AILG membership',
+  headline VARCHAR(255) NOT NULL DEFAULT 'Join the membership',
+  intro TEXT NULL,
+  cta_label VARCHAR(80) NOT NULL DEFAULT 'Join membership',
+  cta_url VARCHAR(500) NOT NULL DEFAULT 'https://test.ailgagro.com/#membership',
+  updated_by INT UNSIGNED NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT chk_membership_singleton CHECK (id = 1),
+  CONSTRAINT fk_membership_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE contact_messages (

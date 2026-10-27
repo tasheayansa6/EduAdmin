@@ -333,6 +333,17 @@ export const contactMessageCreateSchema = {
   }),
 };
 
+export const membershipUpdateSchema = {
+  body: z.object({
+    enabled: z.boolean().optional(),
+    eyebrow: z.string().trim().min(2).max(80).optional(),
+    headline: z.string().trim().min(2).max(255).optional(),
+    intro: optionalText(2000).optional(),
+    ctaLabel: z.string().trim().min(2).max(80).optional(),
+    ctaUrl: z.string().trim().url('Enter a valid URL.').max(500).optional(),
+  }),
+};
+
 export const contactMessageListSchema = {
   query: z.object({
     q: search,

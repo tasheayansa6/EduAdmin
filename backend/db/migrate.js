@@ -62,6 +62,8 @@ async function migrate() {
     console.log('Subscription tables are ready.');
     await connection.query(await readFile(new URL('./careers.sql', import.meta.url), 'utf8'));
     console.log('Careers tables are ready.');
+    await connection.query(await readFile(new URL('./membership.sql', import.meta.url), 'utf8'));
+    console.log('Membership settings are ready.');
     await connection.query(
       `UPDATE contact_info SET email = 'tasheayansa6@gmail.com' WHERE id = 1`,
     );
